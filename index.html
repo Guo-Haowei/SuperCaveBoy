@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+	<meta name="mobile-web-app-capable" content="yes">
+    <!-- address bar icon -->
+    <link rel="icon" type="image/png" href="resources/icon.png">
+    <title>Cave Boy</title>
+    <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Karma">
+    <style>
+        h1,h2,h3,h4,h5,h6 {font-family: "Karma", sans-serif}
+        .w3-sidenav a {padding:20px}
+        canvas {
+            display: block;
+            position: absolute;
+            margin: auto;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="w3-sidenav w3-card-1 w3-top w3-large w3-animate-left" style="display:none;z-index:2;width:24%;min-width:160px;opacity: 0.7;" id="mySidenav">
+        <a href="javascript:void(0)" onclick="my_close()"
+        class="w3-closenav">&#10006</a>
+        <div style="padding-left: 20px;">
+            <form>
+                Frame Per Second:<br>
+                <input type="text" id="fps">
+            <br>
+                Left Key:<br>
+                <input type="text" id="leftkey">
+            <br>
+                Right Key:<br>
+                <input type="text" id="rightkey">
+            <br>
+                Jump Key:<br>
+                <input type="text" id="jumpkey">
+            </form>
+            <br>
+            <button onclick="customize()">Apply Changes</button>
+        </div>
+    </nav>
+
+    <div class="w3-top">
+        <div class="w3-white w3-xlarge w3-padding-small" style="max-width:1200px;margin:auto">
+            <div class="w3-opennav w3-left w3-hover-text-grey" onclick="my_open()" id="menu">☰&nbsp Settings</div>
+        </div>
+    </div>
+
+    <!-- preloader lib -->
+    <script type="text/javascript" src="src/lib/PxLoader.js"></script>
+    <script type="text/javascript" src="src/lib/PxLoaderImage.js"></script>
+    
+    <script src="src/world/data.js"></script>
+    <script src="src/world/level/level.js"></script>
+    <script src="src/world/level/tile.js"></script>
+    
+    <script src="src/utils/helpers.js"></script>
+    <script src="src/utils/rect.js"></script>
+    <script src="src/utils/defs.js"></script>
+    
+    <script src="src/graphics/gui.js"></script>
+    <script src="src/graphics/sprite.js"></script>
+    <script src="src/graphics/assets.js"></script>
+    <script src="src/graphics/animation.js"></script>
+    
+    <script src="src/input/keymanager.js"></script>
+    <script src="src/objects/camera.js"></script>
+    <script src="src/objects/alarm.js"></script>
+    
+    <script src="src/handler.js"></script>
+    <script src="src/objects/gameobjects/gameobject.js"></script>
+    <script src="src/objects/gameobjects/specialobject.js"></script>
+
+    
+    <script src="src/objects/gameobjects/lifeforms/player.js"></script>
+    <script src="src/objects/gameobjects/lifeforms/monster.js"></script>
+    <script src="src/game.js"></script>
+    <script src="src/states/gamestate.js"></script>
+    <script src="src/states/menustate.js"></script>
+    <script src="src/states/endstate.js"></script>
+    
+    <script src="src/music/music.js"></script>
+
+    <!-- main -->
+    <script src="src/main.js"></script>
+    <script src="src/ui.js"></script>
+
+</body>
+</html>
