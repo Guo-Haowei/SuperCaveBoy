@@ -1,6 +1,6 @@
 # Super Cave Boy
 
-Click [here](http://guo-haowei.github.io/pages/Cave%20Boy/index.html) to play
+Click [here](http://guo-haowei.github.io/pages/SuperCaveBoy/index.html) to play
 
 ## Video
 
