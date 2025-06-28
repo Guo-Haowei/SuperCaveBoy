@@ -1,32 +1,34 @@
 import { Player } from './objects/gameobjects/lifeforms/player.js';
 
-export function Game() {
-    // fields
-    this.running = true;
-    this.currentState;
-    this.states = new Array(5);
-    // assets
-    this.assets;
-    // handler
-    this.handler = new Handler(this);
-    // key manager
-    this.keyManager = keyManager;
-    this.keyManager._setTakeInput(true);
-    this.keyManager._init();
-    // game objects
-    this.player;
-    // camera
-    this.camera;
-    // music
-    this.music = null;
-    // level
-    this.level;
+export class Game {
+    constructor() {
+        // fields
+        this.running = true;
+        this.currentState;
+        this.states = new Array(5);
+        // assets
+        this.assets;
+        // handler
+        this.handler = new Handler(this);
+        // key manager
+        this.keyManager = keyManager;
+        this.keyManager._setTakeInput(true);
+        this.keyManager._init();
+        // game objects
+        this.player;
+        // camera
+        this.camera;
+        // music
+        this.music = null;
+        // level
+        this.level;
 
-    this.start;
-    this.end;
+        this.start;
+        this.end;
+    }
 
     // methods
-    this._init = function() {
+    _init() {
         this.currentState = GAMESTATES.MENU;
         // create music
 
@@ -61,16 +63,16 @@ export function Game() {
 
     }
 
-    this._setState = function(index) {
+    _setState(index) {
         this.currentState = index;
     }
 
-    this._tick = function() {
+    _tick() {
         this.music._tick();
         this.states[this.currentState]._tick();
     }
 
-    this._render = function(graphics) {
+    _render(graphics) {
         graphics.clearRect(0, 0, WIDTH, HEIGHT);
         graphics.fillStyle = '#1C0909';
         graphics.fillRect(0, 0, WIDTH, HEIGHT);

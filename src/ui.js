@@ -25,32 +25,32 @@ function customize() {
     my_close();
 }
 
-var leftKey = document.getElementById('leftkey')
-leftKey.addEventListener('keydown', function(e) {
-    var keycode = e.keyCode;
-    if (typeof keycode === 'number') {
-        tempLeft = keycode;
-        leftKey.value = keycode;
-    }
-});
+// var leftKey = document.getElementById('leftkey')
+// leftKey.addEventListener('keydown', function(e) {
+//     var keycode = e.keyCode;
+//     if (typeof keycode === 'number') {
+//         tempLeft = keycode;
+//         leftKey.value = keycode;
+//     }
+// });
 
-var rightKey = document.getElementById('rightkey')
-rightKey.addEventListener('keydown', function(e) {
-    var keycode = e.keyCode;
-    if (typeof keycode === 'number') {
-        tempRight = keycode;
-        rightKey.value = keycode;
-    }
-});
+// var rightKey = document.getElementById('rightkey')
+// rightKey.addEventListener('keydown', function(e) {
+//     var keycode = e.keyCode;
+//     if (typeof keycode === 'number') {
+//         tempRight = keycode;
+//         rightKey.value = keycode;
+//     }
+// });
 
-var upKey = document.getElementById('jumpkey')
-upKey.addEventListener('keydown', function(e) {
-    var keycode = e.keyCode;
-    if (typeof keycode === 'number') {
-        tempUp = keycode;
-        upKey.value = keycode;
-    }
-});
+// var upKey = document.getElementById('jumpkey')
+// upKey.addEventListener('keydown', function(e) {
+//     var keycode = e.keyCode;
+//     if (typeof keycode === 'number') {
+//         tempUp = keycode;
+//         upKey.value = keycode;
+//     }
+// });
 
 
 function reStart() {
