@@ -1,4 +1,4 @@
-function Player(x, y, speed, handler) {
+export function Player(x, y, speed, handler) {
     this.x = x;
     this.y = y;
     this.speed = speed;
@@ -35,7 +35,7 @@ function Player(x, y, speed, handler) {
     this.alarm1 = new Alarm(this.handler);
     
     this._init = function() {
-        this.walk_animation = new Animation(2, handler._getGameAssets().spr_player_walk);
+        this.walk_animation = new OldAnimation(2, handler._getGameAssets().spr_player_walk);
         this.jump_animation = handler._getGameAssets().spr_player_jump;
         this.currentFrame = this.jump_animation[1];
         this.currentState = this._JumpingState;

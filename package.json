@@ -1,0 +1,27 @@
+{
+  "name": "supercaveboy",
+  "version": "1.0.0",
+  "description": "Click [here](http://guo-haowei.github.io/pages/SuperCaveBoy/index.html) to play",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Guo-Haowei/SuperCaveBoy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Guo-Haowei/SuperCaveBoy/issues"
+  },
+  "homepage": "https://github.com/Guo-Haowei/SuperCaveBoy#readme",
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0"
+  }
+}

@@ -33,7 +33,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             case MONSTER.SNAKE:
                 this.bound = new Rect(0, 22, 62, 42);
                 
-                this.move_animation = new Animation(5, this.handler._getGameAssets().spr_snake_slithe);
+                this.move_animation = new OldAnimation(5, this.handler._getGameAssets().spr_snake_slithe);
                 this.sprite = this.move_animation._getFrame();
                 this._move = this._SnakeMove;
                 this.music = this.handler._getMusic().snd_snake;
@@ -44,7 +44,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
                 this.bound = new Rect(10, 15, 48, 35);
                 this.sprite = this.handler._getGameAssets().spr_bat_idle;
                 
-                this.move_animation = new Animation(3, this.handler._getGameAssets().spr_bat_fly);
+                this.move_animation = new OldAnimation(3, this.handler._getGameAssets().spr_bat_fly);
                 this._move = this._BatIdle;
                 this.music = this.handler._getMusic().snd_bat;
                 this.speed = 2;
@@ -52,7 +52,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             case MONSTER.SPIDER:
                 this.bound = new Rect(12, 12, 40, 52);
                 this.sprite = this.handler._getGameAssets().spr_spider_jump[0];
-                this.move_animation = new Animation(5, this.handler._getGameAssets().spr_spider_jump);
+                this.move_animation = new OldAnimation(5, this.handler._getGameAssets().spr_spider_jump);
                 this._move = this._SpiderIdle;
                 this.music = this.handler._getMusic().snd_spider;
                 this.alarm0 = new Alarm(this.handler);
@@ -60,7 +60,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
                 break;
             case MONSTER.BOSS:
                 this.bound = new Rect(15, -5, 130, 193);
-                this.move_animation = new Animation(10, this.handler._getGameAssets().spr_boss);
+                this.move_animation = new OldAnimation(10, this.handler._getGameAssets().spr_boss);
                 this.sprite = this.handler._getGameAssets().spr_boss[1];
                 this.health = 3;
                 this.speed = 6;

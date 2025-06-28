@@ -1,4 +1,6 @@
-function Game() {
+import { Player } from './objects/gameobjects/lifeforms/player.js';
+
+export function Game() {
     // fields
     this.running = true;
     this.currentState;
