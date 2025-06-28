@@ -33,7 +33,7 @@ function SpecialObject(handler, x, y, type) {
                 this.trigger = this._LavaTrigger;
                 this.bound = new Rect(0, 36, 64*this.length, 48);
                 this.y -= 12;
-                this.lavaAnimation = new Animation(8, this.handler._getGameAssets().spr_lava);
+                this.lavaAnimation = new OldAnimation(8, this.handler._getGameAssets().spr_lava);
                 this.sprite = this.lavaAnimation._getFrame();
                 break;
             case TYPE.CAMERA:

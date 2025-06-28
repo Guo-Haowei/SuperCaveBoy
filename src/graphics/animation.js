@@ -1,4 +1,4 @@
-function Animation(tenf, sprite) {
+function OldAnimation(tenf, sprite) {
 	this.tenf = tenf; // tick every n frames
     this.timer = 0;
     
