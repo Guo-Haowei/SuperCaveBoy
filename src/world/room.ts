@@ -2,16 +2,19 @@ import { Rect } from '../math'
 import { Monster } from './monster';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
-import { renderQueue } from '../renderer';
-import { spriteManager, SpriteSheets } from '../assets';
+import { SpriteSheets } from '../assets';
+import { ComponentType } from '../components';
+import { ECSWorld, Entity } from '../ecs';
 
 enum TileType {
     WALL = 0,
     DIRT = 1,
-}
+};
 
-// @TODO: rename to room
-export class Level {
+// @TODO: use constants for these
+const TILE_SIZE = 64;
+
+export class Room {
     level = WORLD.startLevel;
     world: Array<Array<number>> = [];
     width: number;
@@ -19,9 +22,26 @@ export class Level {
     obstacles: GameObject[] = [];
     monsters: Monster[] = [];
     objects: SpecialObject[] = [];
+    ecs: ECSWorld = new ECSWorld();
+
+    entities: Entity[] = [];
 
     constructor(handler) {
         this.handler = handler;
+    }
+
+    private createTile(x: number, y: number, sheetId: string) {
+        const id = this.ecs.createEntity();
+        this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
+        this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId, frameIndex: 0 });
+        this.entities.push(id);
+    }
+
+    private createEntrance(x: number, y: number) {
+        const id = this.ecs.createEntity();
+        this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
+        this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.ENTRANCE, frameIndex: 0 });
+        this.entities.push(id);
     }
 
     _init(bool) {
@@ -38,6 +58,18 @@ export class Level {
             WHEIGHT = this.height*64;
             YBOUND = WHEIGHT-72-64*3;
             const currentLevel = WORLD.levels[this.level].obstacles;
+
+            // tiles
+            for (let y = 0; y < this.height; ++y) {
+                for (let x = 0; x < this.width; ++x) {
+                    const spriteId = this.world[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
+                    this.createTile(TILE_SIZE * x, TILE_SIZE * y, spriteId);
+                }
+            }
+
+            // entrance
+            this.createEntrance(96, 608);
+
             for (let i = 0; i < currentLevel.length; ++i) {
                 var current = currentLevel[i];
                 this.obstacles.push(new GameObject(current[0]*64,current[1]*64,new Rect(0,0,current[2]*64,current[3]*64)));
@@ -82,29 +114,6 @@ export class Level {
     }
 
     _render(graphics) {
-
-        const wallSprite = spriteManager.getFrame(SpriteSheets.WALL);
-        const dirtSprite = spriteManager.getFrame(SpriteSheets.DIRY);
-
-        for (let y = 0; y < this.height; ++y) {
-            for (let x = 0; x < this.width; ++x) {
-                const renderable = this.world[y][x] === TileType.WALL ? wallSprite : dirtSprite;
-                const { frame, image } = renderable;
-                const command = {
-                    image,
-                    x: x * 64 + frame.sourceX,
-                    y: y * 64 + frame.sourceY,
-                    width: frame.width,
-                    height: frame.height,
-                };
-                renderQueue.submit(command);
-            }
-        }
-
-        // @TODO: add entrance
-
-        // entrance
-        // this.entrance.draw(graphics, 96-xOffset, 608-yOffset+YOFFSET);
         // objects
         for (var i = 0; i < this.objects.length; ++i) {
             if(this.objects[i].type !== TYPE.LAVA) this.objects[i]._render(graphics);

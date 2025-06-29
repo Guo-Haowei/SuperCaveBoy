@@ -1,5 +1,5 @@
 import { Rect } from '../math';
-import { Sprite } from '../sprite';
+import { OldSprite } from '../sprite';
 
 export class Monster {
     type: number;
@@ -7,7 +7,7 @@ export class Monster {
     y: number;
     destroyed = false;
     alpha = 1;
-    sprite: Sprite;
+    sprite: OldSprite;
     leftBound?: number;
     rightBound?: number;
     face: number;

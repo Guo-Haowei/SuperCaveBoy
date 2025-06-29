@@ -1,4 +1,4 @@
-export class Sprite {
+export class OldSprite {
     image: HTMLImageElement;
     x: number;
     y: number;

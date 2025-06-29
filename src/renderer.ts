@@ -1,53 +1,25 @@
-export type RenderCommand = {
-    image: HTMLImageElement;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    flipX?: boolean;
-    flipY?: boolean;
-};
-
-export class RenderQueue {
-    commands: RenderCommand[] = []
-
-    submit(cmd: RenderCommand) {
-        this.commands.push(cmd);
-    }
-
-    clear() {
-        this.commands.length = 0;
-    }
-
-    getCommands(): RenderCommand[] {
-        return this.commands;
-    }
-};
+import { ECSWorld } from './ecs';
+import { ComponentType, Position, Sprite } from './components';
+import { spriteManager } from './assets';
 
 // @TODO: use camera
-export function renderSystem(ctx: CanvasRenderingContext2D, camera: any, queue: RenderQueue) {
-    const commands = queue.getCommands();
-
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
     const xOffset = camera.xoffset - 0.5 * WIDTH;
     const yOffset = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
 
+    // @TODO: culling
+    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
+        const pos = world.getComponent<Position>(entity, ComponentType.POSITION)!;
+        const sprite = world.getComponent<Sprite>(entity, ComponentType.SPRITE)!;
 
-    for (const cmd of commands) {
-        ctx.save();
-        ctx.translate(cmd.x - xOffset, cmd.y - yOffset)
+        const { x, y } = pos;
+        const { sheetId, frameIndex } = sprite;
+        const renderable = spriteManager.getFrame(sheetId, frameIndex);
+        const { image, frame } = renderable;
 
-        ctx.drawImage(
-            cmd.image,
-            0,
-            0,
-            cmd.width,
-            cmd.height
-        );
+        const dx = x + frame.sourceX - xOffset;
+        const dy = y + frame.sourceX - yOffset;
 
-        ctx.restore();
+        ctx.drawImage(image, dx, dy, frame.width, frame.height);
     }
-
-    queue.clear();
 }
-
-export const renderQueue = new RenderQueue();

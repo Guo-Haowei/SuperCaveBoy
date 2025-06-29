@@ -32,19 +32,19 @@ function Handler(game) {
     }
     
     this._getLevel = function() {
-        return this.game.level;
+        return this.game.room;
     }
     
     this._getObstacles = function() {
-        return this.game.level.obstacles;
+        return this.game.room.obstacles;
     }
     
     this._getObjects = function() {
-        return this.game.level.objects;
+        return this.game.room.objects;
     }
     
     this._getMonsters = function() {
-        return this.game.level.monsters;
+        return this.game.room.monsters;
     }
     
     this._getGUI = function() {
