@@ -1,3 +1,5 @@
+import { Rect } from '../math';
+
 export function Player(x, y, speed, handler) {
     this.x = x;
     this.y = y;

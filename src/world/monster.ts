@@ -1,43 +1,43 @@
-// @TODO: collider
-// type Collider = {
-//   offsetX: number;
-//   offsetY: number;
-//   width: number;
-//   height: number;
-//   collisionMask: number;    // Bitmask representing what this entity *collides with*
-//   collisionCategory: number; // Bitmask representing what this entity *is*
-// };
+import { Rect } from '../math';
+import { Sprite } from '../sprite';
 
-function Monster(handler, x, y, type, leftBound, rightBound) {
-    this.x = x;
-    this.y = y;
-    this.leftBound = leftBound;
-    this.rightBound = rightBound;
-    this.handler = handler;
-    this.type = type;
+export class Monster {
+    type: number;
+    x: number;
+    y: number;
+    destroyed = false;
+    alpha = 1;
+    sprite: Sprite;
+    leftBound?: number;
+    rightBound?: number;
+    face: number;
+    hspeed = 0;
+    vspeed = 0;
+    health = 1;
 
-    this.face = DIRECTION.LEFT;
+    constructor(handler, x: number, y: number, type: number, leftBound?: number, rightBound?: number, face?: number) {
+        this.type = type;
+        this.x = x;
+        this.y = y;
+        this.leftBound = leftBound;
+        this.rightBound = rightBound;
 
-    this.hspeed = 0;
-    this.vspeed = 0;
-    this.health = 1;
+        this.handler = handler;
 
-    this.move_animation;
+        this.face = face || DIRECTION.LEFT;
 
-    this._move;
+        this.move_animation;
 
-    this.destroyed = false;
-    this.takingDamage = true;
+        this._move;
 
-    this.bound;
-    this.music;
-    this.sprite;
-    this.alarm0;
-    this.alarm1;
-    this.alarm2;
-    this.alpha = 1;
+        this.takingDamage = true;
 
-    this._init = function(face) {
+        this.bound;
+        this.music;
+        this.alarm0;
+        this.alarm1;
+        this.alarm2;
+
         switch (this.type) {
             case MONSTER.SNAKE:
                 this.bound = new Rect(0, 22, 62, 42);
@@ -71,7 +71,8 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
                 this.bound = new Rect(15, -5, 130, 193);
                 this.move_animation = new OldAnimation(10, this.handler._getGameAssets().spr_boss);
                 this.sprite = this.handler._getGameAssets().spr_boss[1];
-                this.health = 3;
+                this.health = 1;
+                // this.health = 3;
                 this.speed = 6;
                 this.alarm0 = new Alarm(this.handler);
                 this.alarm1 = new Alarm(this.handler);
@@ -82,9 +83,9 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossIdling = function() {}
+    _BossIdling() {}
 
-    this._BossTransition = function () {
+    _BossTransition() {
         if (this.alarm1.activated) this.alarm1._tick();
         this.sprite = this.handler._getGameAssets().spr_boss[1];
         if (!this.alarm1.activated) {
@@ -101,7 +102,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossDying = function() {
+    _BossDying() {
         if (this.alarm2.activated) {this.alarm2._tick();}
         this.sprite = handler._getGameAssets().spr_boss_damaged;
         this.takingDamage = false;
@@ -109,7 +110,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         else {this.alarm2.activated = false;}
     }
 
-    this._BossRising = function() {
+    _BossRising() {
         if (this.y > 192) {
             this.y -= (this.y - 180)/30;
             if (this.y < 192) this.y = 192;
@@ -120,7 +121,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossChasing = function() {
+    _BossChasing() {
         if (this.alarm0.activated) this.alarm0._tick();
         var center = this.x+this.bound.x+this.bound.width/2,
             player = this.handler._getPlayer(),
@@ -133,13 +134,13 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossFalling = function() {}
+    _BossFalling () {}
 
-    this._setState = function(state) {
+    _setState(state) {
         this._move = state;
     }
 
-    this._land = function() {
+    _land() {
         if (this.type === MONSTER.SPIDER) {
             this.hspeed = 0;
             this.vspeed = 0;
@@ -154,19 +155,19 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._SpiderWait = function() {
+    _SpiderWait() {
         this.alarm0._tick();
         if (!this.alarm0.activated) {this._move = this._SpiderIdle;}
     }
 
-    this._SpiderIdle = function() {
+    _SpiderIdle () {
         var player = this.handler._getPlayer();
         if (Math.abs(this.x - player.x) < 350 && Math.abs(this.x - player.x) < 550 && this.y < player.y+300) {
             this._move = this._SpiderAttack;
         }
     }
 
-    this._SpiderAttack = function() {
+    _SpiderAttack() {
         this.move_animation._tick();
         this.sprite = this.move_animation._getFrame();
         if (this.hspeed !== 0) return;
@@ -190,7 +191,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         this.sprite = this.move_animation._getFrame();
     }
 
-    this._BatIdle = function() {
+    _BatIdle() {
         var player = this.handler._getPlayer();
         if (Math.abs(this.x - player.x) < 350 && this.y-100 < player.y) {
             this._move = this._BatMove;
@@ -198,7 +199,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BatMove = function() {
+    _BatMove() {
         this.sprite = this.move_animation._getFrame();
         this.move_animation._tick();
         var player = this.handler._getPlayer();
@@ -210,7 +211,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         if (this.hspeed == 0 || this.vspeed == 0) this.speed = 3;
     }
 
-    this._SnakeMove = function() {
+    _SnakeMove() {
         this.move_animation._tick();
         if (this.x >= this.leftBound && this.x-this.speed <= this.leftBound && this.face === DIRECTION.LEFT) {
             this.x = this.leftBound;
@@ -224,7 +225,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         this.sprite = this.move_animation._getFrame();
     }
 
-    this._tick = function() {
+    _tick() {
         if (this.health <= 0) {
             this.destroyed = true;
         }
@@ -282,11 +283,10 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             }
         }
     }
-    this._render = function(graphics) {
-        var 
-        xoffset = this.handler._getCamera()._getxoffset()-WIDTH/2,
-        yoffset = this.handler._getCamera()._getyoffset()-HEIGHT/2 - YOFFSET;
-        this.sprite.draw(graphics, this.x-xoffset, this.y-yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
 
+    _render(graphics) {
+        const xoffset = this.handler._getCamera()._getxoffset()-WIDTH/2;
+        const yoffset = this.handler._getCamera()._getyoffset()-HEIGHT/2 - YOFFSET;
+        this.sprite.draw(graphics, this.x-xoffset, this.y-yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
     }
 }

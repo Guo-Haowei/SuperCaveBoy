@@ -1,4 +1,7 @@
-import { Player } from './objects/gameobjects/lifeforms/player.js';
+import { Player } from './world/player';
+import { Room } from './world/room';
+import { renderSystem } from './renderer';
+import { Assets } from './assets';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -9,6 +12,9 @@ export class Game {
     private currentScene: IScene;
     private scenes = new Map<Scene, IScene>();
     private lastTick = 0;
+    room: Room;
+
+    camera: any; // @TODO: define Camera type
 
     constructor() {
         // assets
@@ -22,11 +28,10 @@ export class Game {
         // game objects
         this.player;
         // camera
-        this.camera;
         // music
         this.music = null;
         // level
-        this.level;
+        this.room;
     }
 
     public init(images: { [key: string]: HTMLImageElement }) {
@@ -39,11 +44,10 @@ export class Game {
 
         // create assets
         this.assets = new Assets(images);
-        this.assets._init();
 
         // level
-        this.level = new Level(this.handler);
-        this.level._init();
+        this.room = new Room(this.handler);
+        this.room._init();
 
         // create entities
         this.player = new Player(SpawningX, SpawningY, 10, this.handler);
@@ -88,6 +92,9 @@ export class Game {
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
         ctx.fillStyle = '#1C0909';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        renderSystem(this.room.ecs, ctx, this.camera);
+
         this.currentScene.render(ctx);
     }
 }
@@ -144,11 +151,11 @@ class PlayScene implements IScene {
     tick(dt: number) {
         this.handler._getCamera()._tick();
         this.handler._getPlayer()._tick();
-        this.handler._getLevel()._tick();
+        this.game.room._tick();
     }
 
     render(ctx) {
-        this.handler._getLevel()._render(ctx);
+        this.game.room._render(ctx);
         this.handler._getPlayer()._render(ctx);
         this.handler._getGUI()._render(ctx);
     }
