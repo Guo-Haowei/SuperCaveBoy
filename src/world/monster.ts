@@ -1,37 +1,43 @@
 import { Rect } from '../math';
+import { Sprite } from '../sprite';
 
 export class Monster {
-    constructor(handler, x, y, type, leftBound, rightBound) {
+    type: number;
+    x: number;
+    y: number;
+    destroyed = false;
+    alpha = 1;
+    sprite: Sprite;
+    leftBound?: number;
+    rightBound?: number;
+    face: number;
+    hspeed = 0;
+    vspeed = 0;
+    health = 1;
+
+    constructor(handler, x: number, y: number, type: number, leftBound?: number, rightBound?: number, face?: number) {
+        this.type = type;
         this.x = x;
         this.y = y;
         this.leftBound = leftBound;
         this.rightBound = rightBound;
+
         this.handler = handler;
-        this.type = type;
 
-        this.face = DIRECTION.LEFT;
-
-        this.hspeed = 0;
-        this.vspeed = 0;
-        this.health = 1;
+        this.face = face || DIRECTION.LEFT;
 
         this.move_animation;
 
         this._move;
 
-        this.destroyed = false;
         this.takingDamage = true;
 
         this.bound;
         this.music;
-        this.sprite;
         this.alarm0;
         this.alarm1;
         this.alarm2;
-        this.alpha = 1;
-    }
 
-    _init(face) {
         switch (this.type) {
             case MONSTER.SNAKE:
                 this.bound = new Rect(0, 22, 62, 42);

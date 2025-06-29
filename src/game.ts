@@ -1,6 +1,7 @@
 import { Player } from './world/player';
 import { Level } from './world/level';
 import { renderSystem, renderQueue } from './renderer';
+import { Assets } from './assets';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -43,7 +44,6 @@ export class Game {
 
         // create assets
         this.assets = new Assets(images);
-        this.assets._init();
 
         // level
         this.level = new Level(this.handler);

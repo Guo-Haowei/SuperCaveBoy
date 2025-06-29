@@ -1,40 +1,36 @@
 
-// @TODO: move it to asset manager
+import { Sprite } from './sprite';
 
-function Assets(images) {
-    // sprites
-    // player
-    this.spr_player_idle;
-    this.spr_player_walk = new Array(8);
-    this.spr_player_jump = new Array(2);
-    this.spr_player_grab;
-    this.spr_player_damage;
+export class Assets {
+    spr_player_idle: Sprite;
+    spr_player_walk: Sprite[] = new Array(8);
+    spr_player_jump: Sprite[] = new Array(2);
+    spr_player_grab: Sprite;
+    spr_player_damage: Sprite;
+
     // map
-    this.spr_background;
-    this.spr_dirt;
-    this.spr_entrance;
-    this.spr_exit;
-    this.spr_lava = new Array(2);
-    this.spr_small_sapphire;
+    bg_menu: Sprite;
+    spr_background: Sprite;
+    spr_dirt: Sprite;
+    spr_entrance: Sprite;
+    spr_lava = new Array(2);
+    spr_exit: Sprite;
+    spr_small_sapphire: Sprite;
     // GUI
-    this.spr_gui_sapphire;
-    this.spr_gui_heart;
+    spr_gui_sapphire: Sprite;
+    spr_gui_heart: Sprite;
     // enemies
-    this.spr_bat_fly = new Array(5);
-    this.spr_bat_idle;
-    this.spr_snake_slithe = new Array(2);
-    this.spr_spider_jump = new Array(5);
-    this.spr_boss = new Array(2);
-    this.spr_boss_damaged;
+    spr_bat_fly: Sprite[] = new Array(5);
+    spr_bat_idle: Sprite;
+    spr_snake_slithe: Sprite[] = new Array(2);
+    spr_spider_jump: Sprite[] = new Array(5);
+    spr_boss: Sprite[] = new Array(2);
+    spr_boss_damaged: Sprite;
     // effect
-    this.spr_blood = new Array(4);
-    this.spr_sapphire_chunk = new Array(4);
-    this.spr_fire_bubble = new Array(4);
+    spr_sapphire_chunk: Sprite[] = new Array(4);
+    spr_fire_bubble: Sprite[] = new Array(4);
 
-
-    // initialize assets
-
-    this._init = function() {
+    constructor(images) {
         // player idle
         this.spr_player_idle = new Sprite(images.spr_player_idle, 0, 0, 64, 72);
         // player walk
@@ -81,4 +77,4 @@ function Assets(images) {
         this.spr_boss_damaged = new Sprite(images.spr_boss_damaged, 0, 0, 160, 188);
         // effects
     }
-}
+};

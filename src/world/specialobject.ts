@@ -1,24 +1,30 @@
 import { Rect } from '../math';
 
-export function SpecialObject(handler, x, y, type) {
-    // fields
-    this.handler = handler;
-    this.x = x;
-    this.y = y;
-    this.bound;
-    this.destroyed = false;
-    this.sprite;
-    this.type = type;
-    this.collided = false;
-    this.trigger;
-    this.lavaAnimation;
-    this.length = 1;
-    this.alarm0;
-    this.triggerActivated = false;
-    this.hspeed = 5;
-    this.boss;
-    
-    this._init = function(length) {
+export class SpecialObject {
+    type: number;
+    x: number;
+    y: number;
+    bound: Rect;
+    destroyed = false;
+    length = 1;
+    hspeed = 5;
+
+    constructor(handler, x, y, type) {
+        this.handler = handler;
+        this.x = x;
+        this.y = y;
+        this.bound;
+        this.sprite;
+        this.type = type;
+        this.collided = false;
+        this.trigger;
+        this.lavaAnimation;
+        this.alarm0;
+        this.triggerActivated = false;
+        this.boss;
+    }
+
+    _init(length?: number) {
         switch (this.type) {
             case TYPE.SAPPHIRE:
                 this.trigger = this._SapphireTrigger;
@@ -49,8 +55,8 @@ export function SpecialObject(handler, x, y, type) {
                 break;
         }
     }
-    
-    this._CameraTrigger = function() {
+
+   _CameraTrigger() {
         this.triggerActivated = true;
         var camera = this.handler._getCamera();
         camera._setTarget(this);
@@ -63,8 +69,8 @@ export function SpecialObject(handler, x, y, type) {
             this.trigger = this._tickAlarm;
         }
     }
-    
-    this._tickAlarm = function() {
+
+    _tickAlarm() {
         // alarm for boss
         if (!this.alarm0.activated) {
             if (this.x > 300) {
@@ -81,35 +87,33 @@ export function SpecialObject(handler, x, y, type) {
         }
     }
 
-    this._cameraSkip = function() {
+    _cameraSkip() {
         this.triggerActivated = false;
         this.handler._getCamera()._setTarget(this.handler._getPlayer());                
         this.destroyed = true;
         this.handler._getPlayer().pausing = false;
         this.boss._setState(this.boss._BossRising);
     }
-    
-    this._ExitTrigger = function() {
+
+    _ExitTrigger() {
         // start alarm
         var alarm = this.handler._getPlayer().alarm0;
         if (alarm.activated) return;
         alarm._init(10);
         alarm._setScript(alarm._enterNewRoom);
-        
     }
-    
-    this._SapphireTrigger = function() {
+
+    _SapphireTrigger() {
         this.destroyed = true;
         ++this.handler._getPlayer().sapphire;
         this.handler._getMusic().snd_tink.play();
-    } 
-    
-    this._LavaTrigger = function() {
+    }
+
+    _LavaTrigger() {
         this.handler._getPlayer()._damageTrigger(this.x+32*this.length);
     }
 
-    
-    this._tick = function() {
+    _tick() {
         if (this.triggerActivated) {
             this.trigger();
             return;
@@ -143,13 +147,13 @@ export function SpecialObject(handler, x, y, type) {
                         }
                     }
                 }
-            }    
+            }
             this.lavaAnimation._tick();
             this.sprite = this.lavaAnimation._getFrame();
         }
     }
-    
-    this._render = function(graphics) {
+
+    _render(graphics) {
         if (!this.sprite) return;
         var xoffset = this.handler._getCamera()._getxoffset() - WIDTH/2,
             yoffset = this.handler._getCamera()._getyoffset() -HEIGHT/2 - YOFFSET;

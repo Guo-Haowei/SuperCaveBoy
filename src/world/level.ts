@@ -3,6 +3,7 @@ import { Monster } from './monster';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { renderQueue } from '../renderer';
+import { Sprite } from '../sprite';
 
 enum TileType {
     WALL = 0,
@@ -17,10 +18,13 @@ export class Level {
     height: number;
     obstacles: GameObject[] = [];
     monsters: Monster[] = [];
+    spr_dirt: Sprite;
+    spr_wall: Sprite;
+    entrance: Sprite;
+    objects: SpecialObject[] = [];
 
     constructor(handler) {
         this.handler = handler;
-        this.objects = [];
 
         this.entrance = this.handler._getGameAssets().spr_entrance;
 
@@ -51,17 +55,14 @@ export class Level {
             else YOFFSET = 0;
         }
 
-        var mons = WORLD.levels[this.level].monsters;
-        this.monsters = [];
+        const mons = WORLD.levels[this.level].monsters;
         for (var i = 0; i < mons.length; ++i) {
-            var mon = mons[i];
-            this.monsters.push(new Monster(this.handler, mon[0], mon[1], mon[2], mon[3], mon[4]));
-            if (mon[5]) {this.monsters[i]._init(mon[5]);}
-            this.monsters[i]._init();
+            const mon = mons[i];
+            const monster = new Monster(this.handler, ...mon);
+            this.monsters.push(monster);
         }
 
-        var objs = WORLD.levels[this.level].objects;
-        this.objects = [];
+        const objs = WORLD.levels[this.level].objects;
         for (var i = 0; i < objs.length; ++i) {
             var obj = objs[i];
             this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
