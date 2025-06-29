@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "es6",
+    "outDir": "./dist",
+    "allowJs": true,          // allow compiling JS files too
+    "checkJs": false,         // optional: enable for JS type checking
+    "strict": false,          // start without strict mode, enable later
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "sourceMap": true
+  },
+  "include": ["src/**/*"]
+}

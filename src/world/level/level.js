@@ -97,7 +97,7 @@ function Level(handler) {
                 this.map[y][x]._render(graphics);
             }
         }
-        
+
         // entrance
         this.entrance.draw(graphics, 96-xOffset, 608-yOffset+YOFFSET);
         // objects
@@ -111,14 +111,5 @@ function Level(handler) {
         for (var i = 0; i < this.objects.length; ++i) {
             if(this.objects[i].type === TYPE.LAVA) this.objects[i]._render(graphics);
         }
-        
-        // temprory code for rects
-        /*
-        for (var i = 0; i < this.obstacles.length; ++i) {
-            var obj = this.obstacles[i];
-            graphics.fillStyle = "#fff"
-            graphics.fillRect(obj.x-xOffset, obj.y-yOffset+YOFFSET, obj.bound.width, obj.bound.height);
-        }*/
     }
-    
 }

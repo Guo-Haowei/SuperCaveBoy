@@ -1,25 +1,34 @@
+// @TODO: collider
+// type Collider = {
+//   offsetX: number;
+//   offsetY: number;
+//   width: number;
+//   height: number;
+//   collisionMask: number;    // Bitmask representing what this entity *collides with*
+//   collisionCategory: number; // Bitmask representing what this entity *is*
+// };
+
 function Monster(handler, x, y, type, leftBound, rightBound) {
-    
     this.x = x;
     this.y = y;
     this.leftBound = leftBound;
     this.rightBound = rightBound;
     this.handler = handler;
     this.type = type;
-    
+
     this.face = DIRECTION.LEFT;
-    
+
     this.hspeed = 0;
     this.vspeed = 0;
     this.health = 1;
-    
+
     this.move_animation;
-    
+
     this._move;
-    
+
     this.destroyed = false;
     this.takingDamage = true;
-        
+
     this.bound;
     this.music;
     this.sprite;
@@ -27,13 +36,13 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
     this.alarm1;
     this.alarm2;
     this.alpha = 1;
-    
+
     this._init = function(face) {
         switch (this.type) {
             case MONSTER.SNAKE:
                 this.bound = new Rect(0, 22, 62, 42);
-                
-                this.move_animation = new Animation(5, this.handler._getGameAssets().spr_snake_slithe);
+
+                this.move_animation = new OldAnimation(5, this.handler._getGameAssets().spr_snake_slithe);
                 this.sprite = this.move_animation._getFrame();
                 this._move = this._SnakeMove;
                 this.music = this.handler._getMusic().snd_snake;
@@ -43,8 +52,8 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             case MONSTER.BAT:
                 this.bound = new Rect(10, 15, 48, 35);
                 this.sprite = this.handler._getGameAssets().spr_bat_idle;
-                
-                this.move_animation = new Animation(3, this.handler._getGameAssets().spr_bat_fly);
+
+                this.move_animation = new OldAnimation(3, this.handler._getGameAssets().spr_bat_fly);
                 this._move = this._BatIdle;
                 this.music = this.handler._getMusic().snd_bat;
                 this.speed = 2;
@@ -52,7 +61,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             case MONSTER.SPIDER:
                 this.bound = new Rect(12, 12, 40, 52);
                 this.sprite = this.handler._getGameAssets().spr_spider_jump[0];
-                this.move_animation = new Animation(5, this.handler._getGameAssets().spr_spider_jump);
+                this.move_animation = new OldAnimation(5, this.handler._getGameAssets().spr_spider_jump);
                 this._move = this._SpiderIdle;
                 this.music = this.handler._getMusic().snd_spider;
                 this.alarm0 = new Alarm(this.handler);
@@ -60,7 +69,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
                 break;
             case MONSTER.BOSS:
                 this.bound = new Rect(15, -5, 130, 193);
-                this.move_animation = new Animation(10, this.handler._getGameAssets().spr_boss);
+                this.move_animation = new OldAnimation(10, this.handler._getGameAssets().spr_boss);
                 this.sprite = this.handler._getGameAssets().spr_boss[1];
                 this.health = 3;
                 this.speed = 6;
@@ -72,9 +81,9 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
                 break;
         }
     }
-    
+
     this._BossIdling = function() {}
-    
+
     this._BossTransition = function () {
         if (this.alarm1.activated) this.alarm1._tick();
         this.sprite = this.handler._getGameAssets().spr_boss[1];
@@ -91,7 +100,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             this.handler._getLevel().objects.push(exit);
         }
     }
-    
+
     this._BossDying = function() {
         if (this.alarm2.activated) {this.alarm2._tick();}
         this.sprite = handler._getGameAssets().spr_boss_damaged;
@@ -99,7 +108,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         if (this.alpha > 0.1) this.alpha -= 0.03;
         else {this.alarm2.activated = false;}
     }
-    
+
     this._BossRising = function() {
         if (this.y > 192) {
             this.y -= (this.y - 180)/30;
@@ -110,7 +119,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             this.takingDamage = true;
         }
     }
-    
+
     this._BossChasing = function() {
         if (this.alarm0.activated) this.alarm0._tick();
         var center = this.x+this.bound.x+this.bound.width/2,
@@ -123,13 +132,13 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             this.hspeed = 0;
         }
     }
-     
+
     this._BossFalling = function() {}
-    
+
     this._setState = function(state) {
         this._move = state;
     }
-    
+
     this._land = function() {
         if (this.type === MONSTER.SPIDER) {
             this.hspeed = 0;
@@ -144,21 +153,20 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             // do something
         }
     }
-        
+
     this._SpiderWait = function() {
         this.alarm0._tick();
         if (!this.alarm0.activated) {this._move = this._SpiderIdle;}
     }
-    
+
     this._SpiderIdle = function() {
         var player = this.handler._getPlayer();
         if (Math.abs(this.x - player.x) < 350 && Math.abs(this.x - player.x) < 550 && this.y < player.y+300) {
             this._move = this._SpiderAttack;
         }
     }
-    
+
     this._SpiderAttack = function() {
-        
         this.move_animation._tick();
         this.sprite = this.move_animation._getFrame();
         if (this.hspeed !== 0) return;
@@ -180,11 +188,8 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         // reset animation
         this.move_animation._tick();
         this.sprite = this.move_animation._getFrame();
-        
-        
-        // state finish when the animation index back to 0
     }
-    
+
     this._BatIdle = function() {
         var player = this.handler._getPlayer();
         if (Math.abs(this.x - player.x) < 350 && this.y-100 < player.y) {
@@ -192,7 +197,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             this.move_animation._reset();
         }
     }
-    
+
     this._BatMove = function() {
         this.sprite = this.move_animation._getFrame();
         this.move_animation._tick();
@@ -204,7 +209,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         this.face = this.hspeed>0? DIRECTION.RIGHT:DIRECTION.LEFT;
         if (this.hspeed == 0 || this.vspeed == 0) this.speed = 3;
     }
-    
+
     this._SnakeMove = function() {
         this.move_animation._tick();
         if (this.x >= this.leftBound && this.x-this.speed <= this.leftBound && this.face === DIRECTION.LEFT) {
@@ -218,7 +223,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         this.x += this.hspeed*this.speed;
         this.sprite = this.move_animation._getFrame();
     }
-    
+
     this._tick = function() {
         if (this.health <= 0) {
             this.destroyed = true;
@@ -260,7 +265,6 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             player._damageTrigger(that.x);
         }
 
-        
         // check collision
         if (this.type !== MONSTER.SNAKE) {
             // vertical
@@ -278,30 +282,11 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             }
         }
     }
-    
     this._render = function(graphics) {
         var 
         xoffset = this.handler._getCamera()._getxoffset()-WIDTH/2,
         yoffset = this.handler._getCamera()._getyoffset()-HEIGHT/2 - YOFFSET;
         this.sprite.draw(graphics, this.x-xoffset, this.y-yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
-        
-        /*
-        if (false)
-            return;
-        graphics.strokeStyle = 'green';
-        var x = this.x-xoffset, y = this.y-yoffset;
-        graphics.strokeRect(x, y, 64, 64);
-        
-        x = Math.floor(this.x/64)
-        y = Math.ceil(this.y/64)+1;
 
-        var tile1 = this.handler._getLevel()._getTile(x, y);
-        var tile2 = this.handler._getLevel()._getTile(x+1, y);
-        
-        tile1._renderBound();
-        tile2._renderBound();
-        */
-        
     }
-        
 }
