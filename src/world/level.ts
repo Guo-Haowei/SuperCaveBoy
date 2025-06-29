@@ -2,42 +2,41 @@ import { Rect } from '../math'
 import { Monster } from './monster';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
+import { renderQueue } from '../renderer';
 
-export function Level(handler) {
-    
-    this.handler = handler;
-    this.level = WORLD.startLevel;
-    this.world = [];
-    this.map;
-    this.width;
-    this.height;
-    
-    this.obstacles = [];
-    this.objects = [];
-    this.monsters = [];
-    
-    this.entrance = this.handler._getGameAssets().spr_entrance;
-    
-    this._init = function(bool) {
+// @TODO: rename to room
+export class Level {
+    level = WORLD.startLevel;
+    world: Array<Array<number>> = [];
+    width: number;
+    height: number;
+
+    constructor(handler) {
+
+        this.handler = handler;
+        this.obstacles = [];
+        this.objects = [];
+        this.monsters = [];
+
+        this.entrance = this.handler._getGameAssets().spr_entrance;
+
+        this.spr_dirt = this.handler._getGameAssets().spr_dirt;
+        this.spr_wall = this.handler._getGameAssets().spr_background;
+    }
+
+    _init(bool) {
         if (bool) {}
         else {
             ++this.level;
-            var world = WORLD.levels[this.level].level;
+            const world = WORLD.levels[this.level].level;
+            this.world = world;
             this.width = world[this.level].length;
             this.height = world.length;
-            this.map = new Array(this.height);
-            for (var i = 0; i < this.height; ++i) {
-                this.map[i] = new Array(this.width);
-                for (var j = 0; j < this.width; ++j) {
-                    this.map[i][j] = new Tile(j*64, i*64, world[i][j], this.handler);
-                }
-            }
             WWIDTH = this.width*64;
             WHEIGHT = this.height*64;
             YBOUND = WHEIGHT-72-64*3;
-            var currentLevel = WORLD.levels[this.level].obstacles;
-            this.obstacles = [];
-            for (var i = 0; i < currentLevel.length; ++i) {
+            const currentLevel = WORLD.levels[this.level].obstacles;
+            for (let i = 0; i < currentLevel.length; ++i) {
                 var current = currentLevel[i];
                 this.obstacles.push(new GameObject(current[0]*64,current[1]*64,new Rect(0,0,current[2]*64,current[3]*64)));
             }
@@ -45,7 +44,7 @@ export function Level(handler) {
             else if (this.level === 6 || this.level === 9) YOFFSET = 35;
             else YOFFSET = 0;
         }
-        
+
         var mons = WORLD.levels[this.level].monsters;
         this.monsters = [];
         for (var i = 0; i < mons.length; ++i) {
@@ -54,7 +53,7 @@ export function Level(handler) {
             if (mon[5]) {this.monsters[i]._init(mon[5]);}
             this.monsters[i]._init();
         }
-        
+
         var objs = WORLD.levels[this.level].objects;
         this.objects = [];
         for (var i = 0; i < objs.length; ++i) {
@@ -65,14 +64,14 @@ export function Level(handler) {
             {this.objects[i]._init(obj[3]);}
             else {this.objects[i]._init();}
         }
-        
+
         if (this.level === 9) {
             var music = handler._getMusic()
             music._setCurrent(music.snd_boss);
         }
     }
-    
-    this._tick = function() {
+
+    _tick() {
         for (var i = 0; i < this.objects.length; ++i) {
             this.objects[i]._tick();
             if (this.objects[i].destroyed) {this.objects.splice(i, 1);}
@@ -82,24 +81,29 @@ export function Level(handler) {
             if (this.monsters[i].destroyed) {this.monsters.splice(i, 1);}
         }
     }
-    
-    this._getTile = function(x, y) {
-        var result = this.map[y][x];
-        if (!result)
-            return null;
-        return result;
-    }
-    
-    this._render = function(graphics) {
+
+    _render(graphics) {
         const xOffset = this.handler._getCamera().xoffset-WIDTH / 2;
         const yOffset = this.handler._getCamera().yoffset-HEIGHT / 2;
-        var xStart = Math.max(Math.floor(xOffset/64), 0),
-            yStart = Math.max(Math.floor(yOffset/64)-1, 0),
-            xLen = Math.min(xStart+wTile+1, this.width),
-            yLen = Math.min(yStart+hTile+2, this.height);
-        for (var y = yStart; y < yLen; ++y) {
-            for (var x = xStart; x < xLen; ++x) {
-                this.map[y][x]._render(graphics);
+        const xStart = Math.max(Math.floor(xOffset/64), 0);
+        const yStart = Math.max(Math.floor(yOffset/64)-1, 0);
+        const xLen = Math.min(xStart+wTile+1, this.width);
+        const yLen = Math.min(yStart+hTile+2, this.height);
+
+        for (let y = 0; y < this.height; ++y) {
+            for (let x = 0; x < this.width; ++x) {
+        // for (let y = yStart; y < yLen; ++y) {
+        //     for (let x = xStart; x < xLen; ++x) {
+                const sprite = this.world[y][x] === 1 ? this.spr_dirt : this.spr_wall;
+                const command = {
+                    image: sprite.img,
+                    x: x * 64,
+                    y: y * 64,
+                    width: sprite.width,
+                    height: sprite.height,
+                };
+                renderQueue.submit(command);
+                console.log(`Rendering tile at (${x}, ${y}) with sprite ${sprite.img.src}`);
             }
         }
 
@@ -117,4 +121,4 @@ export function Level(handler) {
             if(this.objects[i].type === TYPE.LAVA) this.objects[i]._render(graphics);
         }
     }
-}
+};

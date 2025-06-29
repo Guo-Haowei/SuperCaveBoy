@@ -1,5 +1,6 @@
 import { Player } from './world/player';
 import { Level } from './world/level';
+import { renderSystem, renderQueue } from './renderer';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -10,6 +11,9 @@ export class Game {
     private currentScene: IScene;
     private scenes = new Map<Scene, IScene>();
     private lastTick = 0;
+
+    camera: any; // @TODO: define Camera type
+    renderQueue = renderQueue;
 
     constructor() {
         // assets
@@ -23,7 +27,6 @@ export class Game {
         // game objects
         this.player;
         // camera
-        this.camera;
         // music
         this.music = null;
         // level
@@ -89,6 +92,9 @@ export class Game {
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
         ctx.fillStyle = '#1C0909';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+        renderSystem(ctx, this.camera, this.renderQueue);
+
         this.currentScene.render(ctx);
     }
 }
