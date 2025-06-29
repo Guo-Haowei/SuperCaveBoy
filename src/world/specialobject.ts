@@ -1,4 +1,6 @@
-function SpecialObject(handler, x, y, type) {
+import { Rect } from '../math';
+
+export function SpecialObject(handler, x, y, type) {
     // fields
     this.handler = handler;
     this.x = x;

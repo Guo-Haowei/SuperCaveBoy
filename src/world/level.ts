@@ -1,4 +1,9 @@
-function Level(handler) {
+import { Rect } from '../math'
+import { Monster } from './monster';
+import { SpecialObject } from './specialobject';
+import { GameObject } from './gameobject';
+
+export function Level(handler) {
     
     this.handler = handler;
     this.level = WORLD.startLevel;
@@ -86,8 +91,8 @@ function Level(handler) {
     }
     
     this._render = function(graphics) {
-        var xOffset = this.handler._getCamera().xoffset-WIDTH/2,
-            yOffset = this.handler._getCamera().yoffset-HEIGHT/2;
+        const xOffset = this.handler._getCamera().xoffset-WIDTH / 2;
+        const yOffset = this.handler._getCamera().yoffset-HEIGHT / 2;
         var xStart = Math.max(Math.floor(xOffset/64), 0),
             yStart = Math.max(Math.floor(yOffset/64)-1, 0),
             xLen = Math.min(xStart+wTile+1, this.width),

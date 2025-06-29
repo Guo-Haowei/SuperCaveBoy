@@ -1,4 +1,5 @@
-import { Player } from './objects/gameobjects/lifeforms/player.js';
+import { Player } from './world/player';
+import { Level } from './world/level';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 

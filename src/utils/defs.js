@@ -28,7 +28,3 @@ var GRAVITY = 1.5, YOFFSET = 50, STEPOFFSET = 4, JUMPFORCE = -23;
 
 // Flip
 var HORIZONTAL_FLIP = 1, VERTICAL_FLIP = 2, NO_FLIP = 0;
-
-// images
-
-// @TODO: get rid of PxLoader

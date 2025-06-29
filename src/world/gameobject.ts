@@ -1,4 +1,4 @@
-function GameObject(x, y, rect) {
+export function GameObject(x, y, rect) {
     // fields
     this.x = x;
     this.y = y;

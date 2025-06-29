@@ -1,14 +1,6 @@
-// @TODO: collider
-// type Collider = {
-//   offsetX: number;
-//   offsetY: number;
-//   width: number;
-//   height: number;
-//   collisionMask: number;    // Bitmask representing what this entity *collides with*
-//   collisionCategory: number; // Bitmask representing what this entity *is*
-// };
+import { Rect } from '../math';
 
-function Monster(handler, x, y, type, leftBound, rightBound) {
+export function Monster(handler, x, y, type, leftBound, rightBound) {
     this.x = x;
     this.y = y;
     this.leftBound = leftBound;
