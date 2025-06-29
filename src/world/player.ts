@@ -1,49 +1,51 @@
 import { Rect } from '../math';
 
-export function Player(x, y, speed, handler) {
-    this.x = x;
-    this.y = y;
-    this.speed = speed;
-    this.handler = handler;
-    this.face = DIRECTION.RIGHT;
+export class Player {
+    x: number;
+    y: number;
+    speed: number;
+    handler: any;
+    face: number;
+    health = 3;
+    sapphire = 0;
+    hspeed = 0;
+    vspeed = 0;
+    takingJump = false;
+    landed = false;
 
-    this.health = 3;
-    this.sapphire = 0;
+    constructor(x, y, speed, handler) {
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
 
-    this.hspeed = 0;
-    this.vspeed = 0;
+        this.handler = handler;
+        this.face = DIRECTION.RIGHT;
 
-    this.takingJump = false;
-    this.landed = false;
+        this.jump_animation;
+        this.walk_animation;
 
-    this.jump_animation;
-    this.walk_animation;
+        this.currentState;
+        this.currentFrame;
 
-    this.currentState;
-    this.currentFrame;
+        this.grabbing = false;
+        this.hurt = false;
 
-    this.grabbing = false;
-    this.hurt = false;
+        this.bound = new Rect(16, 10, 32, 62);
 
-    this.bound = new Rect(16, 10, 32, 62);
+        this.alpha = 1;
 
-    this.alpha = 1;
+        this.pausing = false;
 
-    this.pausing = false;
+        this.alarm0 = new Alarm(this.handler);
 
-    // alarm exit
-    this.alarm0 = new Alarm(this.handler);
-    // alarm damaged
-    this.alarm1 = new Alarm(this.handler);
-
-    this._init = function() {
+        this.alarm1 = new Alarm(this.handler);
         this.walk_animation = new OldAnimation(2, handler._getGameAssets().spr_player_walk);
         this.jump_animation = handler._getGameAssets().spr_player_jump;
         this.currentFrame = this.jump_animation[1];
         this.currentState = this._JumpingState;
     }
 
-    this._move = function() {
+    _move() {
         if (this.hspeed === 1) this.face = 1;
         else if (this.hspeed === -1) this.face = 0;
         if (this.x <= 60) {
@@ -54,11 +56,13 @@ export function Player(x, y, speed, handler) {
             this.state = ENTITY_STATES.IDLING;
         }
         // check collision with walls
-        if (!checkAllCollision(this, this.handler._getObstacles(), hCollision))        this.x += this.hspeed * speed;
+        if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)) {
+            this.x += this.hspeed * this.speed;
+        }
         this.grabbing = false;
     }
 
-    this._damageTrigger = function(x) {
+    _damageTrigger(x) {
         this.grabbing = false;
         this.alarm1._init(20);
         this.alarm1._setScript(this.alarm1._quitDamangePlayer);
@@ -72,25 +76,25 @@ export function Player(x, y, speed, handler) {
         this.handler._getMusic().snd_ouch.play();
     }
 
-    this._DamagedState = function() {
+    _DamagedState() {
         // damaged state
         this.hurt = true;
         this._move();
         this.currentFrame = this.handler._getGameAssets().spr_player_damage;
     }
 
-    this._GrabState = function() {
+    _GrabState = function() {
         // grab state
         this.currentFrame = this.handler._getGameAssets().spr_player_grab;
     }
 
-    this._IdlingState = function() {
+    _IdlingState = function() {
         // idling state
         this.currentFrame = this.handler._getGameAssets().spr_player_idle;
         if (this.hspeed !== 0) this.currentState = this._MovingState;
     }
 
-    this._MovingState = function() {
+    _MovingState = function() {
         // moving state
         if (this.hspeed === 0) {
             this.currentState == this._IdlingState;
@@ -102,14 +106,13 @@ export function Player(x, y, speed, handler) {
         this.walk_animation._tick();
     }
 
-    this._JumpingState = function() {
+    _JumpingState = function() {
         // jumping state
         this.currentFrame = this.jump_animation[this.vspeed<0?0:1];
         if (this.hspeed !== 0) this._move();
     }
 
-
-    this._revive = function() {
+    _revive = function() {
         this.alarm0.activated = false;
         this.alarm1.activated = false;
         this.hspeed = 0;
@@ -126,7 +129,7 @@ export function Player(x, y, speed, handler) {
         this.handler._getLevel()._init(true);
     }
 
-    this._tick = function() {
+    _tick() {
         this.hurt = false;
         if (this.pausing) {return;}
         if (this.health <= 0) {this._revive();}
@@ -174,7 +177,7 @@ export function Player(x, y, speed, handler) {
         this.handler._getKeyManager()._tick();
     }
 
-    this._land = function() {
+    _land() {
         if (this.vspeed === 0) return;
         this.takingJump = true;
         this.currentState = this._IdlingState;
@@ -182,17 +185,17 @@ export function Player(x, y, speed, handler) {
         this.vspeed = 0;
     }
 
-    this._render = function(graphics) {
+    _render(graphics) {
         var xoffset = this.handler._getCamera()._getxoffset() - WIDTH/2,
             yoffset = this.handler._getCamera()._getyoffset() -HEIGHT/2 - YOFFSET;
         this.currentFrame.draw(graphics, this.x - xoffset, this.y - yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
     }
 
-    this._setState = function(state) {
+    _setState(state) {
         this.currentState = state;
     }
 
-    this._setPos = function(x, y) {
+    _setPos(x, y) {
         this.x = x;
         this.y = y;
     }

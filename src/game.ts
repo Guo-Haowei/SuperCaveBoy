@@ -9,12 +9,14 @@ export class Game {
     start = 0;
     end = 0;
 
+    private player: Player;
     private currentScene: IScene;
     private scenes = new Map<Scene, IScene>();
     private lastTick = 0;
     room: Room;
 
     camera: any; // @TODO: define Camera type
+    handler: any; // @TODO: define Handler type
 
     constructor() {
         // assets
@@ -26,7 +28,6 @@ export class Game {
         this.keyManager._setTakeInput(true);
         this.keyManager._init();
         // game objects
-        this.player;
         // camera
         // music
         this.music = null;
@@ -45,13 +46,14 @@ export class Game {
         // create assets
         this.assets = new Assets(images);
 
+
+        this.player = new Player(SpawningX, SpawningY, 10, this.handler);
+
         // level
         this.room = new Room(this.handler);
         this.room._init();
 
         // create entities
-        this.player = new Player(SpawningX, SpawningY, 10, this.handler);
-        this.player._init();
         this.camera = new Camera(480, SpawningY);
         this.camera._setTarget(this.player);
 

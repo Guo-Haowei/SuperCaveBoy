@@ -1,5 +1,6 @@
 import { Rect } from '../math'
-import { Monster } from './monster';
+import { OldMonster } from './monster';
+import { Bat } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
@@ -20,7 +21,7 @@ export class Room {
     width: number;
     height: number;
     obstacles: GameObject[] = [];
-    monsters: Monster[] = [];
+    monsters: OldMonster[] = [];
     objects: SpecialObject[] = [];
     ecs: ECSWorld = new ECSWorld();
 
@@ -113,7 +114,12 @@ export class Room {
         const mons = WORLD.levels[this.level].monsters;
         for (var i = 0; i < mons.length; ++i) {
             const mon = mons[i] as [number, number, number, number?, number?, number?];
-            const monster = new Monster(this.handler, ...mon);
+            let monster = null;
+            if (mon[2] === MONSTER.BAT) {
+                monster = new Bat(this.handler, ...mon);
+            } else {
+                monster = new OldMonster(this.handler, ...mon);
+            }
             this.monsters.push(monster);
         }
 

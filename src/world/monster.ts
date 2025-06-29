@@ -1,7 +1,7 @@
 import { Rect } from '../math';
 import { Sprite } from '../sprite';
 
-export class Monster {
+export class OldMonster {
     type: number;
     x: number;
     y: number;
@@ -48,15 +48,6 @@ export class Monster {
                 this.music = this.handler._getMusic().snd_snake;
                 this.speed = 3;
                 if (face) this.face = face;
-                break;
-            case MONSTER.BAT:
-                this.bound = new Rect(10, 15, 48, 35);
-                this.sprite = this.handler._getGameAssets().spr_bat_idle;
-
-                this.move_animation = new OldAnimation(3, this.handler._getGameAssets().spr_bat_fly);
-                this._move = this._BatIdle;
-                this.music = this.handler._getMusic().snd_bat;
-                this.speed = 2;
                 break;
             case MONSTER.SPIDER:
                 this.bound = new Rect(12, 12, 40, 52);
@@ -189,26 +180,6 @@ export class Monster {
         // reset animation
         this.move_animation._tick();
         this.sprite = this.move_animation._getFrame();
-    }
-
-    _BatIdle() {
-        var player = this.handler._getPlayer();
-        if (Math.abs(this.x - player.x) < 350 && this.y-100 < player.y) {
-            this._move = this._BatMove;
-            this.move_animation._reset();
-        }
-    }
-
-    _BatMove() {
-        this.sprite = this.move_animation._getFrame();
-        this.move_animation._tick();
-        var player = this.handler._getPlayer();
-        var xsign = this.x-player.x>5?1:this.x-player.x>=-5?0:-1,
-            ysign = this.y-player.y>5?1:this.y-player.y>=-5?0:-1;
-        this.hspeed = -xsign;
-        this.vspeed = -ysign;
-        this.face = this.hspeed>0? DIRECTION.RIGHT:DIRECTION.LEFT;
-        if (this.hspeed == 0 || this.vspeed == 0) this.speed = 3;
     }
 
     _SnakeMove() {
