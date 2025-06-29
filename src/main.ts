@@ -1,12 +1,13 @@
 import { Game } from './game.js';
+
+// @TODO: remove this global variable
 var game = new Game();
 
 function main() {
-    game._init();
 
     const loop = () => {
-        game._tick();
-        game._render(ctx);
+        game.tick();
+        game.render(ctx);
 
         requestAnimationFrame(loop);
     };
