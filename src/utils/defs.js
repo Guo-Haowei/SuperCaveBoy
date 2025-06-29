@@ -31,16 +31,11 @@ var HORIZONTAL_FLIP = 1, VERTICAL_FLIP = 2, NO_FLIP = 0;
 
 // images
 
+// @TODO: get rid of PxLoader
+
 // player
-var loader = new PxLoader(), 
-    img_menu = loader.addImage('resources/sprites/bg_menu.png'), 
-    img_blood = loader.addImage('resources/sprites/effects/spr_blood.png'), 
-    img_player_walk = loader.addImage('resources/sprites/player/spr_player_walk.png'),
-    img_player_idle = loader.addImage('resources/sprites/player/spr_player_idle.png'),
-    img_player_jump = loader.addImage('resources/sprites/player/spr_player_jump.png'),
-    img_player_grab = loader.addImage('resources/sprites/player/spr_player_grab.png'),
-    img_player_damage = loader.addImage('resources/sprites/player/spr_player_damage.png');
-    
+var loader = new PxLoader();
+
 // map
 var img_dirt =          loader.addImage('resources/sprites/level/spr_dirt.png'),
     img_heart = loader.addImage('resources/sprites/guiicons/spr_gui_heart.png'),

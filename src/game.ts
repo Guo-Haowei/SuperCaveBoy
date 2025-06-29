@@ -27,7 +27,9 @@ export class Game {
         this.music = null;
         // level
         this.level;
+    }
 
+    public init(images: { [key: string]: HTMLImageElement }) {
         if (!this.music) {
             this.music = new Music();
             this.music._init();
@@ -36,7 +38,7 @@ export class Game {
         }
 
         // create assets
-        this.assets = new Assets();
+        this.assets = new Assets(images);
         this.assets._init();
 
         // level
