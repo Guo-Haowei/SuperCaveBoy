@@ -25,6 +25,7 @@ export class Room {
     ecs: ECSWorld = new ECSWorld();
 
     entities: Entity[] = [];
+    handler: any; // @TODO: define Handler type
 
     constructor(handler) {
         this.handler = handler;
@@ -34,58 +35,65 @@ export class Room {
         const id = this.ecs.createEntity();
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId, frameIndex: 0 });
-        this.entities.push(id);
     }
 
     private createEntrance(x: number, y: number) {
         const id = this.ecs.createEntity();
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.ENTRANCE, frameIndex: 0 });
-        this.entities.push(id);
+    }
+
+    private clearRoom() {
+        this.world = [];
+        this.obstacles = [];
+        this.monsters = [];
+        this.objects = [];
+        this.ecs = new ECSWorld();
     }
 
     _init(bool) {
-        if (bool) {
-            // this is when the player dies and the level is reset
-        }
-        else {
-            ++this.level;
-            const world = WORLD.levels[this.level].level;
-            this.world = world;
-            this.width = world[this.level].length;
-            this.height = world.length;
-            WWIDTH = this.width*64;
-            WHEIGHT = this.height*64;
-            YBOUND = WHEIGHT-72-64*3;
-            const currentLevel = WORLD.levels[this.level].obstacles;
+        this.clearRoom();
 
-            // tiles
-            for (let y = 0; y < this.height; ++y) {
-                for (let x = 0; x < this.width; ++x) {
-                    const spriteId = this.world[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
-                    this.createTile(TILE_SIZE * x, TILE_SIZE * y, spriteId);
-                }
+        ++this.level;
+        const world = WORLD.levels[this.level].level;
+        this.world = world;
+        this.width = world[this.level].length;
+        this.height = world.length;
+        WWIDTH = this.width*64;
+        WHEIGHT = this.height*64;
+        YBOUND = WHEIGHT-72-64*3;
+        const currentLevel = WORLD.levels[this.level].obstacles;
+
+        // tiles
+        for (let y = 0; y < this.height; ++y) {
+            for (let x = 0; x < this.width; ++x) {
+                const spriteId = this.world[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
+                this.createTile(TILE_SIZE * x, TILE_SIZE * y, spriteId);
             }
-
-            // entrance
-            this.createEntrance(96, 608);
-
-            for (let i = 0; i < currentLevel.length; ++i) {
-                var current = currentLevel[i];
-                this.obstacles.push(new GameObject(current[0]*64,current[1]*64,new Rect(0,0,current[2]*64,current[3]*64)));
-            }
-            if (this.level < 5) YOFFSET = 50;
-            else if (this.level === 6 || this.level === 9) YOFFSET = 35;
-            else YOFFSET = 0;
         }
 
+        // entrance
+        this.createEntrance(96, 608);
+
+        for (let i = 0; i < currentLevel.length; ++i) {
+            var current = currentLevel[i];
+            this.obstacles.push(new GameObject(current[0]*64,current[1]*64,new Rect(0,0,current[2]*64,current[3]*64)));
+        }
+
+        // WTF is this?
+        if (this.level < 5) YOFFSET = 50;
+        else if (this.level === 6 || this.level === 9) YOFFSET = 35;
+        else YOFFSET = 0;
+
+        // monsters
         const mons = WORLD.levels[this.level].monsters;
         for (var i = 0; i < mons.length; ++i) {
-            const mon = mons[i];
+            const mon = mons[i] as [number, number, number, number?, number?, number?];
             const monster = new Monster(this.handler, ...mon);
             this.monsters.push(monster);
         }
 
+        // objects
         const objs = WORLD.levels[this.level].objects;
         for (var i = 0; i < objs.length; ++i) {
             var obj = objs[i];

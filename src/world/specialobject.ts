@@ -9,6 +9,8 @@ export class SpecialObject {
     length = 1;
     hspeed = 5;
 
+    handler: any; // @TODO: define Handler type
+
     constructor(handler, x, y, type) {
         this.handler = handler;
         this.x = x;
@@ -52,7 +54,7 @@ export class SpecialObject {
                 if (boss.type == MONSTER.BOSS) this.boss = boss;
                 break;
             default:
-                break;
+                throw new Error(`Unknown special object type: ${this.type}`);
         }
     }
 
