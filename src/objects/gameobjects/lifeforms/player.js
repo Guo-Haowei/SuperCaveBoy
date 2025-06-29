@@ -4,43 +4,43 @@ export function Player(x, y, speed, handler) {
     this.speed = speed;
     this.handler = handler;
     this.face = DIRECTION.RIGHT;
-    
+
     this.health = 3;
     this.sapphire = 0;
-    
+
     this.hspeed = 0;
     this.vspeed = 0;
-    
+
     this.takingJump = false;
     this.landed = false;
-    
+
     this.jump_animation;
     this.walk_animation;
-    
+
     this.currentState;
     this.currentFrame;
-    
+
     this.grabbing = false;
     this.hurt = false;
-        
+
     this.bound = new Rect(16, 10, 32, 62);
-    
+
     this.alpha = 1;
-    
+
     this.pausing = false;
-    
+
     // alarm exit
     this.alarm0 = new Alarm(this.handler);
     // alarm damaged
     this.alarm1 = new Alarm(this.handler);
-    
+
     this._init = function() {
         this.walk_animation = new OldAnimation(2, handler._getGameAssets().spr_player_walk);
         this.jump_animation = handler._getGameAssets().spr_player_jump;
         this.currentFrame = this.jump_animation[1];
         this.currentState = this._JumpingState;
     }
-    
+
     this._move = function() {
         if (this.hspeed === 1) this.face = 1;
         else if (this.hspeed === -1) this.face = 0;
@@ -55,7 +55,7 @@ export function Player(x, y, speed, handler) {
         if (!checkAllCollision(this, this.handler._getObstacles(), hCollision))        this.x += this.hspeed * speed;
         this.grabbing = false;
     }
-    
+
     this._damageTrigger = function(x) {
         this.grabbing = false;
         this.alarm1._init(20);
@@ -76,18 +76,18 @@ export function Player(x, y, speed, handler) {
         this._move();
         this.currentFrame = this.handler._getGameAssets().spr_player_damage;
     }
-    
+
     this._GrabState = function() {
         // grab state
         this.currentFrame = this.handler._getGameAssets().spr_player_grab;
     }
-    
+
     this._IdlingState = function() {
         // idling state
         this.currentFrame = this.handler._getGameAssets().spr_player_idle;
         if (this.hspeed !== 0) this.currentState = this._MovingState;
     }
-    
+
     this._MovingState = function() {
         // moving state
         if (this.hspeed === 0) {
@@ -99,7 +99,7 @@ export function Player(x, y, speed, handler) {
         this.currentFrame = this.walk_animation._getFrame();
         this.walk_animation._tick();
     }
-    
+
     this._JumpingState = function() {
         // jumping state
         this.currentFrame = this.jump_animation[this.vspeed<0?0:1];
@@ -123,7 +123,7 @@ export function Player(x, y, speed, handler) {
         this.handler._getCamera()._setoffset(480, SpawningY);
         this.handler._getLevel()._init(true);
     }
-    
+
     this._tick = function() {
         this.hurt = false;
         if (this.pausing) {return;}
@@ -133,7 +133,7 @@ export function Player(x, y, speed, handler) {
             if (this.alarm0.activated && this.alpha >= 0.1) this.alpha -= 0.1;
             return;
         }
-        
+
         // hspeed
         if (!this.alarm1.activated  && this.currentState != this._DamagedState)this.hspeed = this.handler._getKeyManager().rightKey - this.handler._getKeyManager().leftKey;
         // vspeed
@@ -151,7 +151,7 @@ export function Player(x, y, speed, handler) {
         if (checkAllCollision(this, this.handler._getObstacles(), grabbingCollision)) {
             this.grabbing = true;
         }
-        
+
         if (this.alarm1.activated) {
             this.alarm1._tick();
         }
@@ -171,7 +171,7 @@ export function Player(x, y, speed, handler) {
         // tick handler
         this.handler._getKeyManager()._tick();
     }
-    
+
     this._land = function() {
         if (this.vspeed === 0) return;
         this.takingJump = true;
@@ -179,34 +179,17 @@ export function Player(x, y, speed, handler) {
         this.handler._getMusic().snd_step.play();
         this.vspeed = 0;
     }
-    
+
     this._render = function(graphics) {
         var xoffset = this.handler._getCamera()._getxoffset() - WIDTH/2,
             yoffset = this.handler._getCamera()._getyoffset() -HEIGHT/2 - YOFFSET;
         this.currentFrame.draw(graphics, this.x - xoffset, this.y - yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
-        
-        //if (false)
-        //    return;
-        //var x = this.x-xoffset, y = this.y-yoffset+8;
-        //graphics.strokeStyle = 'green';
-        //graphics.strokeRect(x, y, 64, 64);
-
-
-        //x = Math.floor(this.x/64)
-        //y = Math.ceil((this.y+8)/64)+1;
-
-        //var tile1 = this.handler._getLevel()._getTile(x, y);
-        //var tile2 = this.handler._getLevel()._getTile(x+1, y);
-        
-        //tile1._renderBound();
-        //tile2._renderBound();
-        
     }
-    
+
     this._setState = function(state) {
         this.currentState = state;
     }
-    
+
     this._setPos = function(x, y) {
         this.x = x;
         this.y = y;

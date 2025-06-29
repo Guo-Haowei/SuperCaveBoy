@@ -46,7 +46,7 @@ function Alarm(handler) {
             level._init();
         } else {
             this.handler._getGame().end = Date.now();
-            this.handler._getGame().setState('END');
+            this.handler._getGame().setScene('END');
         }
     }
     
