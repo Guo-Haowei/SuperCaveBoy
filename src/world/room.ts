@@ -3,7 +3,7 @@ import { Monster } from './monster';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
-import { ComponentType } from '../components';
+import { Collider, ComponentType, ColliderLayer } from '../components';
 import { ECSWorld, Entity } from '../ecs';
 
 enum TileType {
@@ -43,6 +43,29 @@ export class Room {
         this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.ENTRANCE, frameIndex: 0 });
     }
 
+    private createCollider(x: number, y: number, width: number, height: number) {
+        x = x * TILE_SIZE;
+        y = y * TILE_SIZE;
+        width = width * TILE_SIZE;
+        height = height * TILE_SIZE;
+
+        // TODO: remove GameObject
+        this.obstacles.push( new GameObject(x, y, new Rect(0, 0, width, height)));
+
+        const id = this.ecs.createEntity();
+        const collider : Collider = {
+            width,
+            height,
+            offsetX: 0,
+            offsetY: 0,
+            layer: ColliderLayer.OBSTACLE,
+            mask: ColliderLayer.PLAYER | ColliderLayer.ENEMY,
+        };
+
+        this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
+        this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
+    }
+
     private clearRoom() {
         this.world = [];
         this.obstacles = [];
@@ -62,7 +85,6 @@ export class Room {
         WWIDTH = this.width*64;
         WHEIGHT = this.height*64;
         YBOUND = WHEIGHT-72-64*3;
-        const currentLevel = WORLD.levels[this.level].obstacles;
 
         // tiles
         for (let y = 0; y < this.height; ++y) {
@@ -75,9 +97,11 @@ export class Room {
         // entrance
         this.createEntrance(96, 608);
 
-        for (let i = 0; i < currentLevel.length; ++i) {
-            var current = currentLevel[i];
-            this.obstacles.push(new GameObject(current[0]*64,current[1]*64,new Rect(0,0,current[2]*64,current[3]*64)));
+        // colliders
+        const colliders = WORLD.levels[this.level].obstacles;
+        for (let i = 0; i < colliders.length; ++i) {
+            const collider = colliders[i] as [number, number, number, number];
+            this.createCollider(...collider);
         }
 
         // WTF is this?

@@ -1,11 +1,11 @@
 import { ECSWorld } from './ecs';
-import { ComponentType, Position, Sprite } from './components';
+import { ComponentType, Collider, Position, Sprite } from './components';
 import { spriteManager } from './assets';
 
 // @TODO: use camera
 export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
-    const xOffset = camera.xoffset - 0.5 * WIDTH;
-    const yOffset = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
+    const cameraX = camera.xoffset - 0.5 * WIDTH;
+    const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
 
     // @TODO: culling
     for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
@@ -17,9 +17,30 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
         const renderable = spriteManager.getFrame(sheetId, frameIndex);
         const { image, frame } = renderable;
 
-        const dx = x + frame.sourceX - xOffset;
-        const dy = y + frame.sourceX - yOffset;
+        const dx = x + frame.sourceX - cameraX;
+        const dy = y + frame.sourceX - cameraY;
 
         ctx.drawImage(image, dx, dy, frame.width, frame.height);
+    }
+
+    const DEBUG = true;
+    if (!DEBUG) {
+        return;
+    }
+
+    // Render debug rectangles
+    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.COLLIDER])) {
+        const pos = world.getComponent<Position>(entity, ComponentType.POSITION)!;
+        const collider = world.getComponent<Collider>(entity, ComponentType.COLLIDER)!;
+
+        const { x, y } = pos;
+        const { width, height, offsetX, offsetY, layer } = collider;
+
+        const dx = x + offsetX - cameraX;
+        const dy = y + offsetY - cameraY;
+
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dx, dy, width, height);
     }
 }
