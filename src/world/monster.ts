@@ -1,35 +1,37 @@
 import { Rect } from '../math';
 
-export function Monster(handler, x, y, type, leftBound, rightBound) {
-    this.x = x;
-    this.y = y;
-    this.leftBound = leftBound;
-    this.rightBound = rightBound;
-    this.handler = handler;
-    this.type = type;
+export class Monster {
+    constructor(handler, x, y, type, leftBound, rightBound) {
+        this.x = x;
+        this.y = y;
+        this.leftBound = leftBound;
+        this.rightBound = rightBound;
+        this.handler = handler;
+        this.type = type;
 
-    this.face = DIRECTION.LEFT;
+        this.face = DIRECTION.LEFT;
 
-    this.hspeed = 0;
-    this.vspeed = 0;
-    this.health = 1;
+        this.hspeed = 0;
+        this.vspeed = 0;
+        this.health = 1;
 
-    this.move_animation;
+        this.move_animation;
 
-    this._move;
+        this._move;
 
-    this.destroyed = false;
-    this.takingDamage = true;
+        this.destroyed = false;
+        this.takingDamage = true;
 
-    this.bound;
-    this.music;
-    this.sprite;
-    this.alarm0;
-    this.alarm1;
-    this.alarm2;
-    this.alpha = 1;
+        this.bound;
+        this.music;
+        this.sprite;
+        this.alarm0;
+        this.alarm1;
+        this.alarm2;
+        this.alpha = 1;
+    }
 
-    this._init = function(face) {
+    _init(face) {
         switch (this.type) {
             case MONSTER.SNAKE:
                 this.bound = new Rect(0, 22, 62, 42);
@@ -63,7 +65,8 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
                 this.bound = new Rect(15, -5, 130, 193);
                 this.move_animation = new OldAnimation(10, this.handler._getGameAssets().spr_boss);
                 this.sprite = this.handler._getGameAssets().spr_boss[1];
-                this.health = 3;
+                this.health = 1;
+                // this.health = 3;
                 this.speed = 6;
                 this.alarm0 = new Alarm(this.handler);
                 this.alarm1 = new Alarm(this.handler);
@@ -74,9 +77,9 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossIdling = function() {}
+    _BossIdling() {}
 
-    this._BossTransition = function () {
+    _BossTransition() {
         if (this.alarm1.activated) this.alarm1._tick();
         this.sprite = this.handler._getGameAssets().spr_boss[1];
         if (!this.alarm1.activated) {
@@ -93,7 +96,7 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossDying = function() {
+    _BossDying() {
         if (this.alarm2.activated) {this.alarm2._tick();}
         this.sprite = handler._getGameAssets().spr_boss_damaged;
         this.takingDamage = false;
@@ -101,7 +104,7 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         else {this.alarm2.activated = false;}
     }
 
-    this._BossRising = function() {
+    _BossRising() {
         if (this.y > 192) {
             this.y -= (this.y - 180)/30;
             if (this.y < 192) this.y = 192;
@@ -112,7 +115,7 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossChasing = function() {
+    _BossChasing() {
         if (this.alarm0.activated) this.alarm0._tick();
         var center = this.x+this.bound.x+this.bound.width/2,
             player = this.handler._getPlayer(),
@@ -125,13 +128,13 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BossFalling = function() {}
+    _BossFalling () {}
 
-    this._setState = function(state) {
+    _setState(state) {
         this._move = state;
     }
 
-    this._land = function() {
+    _land() {
         if (this.type === MONSTER.SPIDER) {
             this.hspeed = 0;
             this.vspeed = 0;
@@ -146,19 +149,19 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._SpiderWait = function() {
+    _SpiderWait() {
         this.alarm0._tick();
         if (!this.alarm0.activated) {this._move = this._SpiderIdle;}
     }
 
-    this._SpiderIdle = function() {
+    _SpiderIdle () {
         var player = this.handler._getPlayer();
         if (Math.abs(this.x - player.x) < 350 && Math.abs(this.x - player.x) < 550 && this.y < player.y+300) {
             this._move = this._SpiderAttack;
         }
     }
 
-    this._SpiderAttack = function() {
+    _SpiderAttack() {
         this.move_animation._tick();
         this.sprite = this.move_animation._getFrame();
         if (this.hspeed !== 0) return;
@@ -182,7 +185,7 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         this.sprite = this.move_animation._getFrame();
     }
 
-    this._BatIdle = function() {
+    _BatIdle() {
         var player = this.handler._getPlayer();
         if (Math.abs(this.x - player.x) < 350 && this.y-100 < player.y) {
             this._move = this._BatMove;
@@ -190,7 +193,7 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
 
-    this._BatMove = function() {
+    _BatMove() {
         this.sprite = this.move_animation._getFrame();
         this.move_animation._tick();
         var player = this.handler._getPlayer();
@@ -202,7 +205,7 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         if (this.hspeed == 0 || this.vspeed == 0) this.speed = 3;
     }
 
-    this._SnakeMove = function() {
+    _SnakeMove() {
         this.move_animation._tick();
         if (this.x >= this.leftBound && this.x-this.speed <= this.leftBound && this.face === DIRECTION.LEFT) {
             this.x = this.leftBound;
@@ -216,7 +219,7 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
         this.sprite = this.move_animation._getFrame();
     }
 
-    this._tick = function() {
+    _tick() {
         if (this.health <= 0) {
             this.destroyed = true;
         }
@@ -274,11 +277,10 @@ export function Monster(handler, x, y, type, leftBound, rightBound) {
             }
         }
     }
-    this._render = function(graphics) {
-        var 
-        xoffset = this.handler._getCamera()._getxoffset()-WIDTH/2,
-        yoffset = this.handler._getCamera()._getyoffset()-HEIGHT/2 - YOFFSET;
-        this.sprite.draw(graphics, this.x-xoffset, this.y-yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
 
+    _render(graphics) {
+        const xoffset = this.handler._getCamera()._getxoffset()-WIDTH/2;
+        const yoffset = this.handler._getCamera()._getyoffset()-HEIGHT/2 - YOFFSET;
+        this.sprite.draw(graphics, this.x-xoffset, this.y-yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
     }
 }

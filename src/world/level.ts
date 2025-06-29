@@ -15,13 +15,12 @@ export class Level {
     world: Array<Array<number>> = [];
     width: number;
     height: number;
+    obstacles: GameObject[] = [];
+    monsters: Monster[] = [];
 
     constructor(handler) {
-
         this.handler = handler;
-        this.obstacles = [];
         this.objects = [];
-        this.monsters = [];
 
         this.entrance = this.handler._getGameAssets().spr_entrance;
 
@@ -30,7 +29,9 @@ export class Level {
     }
 
     _init(bool) {
-        if (bool) {}
+        if (bool) {
+            // this is when the player dies and the level is reset
+        }
         else {
             ++this.level;
             const world = WORLD.levels[this.level].level;
