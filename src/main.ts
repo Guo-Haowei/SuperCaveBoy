@@ -17,10 +17,9 @@ function main(imageAssets: { [key: string]: HTMLImageElement }) {
     loop();
 }
 
-loader.addCompletionListener(function() {
+window.onload = () => {
     const images = Array.from(document.querySelectorAll('img'));
     const imageAssets: { [key: string]: HTMLImageElement } = {};
-
     Promise.all(images.map(img => {
         if (img.complete) return Promise.resolve();
         return new Promise<void>(resolve => {
@@ -35,10 +34,9 @@ loader.addCompletionListener(function() {
             name = name.split('.').shift() || '';
             imageAssets[name] = img;
         });
+
         console.log(imageAssets);
 
         main(imageAssets);
     });
-});
-
-loader.start();
+};

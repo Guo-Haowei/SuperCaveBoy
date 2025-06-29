@@ -55,31 +55,31 @@ function Assets(images) {
         this.bg_menu = new Sprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
 
         // map
-        this.spr_background = new Sprite(img_background, 0, 0, 64, 64);
-        this.spr_dirt = new Sprite(img_dirt, 0, 0, 64, 64);
-        this.spr_entrance = new Sprite(img_entrance, 0, 0, 96, 96);
-        this.spr_exit = new Sprite(img_exit, 0, 0, 96, 96);
-        this.spr_small_sapphire = new Sprite(img_small_sapphire, 0, 0, 40, 40);
-        this.spr_lava[0] = new Sprite(img_lava, 0, -20, 64, 84);
-        this.spr_lava[1] = new Sprite(img_lava, 64, -20, 64, 84);
+        this.spr_background = new Sprite(images.bg_dirt, 0, 0, 64, 64);
+        this.spr_dirt = new Sprite(images.spr_dirt, 0, 0, 64, 64);
+        this.spr_entrance = new Sprite(images.spr_entrance, 0, 0, 96, 96);
+        this.spr_exit = new Sprite(images.spr_exit, 0, 0, 96, 96);
+        this.spr_small_sapphire = new Sprite(images.spr_sapphire, 0, 0, 40, 40);
+        this.spr_lava[0] = new Sprite(images.spr_lava, 0, -20, 64, 84);
+        this.spr_lava[1] = new Sprite(images.spr_lava, 64, -20, 64, 84);
 
         // gui
-        this.spr_gui_sapphire = new Sprite(img_sapphire, 0, 0, 64, 64);
-        this.spr_gui_heart = new Sprite(img_heart, 0, 0, 64, 64);
+        this.spr_gui_sapphire = new Sprite(images.spr_gui_sapphire, 0, 0, 64, 64);
+        this.spr_gui_heart = new Sprite(images.spr_gui_heart, 0, 0, 64, 64);
 
         // monsters
-        this.spr_snake_slithe[0] = new Sprite(img_snake, 0, 0, 64, 64);
-        this.spr_snake_slithe[1] = new Sprite(img_snake, 64, 0, 64, 64);
+        this.spr_snake_slithe[0] = new Sprite(images.spr_snake_slithe, 0, 0, 64, 64);
+        this.spr_snake_slithe[1] = new Sprite(images.spr_snake_slithe, 64, 0, 64, 64);
 
-        this.spr_bat_idle = new Sprite(img_bat_idle, 0, 0, 64, 64);
+        this.spr_bat_idle = new Sprite(images.spr_bat_idle, 0, 0, 64, 64);
         for (var i = 0; i < 5; ++i) {
-            this.spr_bat_fly[i] = new Sprite(img_bat_fly, 64*i, 0, 64, 64);
-            this.spr_spider_jump[i] = new Sprite(img_spider_jump, 64*i, 0/*-6*/, 64, 68);
+            this.spr_bat_fly[i] = new Sprite(images.spr_bat_fly, 64*i, 0, 64, 64);
+            this.spr_spider_jump[i] = new Sprite(images.spr_spider_jump, 64*i, 0/*-6*/, 64, 68);
         }
 
-        this.spr_boss[0] = new Sprite(img_boss, 160, 0, 160, 188);
-        this.spr_boss[1] = new Sprite(img_boss, 0, 0, 160, 188);
-        this.spr_boss_damaged = new Sprite(img_boss_damaged, 0, 0, 160, 188);
+        this.spr_boss[0] = new Sprite(images.spr_boss, 160, 0, 160, 188);
+        this.spr_boss[1] = new Sprite(images.spr_boss, 0, 0, 160, 188);
+        this.spr_boss_damaged = new Sprite(images.spr_boss_damaged, 0, 0, 160, 188);
         // effects
     }
 }
