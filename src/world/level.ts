@@ -4,6 +4,11 @@ import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { renderQueue } from '../renderer';
 
+enum TileType {
+    WALL = 0,
+    DIRT = 1,
+}
+
 // @TODO: rename to room
 export class Level {
     level = WORLD.startLevel;
@@ -83,6 +88,7 @@ export class Level {
     }
 
     _render(graphics) {
+        // @TODO: do culling in renderSystem
         const xOffset = this.handler._getCamera().xoffset-WIDTH / 2;
         const yOffset = this.handler._getCamera().yoffset-HEIGHT / 2;
         const xStart = Math.max(Math.floor(xOffset/64), 0);
@@ -90,20 +96,18 @@ export class Level {
         const xLen = Math.min(xStart+wTile+1, this.width);
         const yLen = Math.min(yStart+hTile+2, this.height);
 
-        for (let y = 0; y < this.height; ++y) {
-            for (let x = 0; x < this.width; ++x) {
-        // for (let y = yStart; y < yLen; ++y) {
-        //     for (let x = xStart; x < xLen; ++x) {
-                const sprite = this.world[y][x] === 1 ? this.spr_dirt : this.spr_wall;
+        for (let y = yStart; y < yLen; ++y) {
+            for (let x = xStart; x < xLen; ++x) {
+                const sprite = this.world[y][x] === TileType.WALL ? this.spr_wall : this.spr_dirt;
+                const { image, width, height } = sprite;
                 const command = {
-                    image: sprite.img,
+                    image,
                     x: x * 64,
                     y: y * 64,
-                    width: sprite.width,
-                    height: sprite.height,
+                    width,
+                    height,
                 };
                 renderQueue.submit(command);
-                console.log(`Rendering tile at (${x}, ${y}) with sprite ${sprite.img.src}`);
             }
         }
 

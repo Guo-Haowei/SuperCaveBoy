@@ -1,5 +1,5 @@
-function Sprite(img, x, y, width, height) {
-	this.img = img;
+function Sprite(image, x, y, width, height) {
+	this.image = image;
 	this.x = x;
 	this.y = y;
 	this.width = width;
@@ -20,7 +20,7 @@ function Sprite(img, x, y, width, height) {
         graphics.scale((hFlip===1?-1:1), (vFlip===1?-1:1));
 
 
-        graphics.drawImage(this.img, this.x, this.y, this.width, this.height, 0, 0, this.width, this.height);
+        graphics.drawImage(this.image, this.x, this.y, this.width, this.height, 0, 0, this.width, this.height);
 
         graphics.globalAlpha = 1;
         graphics.setTransform(1,0,0,1,0,0);
