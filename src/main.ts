@@ -1,9 +1,11 @@
 import { Game } from './game.js';
+import { spriteManager } from './assets';
 
 // @TODO: remove this global variable
 var game = new Game();
 
 function main(imageAssets: { [key: string]: HTMLImageElement }) {
+    spriteManager.init(imageAssets);
 
     game.init(imageAssets);
 
@@ -34,8 +36,6 @@ window.onload = () => {
             name = name.split('.').shift() || '';
             imageAssets[name] = img;
         });
-
-        console.log(imageAssets);
 
         main(imageAssets);
     });

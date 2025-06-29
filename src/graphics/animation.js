@@ -1,7 +1,7 @@
 function OldAnimation(tenf, sprite) {
 	this.tenf = tenf; // tick every n frames
     this.timer = 0;
-    
+
 	this.sprite = sprite;
     this.index = 0;
     this.spriteLength = sprite.length;
@@ -17,11 +17,11 @@ function OldAnimation(tenf, sprite) {
             }
         }
     }
-    
+
     this._getFrame = function() {
         return this.sprite[this.index];
     }
-    
+
     this._reset = function() {
         this.index = 0;
     }

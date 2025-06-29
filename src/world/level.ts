@@ -3,7 +3,7 @@ import { Monster } from './monster';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { renderQueue } from '../renderer';
-import { Sprite } from '../sprite';
+import { spriteManager, SpriteSheets } from '../assets';
 
 enum TileType {
     WALL = 0,
@@ -18,18 +18,10 @@ export class Level {
     height: number;
     obstacles: GameObject[] = [];
     monsters: Monster[] = [];
-    spr_dirt: Sprite;
-    spr_wall: Sprite;
-    entrance: Sprite;
     objects: SpecialObject[] = [];
 
     constructor(handler) {
         this.handler = handler;
-
-        this.entrance = this.handler._getGameAssets().spr_entrance;
-
-        this.spr_dirt = this.handler._getGameAssets().spr_dirt;
-        this.spr_wall = this.handler._getGameAssets().spr_background;
     }
 
     _init(bool) {
@@ -72,10 +64,10 @@ export class Level {
             else {this.objects[i]._init();}
         }
 
-        if (this.level === 9) {
-            var music = handler._getMusic()
-            music._setCurrent(music.snd_boss);
-        }
+        // if (this.level === 9) {
+        //     var music = handler._getMusic()
+        //     music._setCurrent(music.snd_boss);
+        // }
     }
 
     _tick() {
@@ -90,31 +82,29 @@ export class Level {
     }
 
     _render(graphics) {
-        // @TODO: do culling in renderSystem
-        const xOffset = this.handler._getCamera().xoffset-WIDTH / 2;
-        const yOffset = this.handler._getCamera().yoffset-HEIGHT / 2;
-        const xStart = Math.max(Math.floor(xOffset/64), 0);
-        const yStart = Math.max(Math.floor(yOffset/64)-1, 0);
-        const xLen = Math.min(xStart+wTile+1, this.width);
-        const yLen = Math.min(yStart+hTile+2, this.height);
 
-        for (let y = yStart; y < yLen; ++y) {
-            for (let x = xStart; x < xLen; ++x) {
-                const sprite = this.world[y][x] === TileType.WALL ? this.spr_wall : this.spr_dirt;
-                const { image, width, height } = sprite;
+        const wallSprite = spriteManager.getFrame(SpriteSheets.WALL);
+        const dirtSprite = spriteManager.getFrame(SpriteSheets.DIRY);
+
+        for (let y = 0; y < this.height; ++y) {
+            for (let x = 0; x < this.width; ++x) {
+                const renderable = this.world[y][x] === TileType.WALL ? wallSprite : dirtSprite;
+                const { frame, image } = renderable;
                 const command = {
                     image,
-                    x: x * 64,
-                    y: y * 64,
-                    width,
-                    height,
+                    x: x * 64 + frame.sourceX,
+                    y: y * 64 + frame.sourceY,
+                    width: frame.width,
+                    height: frame.height,
                 };
                 renderQueue.submit(command);
             }
         }
 
+        // @TODO: add entrance
+
         // entrance
-        this.entrance.draw(graphics, 96-xOffset, 608-yOffset+YOFFSET);
+        // this.entrance.draw(graphics, 96-xOffset, 608-yOffset+YOFFSET);
         // objects
         for (var i = 0; i < this.objects.length; ++i) {
             if(this.objects[i].type !== TYPE.LAVA) this.objects[i]._render(graphics);
