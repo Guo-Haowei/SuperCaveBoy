@@ -117,10 +117,7 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camer
 
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
-  for (const [_id, script, _pos] of world.queryEntities<Script, Position>(
-    Script.name,
-    Position.name,
-  )) {
+  for (const [_id, script] of world.queryEntities<Script>(Script.name)) {
     script.script.onUpdate?.(dt);
   }
 }
