@@ -36,6 +36,7 @@ export type ColliderComponent = {
     offsetY: number;
     layer: number; // e.g. 0b0001 = player, 0b0010 = enemy
     mask: number;
+    mass: number;
 };
 
 export abstract class ScriptBase {
@@ -49,7 +50,7 @@ export abstract class ScriptBase {
 
     onInit?(): void;
     onUpdate?(dt: number): void;
-    onCollision?(other: Entity): void;
+    onCollision?(other: Entity, layer: number): void;
     onDie?(): void;
 };
 

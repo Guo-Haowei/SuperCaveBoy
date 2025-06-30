@@ -158,7 +158,9 @@ class PlayScene implements IScene {
         const { ecs } = this.game.room;
 
         System.scriptSystem(ecs, dt);
+        // move first, then resolve collisions
         System.movementSystem(ecs, dt);
+        System.physicsSystem(ecs, dt);
         // @TODO: physics system
     }
 

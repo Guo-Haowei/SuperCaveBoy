@@ -72,6 +72,7 @@ export class Room {
             offsetY: 0,
             layer: ColliderLayer.OBSTACLE,
             mask: ColliderLayer.PLAYER | ColliderLayer.ENEMY,
+            mass: Number.MAX_SAFE_INTEGER,
         };
 
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
@@ -88,6 +89,7 @@ export class Room {
             offsetY: 15,
             layer: ColliderLayer.ENEMY,
             mask: ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
+            mass: 10,
         };
 
         const script = new BatScript(id, this.ecs);

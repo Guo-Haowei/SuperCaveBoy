@@ -1,6 +1,7 @@
+import { Direction } from '../common';
 import { Rect } from '../math';
 import { ECSWorld, Entity } from '../ecs';
-import { ComponentType, PositionComponent, ScriptBase, VelocityComponent } from '../components';
+import { ColliderLayer, ComponentType, PositionComponent, ScriptBase, VelocityComponent } from '../components';
 
 // @TODO: ai system?
 // @TODO: animation system?
@@ -16,7 +17,7 @@ export class BatScript extends ScriptBase {
 
     constructor(entity: Entity, world: ECSWorld) {
         super(entity, world);
-        this.speed = 0.2;
+        this.speed = 0.07;
     }
 
     private idle() {
@@ -40,7 +41,7 @@ export class BatScript extends ScriptBase {
 
         // this.face = this.hspeed>0? DIRECTION.RIGHT:DIRECTION.LEFT;
         // @TODO: fix this hack
-        if (velocity.vx == 0 || velocity.vy == 0) this.speed = 0.3;
+        if (velocity.vx == 0 || velocity.vy == 0) this.speed = 0.1;
 
         velocity.vx = -xsign * this.speed;
         velocity.vy = -ysign * this.speed;

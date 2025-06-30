@@ -1,3 +1,4 @@
+import { Direction } from './common';
 import { ECSWorld } from './ecs';
 import {
     ComponentType,
@@ -9,6 +10,7 @@ import {
     VelocityComponent,
 } from './components';
 import { spriteManager } from './assets';
+import { Rect, Vec2 } from './math';
 
 // @TODO: use camera
 export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
@@ -82,5 +84,81 @@ export function movementSystem(world: ECSWorld, dt: number) {
 
         pos.x += vel.vx * dt;
         pos.y += vel.vy * dt;
+    }
+}
+
+function canCollide(a: ColliderComponent, b: ColliderComponent): boolean {
+    return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
+}
+
+function getMTV(a: Rect, b: Rect): Vec2 | null {
+    const ax1 = a.x;
+    const ay1 = a.y;
+    const ax2 = a.x + a.width;
+    const ay2 = a.y + a.height;
+
+    const bx1 = b.x;
+    const by1 = b.y;
+    const bx2 = b.x + b.width;
+    const by2 = b.y + b.height;
+
+    // Check for no overlap
+    if (ax2 <= bx1 || ax1 >= bx2 || ay2 <= by1 || ay1 >= by2) {
+        return null; // No collision
+    }
+
+    const overlapX1 = ax2 - bx1; // from left
+    const overlapX2 = bx2 - ax1; // from right
+    const overlapY1 = ay2 - by1; // from top
+    const overlapY2 = by2 - ay1; // from bottom
+
+    const mtvX = overlapX1 < overlapX2 ? -overlapX1 : overlapX2;
+    const mtvY = overlapY1 < overlapY2 ? -overlapY1 : overlapY2;
+
+    // Return the smallest axis of resolution
+    if (Math.abs(mtvX) < Math.abs(mtvY)) {
+        return { x: mtvX, y: 0 };
+    } else {
+        return { x: 0, y: mtvY };
+    }
+}
+
+function toRect(position: PositionComponent, collider: ColliderComponent): Rect {
+    return {
+        x: position.x + collider.offsetX,
+        y: position.y + collider.offsetY,
+        width: collider.width,
+        height: collider.height,
+    };
+}
+
+export function physicsSystem(world: ECSWorld, dt: number) {
+    const entities = world.queryEntities(["Position", "Collider"]);
+    for (let i = 0; i < entities.length - 1; ++i) {
+        for (let j = i + 1; j < entities.length; ++j) {
+            const a = entities[i];
+            const b = entities[j];
+            const colliderA = world.getComponent<ColliderComponent>(a, ComponentType.COLLIDER)!;
+            const colliderB = world.getComponent<ColliderComponent>(b, ComponentType.COLLIDER)!;
+            if (!canCollide(colliderA, colliderB)) {
+                continue;
+            }
+
+            const posB = world.getComponent<PositionComponent>(b, ComponentType.POSITION)!;
+            const posA = world.getComponent<PositionComponent>(a, ComponentType.POSITION)!;
+
+            const mtv = getMTV(toRect(posA, colliderA), toRect(posB, colliderB));
+            if (!mtv) {
+                continue;
+            }
+
+            // @TODO: resolve collision
+            resolveCollision(a, b, mtv);
+
+            const scriptA = world.getComponent<ScriptComponent>(a, ComponentType.SCRIPT);
+            scriptA?.script.onCollision?.(b, colliderB.layer);
+            const scriptB = world.getComponent<ScriptComponent>(b, ComponentType.SCRIPT);
+            scriptB?.script.onCollision?.(a, colliderA.layer);
+        }
     }
 }
