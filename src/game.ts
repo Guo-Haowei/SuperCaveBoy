@@ -78,7 +78,7 @@ export class Game {
       this.lastTick = timestamp;
     }
 
-    this.currentScene.tick(dt);
+    this.currentScene.tick(dt / 1000);
   }
 
   render(ctx: CanvasRenderingContext2D) {

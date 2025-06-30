@@ -2,7 +2,7 @@ import { ECSWorld } from './ecs';
 import {
   Animation,
   Collider,
-  ColliderLayer,
+  CollisionLayer,
   Position,
   Sprite,
   Script,
@@ -23,7 +23,7 @@ export function animationSystem(world: ECSWorld, dt: number) {
     if (!clip) continue;
 
     anim.elapsed += dt;
-    const index = Math.floor((anim.elapsed / (clip.speed * 1000)) * clip.frames);
+    const index = Math.floor((anim.elapsed / clip.speed) * clip.frames);
 
     sprite.sheetId = clip.sheetId;
     if (clip.loop) {
@@ -98,10 +98,10 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camer
 
     let color: string;
     switch (layer) {
-      case ColliderLayer.PLAYER:
+      case CollisionLayer.PLAYER:
         color = 'green';
         break;
-      case ColliderLayer.ENEMY:
+      case CollisionLayer.ENEMY:
         color = 'red';
         break;
       default:

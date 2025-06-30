@@ -5,7 +5,7 @@ import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
 import {
   Collider,
-  ColliderLayer,
+  CollisionLayer,
   Animation,
   Position,
   Script,
@@ -71,8 +71,8 @@ export class Room {
     const collider = new Collider(
       width,
       height,
-      ColliderLayer.OBSTACLE,
-      ColliderLayer.PLAYER | ColliderLayer.ENEMY,
+      CollisionLayer.OBSTACLE,
+      CollisionLayer.PLAYER | CollisionLayer.ENEMY,
       Number.MAX_SAFE_INTEGER,
     );
 
@@ -92,8 +92,8 @@ export class Room {
     const collider = new Collider(
       hitWidth,
       hitHeight,
-      ColliderLayer.ENEMY,
-      ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
+      CollisionLayer.ENEMY,
+      CollisionLayer.PLAYER | CollisionLayer.OBSTACLE,
       10, // mass
       hitOffsetX,
       hitOffsetY,
@@ -132,11 +132,6 @@ export class Room {
     this.ecs.addComponent(id, anim);
     this.ecs.addComponent(id, new Script(script));
   }
-  //   case MONSTER.SPIDER:
-  //     this.bound = new Rect(12, 12, 40, 52);
-  //     this.sprite = this.handler._getGameAssets().spr_spider_jump[0];
-  //     this.move_animation = new OldAnimation(5, this.handler._getGameAssets().spr_spider_jump);
-  //     this._move = this._SpiderIdle;
 
   private createSpider(x: number, y: number) {
     const id = this.createEnemyCommon(x, y, 40, 52, 12, 12);
@@ -150,13 +145,13 @@ export class Room {
           sheetId: SpriteSheets.SPIDER_JUMP,
           frames: 1,
           speed: 1,
-          loop: true,
+          loop: false,
         },
         jump: {
           sheetId: SpriteSheets.SPIDER_JUMP,
           frames: 5,
           speed: 0.5,
-          loop: true,
+          loop: false,
         },
       },
       'idle',

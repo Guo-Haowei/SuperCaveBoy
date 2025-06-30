@@ -49,7 +49,7 @@ export class Animation {
   }
 }
 
-export enum ColliderLayer {
+export enum CollisionLayer {
   PLAYER = 0b0001,
   ENEMY = 0b0010,
   OBSTACLE = 0b0100,
@@ -67,8 +67,8 @@ export class Collider {
   constructor(
     width: number,
     height: number,
-    layer: ColliderLayer,
-    mask: ColliderLayer,
+    layer: CollisionLayer,
+    mask: CollisionLayer,
     mass: number,
     offsetX = 0,
     offsetY = 0,
