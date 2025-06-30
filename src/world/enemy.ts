@@ -1,4 +1,3 @@
-import { Rect } from '../math';
 import { ECSWorld, Entity } from '../ecs';
 import { AnimationComponent, ComponentType, PositionComponent, ScriptBase, VelocityComponent } from '../components';
 
@@ -29,7 +28,7 @@ export class BatScript extends ScriptBase {
         }
     }
 
-    private chase(dt: number) {
+    private chase() {
         const player = this.target;
         const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
         const { x, y } = position;
@@ -46,16 +45,49 @@ export class BatScript extends ScriptBase {
         velocity.vy = -ysign * this.speed;
     }
 
-    onUpdate(dt: number) {
+    onUpdate(_dt: number) {
         switch (this.state) {
             case 'idle':
                 this.idle();
                 break;
             case 'chase':
-                this.chase(dt);
+                this.chase();
                 break;
             default:
                 throw new Error(`Unknown state: ${this.state}`);
         }
+    }
+};
+// case MONSTER.SNAKE:
+//     this.bound = new Rect(0, 22, 62, 42);
+
+//     this.move_animation = new OldAnimation(5, this.handler._getGameAssets().spr_snake_slithe);
+//     this.sprite = this.move_animation._getFrame();
+//     this._move = this._SnakeMove;
+//     this.music = this.handler._getMusic().snd_snake;
+//     this.speed = 3;
+//     if (face) this.face = face;
+//     break;
+
+// _SnakeMove() {
+//     this.move_animation._tick();
+//     if (this.x >= this.leftBound && this.x - this.speed <= this.leftBound && this.face === DIRECTION.LEFT) {
+//         this.x = this.leftBound;
+//         this.face = DIRECTION.RIGHT;
+//     } else if (this.x + this.bound.x <= this.rightBound && this.x + this.bound.x + this.speed >= this.rightBound && this.face === DIRECTION.RIGHT) {
+//         this.x = this.rightBound - this.bound.x;
+//         this.face = DIRECTION.LEFT;
+//     }
+//     this.hspeed = this.face === DIRECTION.RIGHT ? 1 : -1
+//     this.x += this.hspeed * this.speed;
+//     this.sprite = this.move_animation._getFrame();
+// }
+
+export class SnakeScript extends ScriptBase {
+    private speed: number;
+
+    constructor(entity: Entity, world: ECSWorld) {
+        super(entity, world);
+        this.speed = 0.1;
     }
 };

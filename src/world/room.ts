@@ -1,6 +1,6 @@
 import { Rect } from '../math'
 import { OldMonster } from './monster';
-import { BatScript } from './bat';
+import { BatScript } from './enemy';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
@@ -17,7 +17,7 @@ const TILE_SIZE = 64;
 
 export class Room {
     level = WORLD.startLevel;
-    world: Array<Array<number>> = [];
+    world: number[][] = [];
     width: number;
     height: number;
     obstacles: GameObject[] = [];
@@ -68,7 +68,7 @@ export class Room {
         this.obstacles.push(new GameObject(x, y, new Rect(0, 0, width, height)));
 
         const id = this.ecs.createEntity();
-        const collider : ColliderComponent = {
+        const collider: ColliderComponent = {
             width,
             height,
             offsetX: 0,
@@ -85,7 +85,7 @@ export class Room {
 
     private createBat(x: number, y: number) {
         const id = this.ecs.createEntity();
-        const collider : ColliderComponent = {
+        const collider: ColliderComponent = {
             width: 48,
             height: 35,
             offsetX: 10,
@@ -134,9 +134,9 @@ export class Room {
         this.world = world;
         this.width = world[this.level].length;
         this.height = world.length;
-        WWIDTH = this.width*64;
-        WHEIGHT = this.height*64;
-        YBOUND = WHEIGHT-72-64*3;
+        WWIDTH = this.width * 64;
+        WHEIGHT = this.height * 64;
+        YBOUND = WHEIGHT - 72 - 64 * 3;
 
         // tiles
         for (let y = 0; y < this.height; ++y) {
@@ -151,8 +151,8 @@ export class Room {
 
         // colliders
         const colliders = WORLD.levels[this.level].obstacles;
-        for (let i = 0; i < colliders.length; ++i) {
-            const collider = colliders[i] as [number, number, number, number];
+        for (const ele of colliders) {
+            const collider = ele as [number, number, number, number];
             this.createCollider(...collider);
         }
 
@@ -163,10 +163,12 @@ export class Room {
 
         // monsters
         const mons = WORLD.levels[this.level].monsters;
-        for (let i = 0; i < mons.length; ++i) {
-            const mon = mons[i] as [number, number, number, number?, number?, number?];
+        for (const ele of mons) {
+            const mon = ele as [number, number, number, number?, number?, number?];
             if (mon[2] === MONSTER.BAT) {
                 this.createBat(mon[0], mon[1]);
+            } else if (mon[2] === MONSTER.SNAKE) {
+                // do nothing, snake is handled in the OldMonster class
             } else {
                 const monster = new OldMonster(this.handler, ...mon);
                 this.monsters.push(monster);
@@ -179,9 +181,8 @@ export class Room {
             const obj = objs[i];
             this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
             this.objects[i]._init();
-            if (obj[3])
-            {this.objects[i]._init(obj[3]);}
-            else {this.objects[i]._init();}
+            if (obj[3]) { this.objects[i]._init(obj[3]); }
+            else { this.objects[i]._init(); }
         }
 
         // if (this.level === 9) {
@@ -193,25 +194,25 @@ export class Room {
     _tick() {
         for (let i = 0; i < this.objects.length; ++i) {
             this.objects[i]._tick();
-            if (this.objects[i].destroyed) {this.objects.splice(i, 1);}
+            if (this.objects[i].destroyed) { this.objects.splice(i, 1); }
         }
         for (let i = 0; i < this.monsters.length; ++i) {
             this.monsters[i]._tick();
-            if (this.monsters[i].destroyed) {this.monsters.splice(i, 1);}
+            if (this.monsters[i].destroyed) { this.monsters.splice(i, 1); }
         }
     }
 
     _render(graphics) {
         // objects
-        for (let i = 0; i < this.objects.length; ++i) {
-            if(this.objects[i].type !== TYPE.LAVA) this.objects[i]._render(graphics);
+        for (const obj of this.objects) {
+            if (obj.type !== TYPE.LAVA) obj._render(graphics);
         }
         // monsters
-        for (let i = 0; i < this.monsters.length; ++i) {
-            this.monsters[i]._render(graphics);
+        for (const monster of this.monsters) {
+            monster._render(graphics);
         }
-        for (let i = 0; i < this.objects.length; ++i) {
-            if(this.objects[i].type === TYPE.LAVA) this.objects[i]._render(graphics);
+        for (const obj of this.objects) {
+            if (obj.type === TYPE.LAVA) obj._render(graphics);
         }
     }
 };

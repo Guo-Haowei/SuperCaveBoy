@@ -2,6 +2,7 @@ import { Game } from './game.js';
 import { spriteManager } from './assets';
 
 // @TODO: remove this global variable
+// eslint-disable-next-line no-var
 var game = new Game();
 
 function main(imageAssets: { [key: string]: HTMLImageElement }) {
