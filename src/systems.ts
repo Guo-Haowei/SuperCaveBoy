@@ -128,6 +128,9 @@ export function movementSystem(world: ECSWorld, dt: number) {
   )) {
     pos.x += vel.vx * dt;
     pos.y += vel.vy * dt;
+    if (vel.gravity) {
+      vel.vy += vel.gravity * dt;
+    }
   }
 }
 
@@ -208,7 +211,13 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         continue;
       }
 
-      resolveCollision(mtv, posA, posB, colliderA, colliderB);
+      // only resolve if one of the colliders is an obstacle
+      if (
+        colliderA.layer === CollisionLayer.OBSTACLE ||
+        colliderB.layer === CollisionLayer.OBSTACLE
+      ) {
+        resolveCollision(mtv, posA, posB, colliderA, colliderB);
+      }
 
       let direction = Direction.NONE;
       if (mtv.x) {

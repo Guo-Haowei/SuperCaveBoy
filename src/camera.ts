@@ -1,5 +1,5 @@
 import { ECSWorld } from './ecs';
-import { Position, Script, ScriptBase } from './components';
+import { Name, Position, Script, ScriptBase } from './components';
 
 class CameraScript extends ScriptBase {
   target: number;
@@ -36,6 +36,7 @@ export function createCamera(ecs: ECSWorld, x: number, y: number, target: number
   const id = ecs.createEntity();
   const script = new CameraScript(id, ecs, target);
 
+  ecs.addComponent(id, new Name('Camera'));
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Script(script));
   return id;

@@ -1,5 +1,13 @@
 import { ECSWorld, Entity } from './ecs';
 
+export class Name {
+  value: string;
+
+  constructor(value: string) {
+    this.value = value;
+  }
+}
+
 export class Position {
   x: number;
   y: number;
@@ -13,6 +21,7 @@ export class Position {
 export class Velocity {
   vx: number;
   vy: number;
+  gravity?: number;
 
   constructor(vx = 0, vy = 0) {
     this.vx = vx;

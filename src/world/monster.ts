@@ -3,6 +3,7 @@ import {
   Animation,
   Collider,
   CollisionLayer,
+  Name,
   Position,
   Script,
   ScriptBase,
@@ -74,15 +75,24 @@ class BatScript extends ScriptBase {
   }
 }
 
+const DESIRED_JUMP_HEIGHT = 170;
+const TIME_TO_APEX = 0.3;
+
+const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
+const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
+
 class SpiderScript extends ScriptBase {
   private target: Entity;
-  private state: 'idle' | 'attack' = 'idle';
+  private state: 'idle' | 'jump' | 'prepare' = 'idle';
   private cooldown: number;
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
     this.cooldown = 0;
     this.target = target;
+
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    vel.gravity = GRAVITY;
   }
 
   private idle(dt: number) {
@@ -90,34 +100,23 @@ class SpiderScript extends ScriptBase {
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const { x, y } = position;
 
-    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
-
     const dx = x - targetPos.x;
     const dy = y - targetPos.y;
 
     // always face the target
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const absDx = Math.abs(dx);
     vel.vx = -Math.sign(dx) * Number.EPSILON;
-    if (this.cooldown === 0 && Math.abs(dx) > 100 && Math.abs(dx) < 500 && dy < 300) {
-      this.state = 'attack';
-      anim.current = 'jump';
-      anim.elapsed = 0;
+    if (this.cooldown <= 0.0001 && absDx > 100 && absDx < 500 && dy < 300) {
+      this.state = 'prepare';
 
       const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-      vel.vy = -300;
-      vel.vx = 250 * -Math.sign(dx);
+      vel.vy = -JUMP_VELOCITY;
+      vel.vx = absDx * -Math.sign(dx);
     }
 
     this.cooldown -= dt;
     this.cooldown = Math.max(this.cooldown, 0);
-  }
-
-  private attack(dt: number) {
-    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    const GRAVITY = 500;
-
-    // @TODO: move to gravity
-    vel.vy += GRAVITY * dt;
   }
 
   onUpdate(dt: number) {
@@ -125,8 +124,10 @@ class SpiderScript extends ScriptBase {
       case 'idle':
         this.idle(dt);
         break;
-      case 'attack':
-        this.attack(dt);
+      case 'prepare':
+        break;
+      case 'jump':
+        // physics system will handle the jump
         break;
       default:
         throw new Error(`Unknown state: ${this.state}`);
@@ -134,8 +135,19 @@ class SpiderScript extends ScriptBase {
   }
 
   onCollision(_other: Entity, layer: number, dir: number): void {
-    if (this.state === 'attack') {
-      if (layer === CollisionLayer.OBSTACLE && dir === Direction.UP) {
+    if (this.state === 'prepare') {
+      const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
+      anim.current = 'jump';
+      anim.elapsed = 0;
+      this.state = 'jump';
+      return;
+    }
+
+    if (layer === CollisionLayer.OBSTACLE && dir === Direction.UP) {
+      const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+      vel.vy = 0;
+
+      if (this.state === 'jump') {
         this.state = 'idle';
         this.cooldown = 1.5;
 
@@ -148,7 +160,7 @@ class SpiderScript extends ScriptBase {
 }
 
 class SnakeScript extends ScriptBase {
-  static readonly INITIAL_SPEED = 100;
+  private static readonly INITIAL_SPEED = 100;
 
   private leftBound: number;
   private rightBound: number;
@@ -222,6 +234,7 @@ export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
     'idle',
   );
 
+  ecs.addComponent(id, new Name('Bat'));
   ecs.addComponent(id, new Sprite(SpriteSheets.BAT_IDLE));
   ecs.addComponent(id, anim);
   ecs.addComponent(id, new Script(script));
@@ -251,6 +264,7 @@ export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity
     'idle',
   );
 
+  ecs.addComponent(id, new Name('Spider'));
   ecs.addComponent(id, new Sprite(SpriteSheets.SPIDER_JUMP));
   ecs.addComponent(id, anim);
   ecs.addComponent(id, new Script(script));
@@ -280,6 +294,7 @@ export function createSnake(
 
   const script = new SnakeScript(id, ecs, leftBound, rightBound);
 
+  ecs.addComponent(id, new Name('Snake'));
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Sprite(SpriteSheets.SNAKE_MOVE));
   ecs.addComponent(id, anim);
