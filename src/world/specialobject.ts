@@ -122,7 +122,7 @@ export class SpecialObject {
       this.trigger();
       return;
     }
-    var player = this.handler._getPlayer(),
+    const player = this.handler._getPlayer(),
       bound1 = player.bound,
       bound2 = this.bound,
       co = 5; // collision offsets
@@ -141,27 +141,27 @@ export class SpecialObject {
 
     if (this.type === TYPE.LAVA) {
       // check monsters
-      const objs = this.handler._getMonsters();
-      for (let i = 0; i < objs.length; ++i) {
-        var monster = objs[i],
-          bound1 = monster.bound,
-          bound2 = this.bound,
-          co = 5; // collision offsets
-        if (
-          monster.x + bound1.x + co <= this.x + bound2.x + bound2.width &&
-          monster.x + bound1.x + bound1.width - co >= this.x + bound2.x &&
-          monster.y + bound1.y + co <= this.y + bound2.y + bound2.height &&
-          monster.y + bound1.y + bound1.height - co >= this.y + bound2.y
-        ) {
-          if (objs[i].health && objs[i].takingDamage) {
-            --objs[i].health;
-            objs[i].takingDamage = false;
-            if (objs[i].type === MONSTER.BOSS && objs[i].health <= 0) {
-              objs[i].alarm2._init(90);
-            }
-          }
-        }
-      }
+      //   const objs = this.handler._getMonsters();
+      //   for (let i = 0; i < objs.length; ++i) {
+      //     var monster = objs[i],
+      //       bound1 = monster.bound,
+      //       bound2 = this.bound,
+      //       co = 5; // collision offsets
+      //     if (
+      //       monster.x + bound1.x + co <= this.x + bound2.x + bound2.width &&
+      //       monster.x + bound1.x + bound1.width - co >= this.x + bound2.x &&
+      //       monster.y + bound1.y + co <= this.y + bound2.y + bound2.height &&
+      //       monster.y + bound1.y + bound1.height - co >= this.y + bound2.y
+      //     ) {
+      //       if (objs[i].health && objs[i].takingDamage) {
+      //         --objs[i].health;
+      //         objs[i].takingDamage = false;
+      //         if (objs[i].type === MONSTER.BOSS && objs[i].health <= 0) {
+      //           objs[i].alarm2._init(90);
+      //         }
+      //       }
+      //     }
+      //   }
       this.lavaAnimation._tick();
       this.sprite = this.lavaAnimation._getFrame();
     }

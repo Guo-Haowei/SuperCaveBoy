@@ -42,11 +42,7 @@ function Handler(game) {
     this._getObjects = function() {
         return this.game.room.objects;
     }
-    
-    this._getMonsters = function() {
-        return this.game.room.monsters;
-    }
-    
+
     this._getGUI = function() {
         return this.game.gui;
     }

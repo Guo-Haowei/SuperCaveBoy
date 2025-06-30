@@ -2,7 +2,7 @@ var TYPE = { EXIT: 0, SAPPHIRE: 1, LAVA: 2, CAMERA: 3 };
 var MONSTER = { SNAKE: 0, BAT: 1, SPIDER: 2, BOSS: 3 };
 
 var WORLD = {
-    "startLevel": 0,
+    "startLevel": 6,
     "levelNum": 9,
     "levels": [
         {
