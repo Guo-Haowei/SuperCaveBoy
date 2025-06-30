@@ -2,9 +2,10 @@ import { Game } from './game.js';
 import { spriteManager } from './assets';
 
 // @TODO: remove this global variable
+// eslint-disable-next-line no-var
 var game = new Game();
 
-function main(imageAssets: { [key: string]: HTMLImageElement }) {
+function main(imageAssets: Record<string, HTMLImageElement>) {
     spriteManager.init(imageAssets);
 
     game.init(imageAssets);
@@ -21,7 +22,7 @@ function main(imageAssets: { [key: string]: HTMLImageElement }) {
 
 window.onload = () => {
     const images = Array.from(document.querySelectorAll('img'));
-    const imageAssets: { [key: string]: HTMLImageElement } = {};
+    const imageAssets: Record<string, HTMLImageElement> = {};
     Promise.all(images.map(img => {
         if (img.complete) return Promise.resolve();
         return new Promise<void>(resolve => {

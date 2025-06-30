@@ -1,137 +1,264 @@
-import { Rect } from '../math'
-import { Monster } from './monster';
+import { Rect } from '../math';
+import { OldMonster } from './monster';
+import { BatScript, SnakeScript } from './enemy';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
-import { ComponentType } from '../components';
+import {
+  Collider,
+  ColliderLayer,
+  Animation,
+  Position,
+  Script,
+  Sprite,
+  Velocity,
+} from '../components';
 import { ECSWorld, Entity } from '../ecs';
 
 enum TileType {
-    WALL = 0,
-    DIRT = 1,
-};
+  WALL = 0,
+  DIRT = 1,
+}
 
 // @TODO: use constants for these
 const TILE_SIZE = 64;
 
 export class Room {
-    level = WORLD.startLevel;
-    world: Array<Array<number>> = [];
-    width: number;
-    height: number;
-    obstacles: GameObject[] = [];
-    monsters: Monster[] = [];
-    objects: SpecialObject[] = [];
-    ecs: ECSWorld = new ECSWorld();
+  level = WORLD.startLevel;
+  world: number[][] = [];
+  width: number;
+  height: number;
+  obstacles: GameObject[] = [];
+  monsters: OldMonster[] = [];
+  objects: SpecialObject[] = [];
+  ecs: ECSWorld = new ECSWorld();
 
-    entities: Entity[] = [];
-    handler: any; // @TODO: define Handler type
+  entities: Entity[] = [];
 
-    constructor(handler) {
-        this.handler = handler;
+  // @TODO: get rid of handler
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handler: any;
+
+  constructor(handler) {
+    this.handler = handler;
+  }
+
+  private clearRoom() {
+    this.world = [];
+    this.obstacles = [];
+    this.monsters = [];
+    this.objects = [];
+    this.ecs = new ECSWorld();
+    this.entities = [];
+  }
+
+  private createTile(x: number, y: number, sheetId: string) {
+    const id = this.ecs.createEntity();
+    this.ecs.addComponent(id, new Position(x, y));
+    this.ecs.addComponent(id, new Sprite(sheetId));
+    this.entities.push(id);
+  }
+
+  private createEntrance(x: number, y: number) {
+    const id = this.ecs.createEntity();
+    this.ecs.addComponent(id, new Position(x, y));
+    this.ecs.addComponent(id, new Sprite(SpriteSheets.ENTRANCE));
+    this.entities.push(id);
+  }
+
+  private createCollider(x: number, y: number, width: number, height: number) {
+    x = x * TILE_SIZE;
+    y = y * TILE_SIZE;
+    width = width * TILE_SIZE;
+    height = height * TILE_SIZE;
+
+    // TODO: remove GameObject
+    this.obstacles.push(new GameObject(x, y, new Rect(0, 0, width, height)));
+
+    const id = this.ecs.createEntity();
+    const collider = new Collider(
+      width,
+      height,
+      ColliderLayer.OBSTACLE,
+      ColliderLayer.PLAYER | ColliderLayer.ENEMY,
+      Number.MAX_SAFE_INTEGER,
+    );
+
+    this.ecs.addComponent(id, new Position(x, y));
+    this.ecs.addComponent(id, collider);
+    this.entities.push(id);
+  }
+
+  private createBat(x: number, y: number) {
+    const id = this.ecs.createEntity();
+    const collider = new Collider(
+      48,
+      35,
+      ColliderLayer.ENEMY,
+      ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
+      10,
+      10,
+      15,
+    );
+
+    const script = new BatScript(id, this.ecs);
+    script.target = this.handler._getPlayer();
+    const anim = new Animation(
+      {
+        idle: {
+          sheetId: SpriteSheets.BAT_IDLE,
+          frames: 1,
+          speed: 1,
+          loop: true,
+        },
+        fly: {
+          sheetId: SpriteSheets.BAT_FLY,
+          frames: 5,
+          speed: 0.5,
+          loop: true,
+        },
+      },
+      'idle',
+    );
+
+    this.ecs.addComponent(id, new Position(x, y));
+    this.ecs.addComponent(id, new Velocity());
+    this.ecs.addComponent(id, new Sprite(SpriteSheets.BAT_IDLE));
+    this.ecs.addComponent(id, anim);
+    this.ecs.addComponent(id, collider);
+    this.ecs.addComponent(id, new Script(script));
+    this.entities.push(id);
+  }
+
+  private createSnake(x: number, y: number, leftBound: number, rightBound: number) {
+    const id = this.ecs.createEntity();
+    const collider = new Collider(
+      62,
+      42,
+      ColliderLayer.ENEMY,
+      ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
+      10,
+      0,
+      22,
+    );
+
+    const anim = new Animation(
+      {
+        idle: {
+          sheetId: SpriteSheets.SNAKE_MOVE,
+          frames: 2,
+          speed: 1,
+          loop: true,
+        },
+      },
+      'idle',
+    );
+
+    const script = new SnakeScript(id, this.ecs, leftBound, rightBound);
+
+    this.ecs.addComponent(id, new Position(x, y));
+    this.ecs.addComponent(id, new Velocity(SnakeScript.INITIAL_SPEED));
+    this.ecs.addComponent(id, new Sprite(SpriteSheets.SNAKE_MOVE));
+    this.ecs.addComponent(id, anim);
+    this.ecs.addComponent(id, collider);
+    this.ecs.addComponent(id, new Script(script));
+    this.entities.push(id);
+  }
+
+  _init() {
+    this.clearRoom();
+
+    ++this.level;
+    const world = WORLD.levels[this.level].level;
+    this.world = world;
+    this.width = world[this.level].length;
+    this.height = world.length;
+    WWIDTH = this.width * 64;
+    WHEIGHT = this.height * 64;
+    YBOUND = WHEIGHT - 72 - 64 * 3;
+
+    // tiles
+    for (let y = 0; y < this.height; ++y) {
+      for (let x = 0; x < this.width; ++x) {
+        const spriteId = this.world[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
+        this.createTile(TILE_SIZE * x, TILE_SIZE * y, spriteId);
+      }
     }
 
-    private createTile(x: number, y: number, sheetId: string) {
-        const id = this.ecs.createEntity();
-        this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
-        this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId, frameIndex: 0 });
+    // entrance
+    this.createEntrance(96, 608);
+
+    // colliders
+    const colliders = WORLD.levels[this.level].obstacles;
+    for (const ele of colliders) {
+      const collider = ele as [number, number, number, number];
+      this.createCollider(...collider);
     }
 
-    private createEntrance(x: number, y: number) {
-        const id = this.ecs.createEntity();
-        this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
-        this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.ENTRANCE, frameIndex: 0 });
+    // WTF is this?
+    if (this.level < 5) YOFFSET = 50;
+    else if (this.level === 6 || this.level === 9) YOFFSET = 35;
+    else YOFFSET = 0;
+
+    // monsters
+    const mons = WORLD.levels[this.level].monsters;
+    for (const ele of mons) {
+      const mon = ele as [number, number, number, number?, number?, number?];
+      if (mon[2] === MONSTER.BAT) {
+        this.createBat(mon[0], mon[1]);
+      } else if (mon[2] === MONSTER.SNAKE) {
+        this.createSnake(mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
+      } else {
+        const monster = new OldMonster(this.handler, ...mon);
+        this.monsters.push(monster);
+      }
     }
 
-    private clearRoom() {
-        this.world = [];
-        this.obstacles = [];
-        this.monsters = [];
-        this.objects = [];
-        this.ecs = new ECSWorld();
+    // objects
+    const objs = WORLD.levels[this.level].objects;
+    for (let i = 0; i < objs.length; ++i) {
+      const obj = objs[i];
+      this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
+      this.objects[i]._init();
+      if (obj[3]) {
+        this.objects[i]._init(obj[3]);
+      } else {
+        this.objects[i]._init();
+      }
     }
 
-    _init(bool) {
-        this.clearRoom();
+    // if (this.level === 9) {
+    //     var music = handler._getMusic()
+    //     music._setCurrent(music.snd_boss);
+    // }
+  }
 
-        ++this.level;
-        const world = WORLD.levels[this.level].level;
-        this.world = world;
-        this.width = world[this.level].length;
-        this.height = world.length;
-        WWIDTH = this.width*64;
-        WHEIGHT = this.height*64;
-        YBOUND = WHEIGHT-72-64*3;
-        const currentLevel = WORLD.levels[this.level].obstacles;
-
-        // tiles
-        for (let y = 0; y < this.height; ++y) {
-            for (let x = 0; x < this.width; ++x) {
-                const spriteId = this.world[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
-                this.createTile(TILE_SIZE * x, TILE_SIZE * y, spriteId);
-            }
-        }
-
-        // entrance
-        this.createEntrance(96, 608);
-
-        for (let i = 0; i < currentLevel.length; ++i) {
-            var current = currentLevel[i];
-            this.obstacles.push(new GameObject(current[0]*64,current[1]*64,new Rect(0,0,current[2]*64,current[3]*64)));
-        }
-
-        // WTF is this?
-        if (this.level < 5) YOFFSET = 50;
-        else if (this.level === 6 || this.level === 9) YOFFSET = 35;
-        else YOFFSET = 0;
-
-        // monsters
-        const mons = WORLD.levels[this.level].monsters;
-        for (var i = 0; i < mons.length; ++i) {
-            const mon = mons[i] as [number, number, number, number?, number?, number?];
-            const monster = new Monster(this.handler, ...mon);
-            this.monsters.push(monster);
-        }
-
-        // objects
-        const objs = WORLD.levels[this.level].objects;
-        for (var i = 0; i < objs.length; ++i) {
-            var obj = objs[i];
-            this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
-            this.objects[i]._init();
-            if (obj[3])
-            {this.objects[i]._init(obj[3]);}
-            else {this.objects[i]._init();}
-        }
-
-        // if (this.level === 9) {
-        //     var music = handler._getMusic()
-        //     music._setCurrent(music.snd_boss);
-        // }
+  _tick() {
+    for (let i = 0; i < this.objects.length; ++i) {
+      this.objects[i]._tick();
+      if (this.objects[i].destroyed) {
+        this.objects.splice(i, 1);
+      }
     }
-
-    _tick() {
-        for (var i = 0; i < this.objects.length; ++i) {
-            this.objects[i]._tick();
-            if (this.objects[i].destroyed) {this.objects.splice(i, 1);}
-        }
-        for (var i = 0; i < this.monsters.length; ++i) {
-            this.monsters[i]._tick();
-            if (this.monsters[i].destroyed) {this.monsters.splice(i, 1);}
-        }
+    for (let i = 0; i < this.monsters.length; ++i) {
+      this.monsters[i]._tick();
+      if (this.monsters[i].destroyed) {
+        this.monsters.splice(i, 1);
+      }
     }
+  }
 
-    _render(graphics) {
-        // objects
-        for (var i = 0; i < this.objects.length; ++i) {
-            if(this.objects[i].type !== TYPE.LAVA) this.objects[i]._render(graphics);
-        }
-        // monsters
-        for (var i = 0; i < this.monsters.length; ++i) {
-            this.monsters[i]._render(graphics);
-        }
-        for (var i = 0; i < this.objects.length; ++i) {
-            if(this.objects[i].type === TYPE.LAVA) this.objects[i]._render(graphics);
-        }
+  _render(graphics) {
+    // objects
+    for (const obj of this.objects) {
+      if (obj.type !== TYPE.LAVA) obj._render(graphics);
     }
-};
+    // monsters
+    for (const monster of this.monsters) {
+      monster._render(graphics);
+    }
+    for (const obj of this.objects) {
+      if (obj.type === TYPE.LAVA) obj._render(graphics);
+    }
+  }
+}

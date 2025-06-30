@@ -11,3 +11,8 @@ export class Rect {
         this.height = height;
     }
 };
+
+export interface Vec2 {
+    x: number;
+    y: number;
+};

@@ -5,9 +5,12 @@ export const SpriteSheets = {
     DIRY: 'dirt',
     WALL: 'wall',
     ENTRANCE: 'entrance',
+    BAT_IDLE: 'bat_idle',
+    BAT_FLY: 'bat_fly',
+    SNAKE_MOVE: 'snake_move',
 } as const;
 
-type SpriteFrame = {
+interface SpriteFrame {
     sourceX: number;
     sourceY: number;
     width: number;
@@ -29,11 +32,16 @@ export interface Renderable {
 class SpriteManager {
     private sheets: Record<string, SpriteSheet> = {};
 
-    init(images: { [key: string]: HTMLImageElement }) {
+    init(images: Record<string, HTMLImageElement>) {
         const TILE_SIZE = 64;
         this.loadSheet(SpriteSheets.DIRY, images.spr_dirt, TILE_SIZE, TILE_SIZE);
         this.loadSheet(SpriteSheets.WALL, images.bg_dirt, TILE_SIZE, TILE_SIZE);
         this.loadSheet(SpriteSheets.ENTRANCE, images.spr_entrance, 96, 96);
+
+        this.loadSheet(SpriteSheets.BAT_IDLE, images.spr_bat_idle, TILE_SIZE, TILE_SIZE);
+        this.loadSheet(SpriteSheets.BAT_FLY, images.spr_bat_fly, TILE_SIZE, TILE_SIZE);
+
+        this.loadSheet(SpriteSheets.SNAKE_MOVE, images.spr_snake_slithe, TILE_SIZE, TILE_SIZE);
     }
 
     private loadSheet(name: string, image: HTMLImageElement, frameWidth: number, frameHeight: number) {
@@ -57,7 +65,7 @@ class SpriteManager {
         this.sheets[name] = { image, frameWidth, frameHeight, frames };
     }
 
-    getFrame(sheetName: string, frameIndex: number = 0): Renderable {
+    getFrame(sheetName: string, frameIndex = 0): Renderable {
         const sheet = this.sheets[sheetName];
         return {
             image: sheet.image,
@@ -85,9 +93,6 @@ export class Assets {
     spr_gui_sapphire: OldSprite;
     spr_gui_heart: OldSprite;
     // enemies
-    spr_bat_fly: OldSprite[] = new Array(5);
-    spr_bat_idle: OldSprite;
-    spr_snake_slithe: OldSprite[] = new Array(2);
     spr_spider_jump: OldSprite[] = new Array(5);
     spr_boss: OldSprite[] = new Array(2);
     spr_boss_damaged: OldSprite;
@@ -99,8 +104,8 @@ export class Assets {
         // player idle
         this.spr_player_idle = new OldSprite(images.spr_player_idle, 0, 0, 64, 72);
         // player walk
-        for (var i = 0; i < 8; ++i) {
-            this.spr_player_walk[7-i] = new OldSprite(images.spr_player_walk, (7-i)*64, 0, 64, 72);
+        for (let i = 0; i < 8; ++i) {
+            this.spr_player_walk[7 - i] = new OldSprite(images.spr_player_walk, (7 - i) * 64, 0, 64, 72);
         }
         //player jump
         this.spr_player_jump[0] = new OldSprite(images.spr_player_jump, 0, 0, 64, 72);
@@ -125,13 +130,9 @@ export class Assets {
         this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
 
         // monsters
-        this.spr_snake_slithe[0] = new OldSprite(images.spr_snake_slithe, 0, 0, 64, 64);
-        this.spr_snake_slithe[1] = new OldSprite(images.spr_snake_slithe, 64, 0, 64, 64);
 
-        this.spr_bat_idle = new OldSprite(images.spr_bat_idle, 0, 0, 64, 64);
-        for (var i = 0; i < 5; ++i) {
-            this.spr_bat_fly[i] = new OldSprite(images.spr_bat_fly, 64*i, 0, 64, 64);
-            this.spr_spider_jump[i] = new OldSprite(images.spr_spider_jump, 64*i, 0, 64, 68);
+        for (let i = 0; i < 5; ++i) {
+            this.spr_spider_jump[i] = new OldSprite(images.spr_spider_jump, 64 * i, 0, 64, 68);
         }
 
         this.spr_boss[0] = new OldSprite(images.spr_boss, 160, 0, 160, 188);

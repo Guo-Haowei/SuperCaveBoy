@@ -1,48 +1,38 @@
 export type Entity = number;
 
 export class ECSWorld {
-    private nextEntityId = 0;
-    private components: Map<string, Map<Entity, any>> = new Map();
+  private nextEntityId = 0;
+  private components = new Map<string, Map<Entity, unknown>>();
 
-    createEntity(): Entity {
-        return this.nextEntityId++;
+  createEntity(): Entity {
+    return this.nextEntityId++;
+  }
+
+  addComponent(entity: Entity, data: unknown): void {
+    const id = data.constructor.name;
+    if (!this.components.has(id)) {
+      this.components.set(id, new Map());
+    }
+    this.components.get(id)?.set(entity, data);
+  }
+
+  getComponent<T>(entity: Entity, type: string): T | undefined {
+    return this.components.get(type)?.get(entity) as T;
+  }
+
+  queryEntities<T1, T2>(type1: string, type2: string): [Entity, T1, T2][] {
+    const map1 = this.components.get(type1);
+    const map2 = this.components.get(type2);
+    if (!map1 || !map2) return [];
+    const result: [Entity, T1, T2][] = [];
+
+    for (const [entity, value1] of map1) {
+      const value2 = map2.get(entity);
+      if (value2) {
+        result.push([entity, value1 as T1, value2 as T2]);
+      }
     }
 
-    addComponent<T>(entity: Entity, componentName: string, data: T): void {
-        if (!this.components.has(componentName)) {
-            this.components.set(componentName, new Map());
-        }
-        this.components.get(componentName)!.set(entity, data);
-    }
-
-    getComponent<T>(entity: Entity, componentName: string): T | undefined {
-        return this.components.get(componentName)?.get(entity);
-    }
-
-    queryEntities(componentNames: string[]): Entity[] {
-        const sets = componentNames.map(name => this.components.get(name));
-        if (!sets) return [];
-
-        const [first, ...rest] = sets as Map<Entity, any>[];
-        return [...first.keys()].filter(entity =>
-            rest.every(set => set.has(entity))
-        );
-    }
-};
-
-
-// function RenderSystem(world: ECSWorld, spriteManager: SpriteManager, ctx: CanvasRenderingContext2D) {
-//     for (const entity of world.queryEntities(['Position', 'Renderable'])) {
-//         const pos = world.getComponent<Position>(entity, 'Position')!;
-//         const render = world.getComponent<Renderable>(entity, 'Renderable')!;
-
-//         const img = spriteManager.get(render.sheetId);
-//         const spriteSize = 32;
-
-//         ctx.drawImage(
-//             img,
-//             render.frame * spriteSize, 0, spriteSize, spriteSize, // source
-//             pos.x, pos.y, spriteSize, spriteSize                  // destination
-//         );
-//     }
-// }
+    return result;
+  }
+}
