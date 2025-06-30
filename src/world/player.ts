@@ -9,6 +9,7 @@ import {
   ScriptBase,
   Sprite,
   Velocity,
+  Facing,
 } from '../components';
 import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
@@ -41,7 +42,12 @@ class PlayerScript extends ScriptBase {
     const leftDown = inputManager.isKeyDown('KeyA');
     const rightDown = inputManager.isKeyDown('KeyD');
     const direction = Number(rightDown) - Number(leftDown);
+    const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
+
     velocity.vx = direction * PlayerScript.MOVE_SPEED;
+    if (leftDown || rightDown) {
+      facing.left = direction < 0;
+    }
   }
 
   private startJump(velocity: Velocity) {
@@ -126,6 +132,7 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   ecs.addComponent(id, new Name('Player'));
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Velocity());
+  ecs.addComponent(id, new Facing(false));
   ecs.addComponent(id, collider);
   ecs.addComponent(id, new Sprite(SpriteSheets.PLAYER_IDLE));
   const script = new PlayerScript(id, ecs);

@@ -39,6 +39,18 @@ export class Sprite {
   }
 }
 
+export class Facing {
+  left: boolean;
+
+  constructor(value: boolean) {
+    this.left = value;
+  }
+
+  toggle() {
+    this.left = !this.left;
+  }
+}
+
 interface AnimationClip {
   sheetId: string;
   frames: number;

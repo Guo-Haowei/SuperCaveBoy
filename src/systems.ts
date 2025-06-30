@@ -3,6 +3,7 @@ import {
   Animation,
   Collider,
   CollisionLayer,
+  Facing,
   Position,
   Sprite,
   Script,
@@ -53,8 +54,8 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, off
 
     ctx.save();
 
-    const vel = world.getComponent<Velocity>(id, Velocity.name);
-    const flipLeft: number = vel && vel.vx < 0 ? 1 : 0;
+    const facing = world.getComponent<Facing>(id, Facing.name);
+    const flipLeft: number = facing && facing.left ? 1 : 0;
 
     ctx.translate(dx + flipLeft * frame.width, dy);
     ctx.scale(flipLeft ? -1 : 1, 1);

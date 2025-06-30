@@ -3,6 +3,7 @@ import {
   Animation,
   Collider,
   CollisionLayer,
+  Facing,
   Name,
   Position,
   Script,
@@ -59,6 +60,9 @@ class BatScript extends ScriptBase {
 
     velocity.vx = -xsign * this.speed;
     velocity.vy = -ysign * this.speed;
+
+    const face = this.world.getComponent<Facing>(this.entity, Facing.name);
+    face.left = velocity.vx < 0;
   }
 
   onUpdate(_dt: number) {
@@ -105,8 +109,11 @@ class SpiderScript extends ScriptBase {
 
     // always face the target
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    vel.vx = 0;
+
     const absDx = Math.abs(dx);
-    vel.vx = -Math.sign(dx) * Number.EPSILON;
+    const face = this.world.getComponent<Facing>(this.entity, Facing.name);
+    face.left = -Math.sign(dx) < 0;
     if (this.cooldown <= 0.0001 && absDx > 100 && absDx < 500 && dy < 300) {
       this.state = 'prepare';
 
@@ -171,17 +178,20 @@ class SnakeScript extends ScriptBase {
     this.rightBound = rightBound;
 
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    vel.vx = SnakeScript.INITIAL_SPEED;
+    vel.vx = -SnakeScript.INITIAL_SPEED;
   }
 
   onUpdate(_dt: number) {
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     const { x } = position;
+    const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
     if (x <= this.leftBound) {
       vel.vx = SnakeScript.INITIAL_SPEED;
+      facing.toggle();
     } else if (x >= this.rightBound) {
       vel.vx = -SnakeScript.INITIAL_SPEED;
+      facing.toggle();
     }
   }
 }
@@ -209,6 +219,7 @@ function createEnemyCommon(
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Velocity());
   ecs.addComponent(id, collider);
+  ecs.addComponent(id, new Facing(true));
   return id;
 }
 
@@ -244,8 +255,6 @@ export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
 export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity) {
   const id = createEnemyCommon(ecs, x, y, 40, 52, 12, 12);
 
-  const script = new SpiderScript(id, ecs, target);
-
   const anim = new Animation(
     {
       idle: {
@@ -267,6 +276,7 @@ export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity
   ecs.addComponent(id, new Name('Spider'));
   ecs.addComponent(id, new Sprite(SpriteSheets.SPIDER_JUMP));
   ecs.addComponent(id, anim);
+  const script = new SpiderScript(id, ecs, target);
   ecs.addComponent(id, new Script(script));
   return id;
 }
