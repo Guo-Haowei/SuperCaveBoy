@@ -25,8 +25,9 @@ export type SpriteComponent = {
 };
 
 type AnimationClip = {
-    frames: number[];       // array of frame indices
-    fps: number;            // frames per second
+    sheetId: string;
+    frames: number;
+    speed: number; // should finish in seconds
     loop: boolean;
 };
 

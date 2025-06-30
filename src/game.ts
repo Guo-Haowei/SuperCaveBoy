@@ -91,11 +91,9 @@ export class Game {
     }
 
     render(ctx: CanvasRenderingContext2D) {
-        ctx.clearRect(0, 0, WIDTH, HEIGHT);
-        ctx.fillStyle = '#1C0909';
-        ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-        System.renderSystem(this.room.ecs, ctx, this.camera);
+        // ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        // ctx.fillStyle = '#1C0909';
+        // ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
         this.currentScene.render(ctx);
     }
@@ -164,6 +162,7 @@ class PlayScene implements IScene {
 
         System.animationSystem(ecs, dt);
         // render at last
+        System.renderSystem(ecs, ctx, this.game.camera);
     }
 
     render(ctx) {

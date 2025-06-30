@@ -1,4 +1,3 @@
-import { Direction } from './common';
 import { Entity, ECSWorld } from './ecs';
 import {
     ComponentType,
@@ -15,27 +14,64 @@ import { Rect, Vec2 } from './math';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
-    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.COLLIDER])) {
+    for (const entity of world.queryEntities([ComponentType.ANIMATION, ComponentType.SPRITE])) {
         const anim = world.getComponent<AnimationComponent>(entity, ComponentType.ANIMATION);
         const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
-        if (!anim || !sprite) continue;
 
         const clip = anim.animations[anim.current];
         if (!clip) continue;
 
         anim.elapsed += dt;
-        const frameIndex = Math.floor(anim.elapsed * clip.fps);
+        const index = Math.floor(anim.elapsed / (clip.speed * 1000) * clip.frames);
 
+        sprite.sheetId = clip.sheetId;
         if (clip.loop) {
-            sprite.frameIndex = clip.frames[frameIndex % clip.frames.length];
+            sprite.frameIndex = index % clip.frames;
         } else {
-            const i = Math.min(frameIndex, clip.frames.length - 1);
-            sprite.frameIndex = clip.frames[i];
+            sprite.frameIndex = Math.min(index, clip.frames - 1);
         }
     }
 }
 
 // ------------------------------- Render System -------------------------------
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
+    const cameraX = camera.xoffset - 0.5 * WIDTH;
+    const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
+
+    // @TODO: culling
+    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
+        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION);
+        const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
+        const animation = world.getComponent<AnimationComponent>(entity, ComponentType.ANIMATION);
+
+        const { x, y } = pos;
+        let { sheetId, frameIndex } = sprite;
+
+        const renderable = spriteManager.getFrame(sheetId, frameIndex);
+        const { image, frame } = renderable;
+
+        const dx = x - cameraX;
+        const dy = y - cameraY;
+
+        ctx.save();
+
+        const vel = world.getComponent<VelocityComponent>(entity, ComponentType.VELOCITY);
+        const flipLeft: number = vel && vel.vx < 0 ? 1 : 0;
+
+        ctx.translate(dx + flipLeft * frame.width, dy);
+        ctx.scale(flipLeft ? -1: 1, 1);
+
+        ctx.drawImage(image, frame.sourceX, frame.sourceY, frame.width, frame.height, 0, 0, frame.width, frame.height);
+
+        ctx.restore();
+    }
+
+    const DEBUG = true;
+    if (DEBUG) {
+        renderSystemDebug(world, ctx, camera);
+    }
+}
+
 function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
     const cameraX = camera.xoffset - 0.5 * WIDTH;
     const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
@@ -66,42 +102,6 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camer
         ctx.strokeStyle = color;
         ctx.lineWidth = 1;
         ctx.strokeRect(dx, dy, width, height);
-    }
-}
-
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
-    const cameraX = camera.xoffset - 0.5 * WIDTH;
-    const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
-
-    // @TODO: culling
-    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
-        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION);
-        const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
-
-        const { x, y } = pos;
-        const { sheetId, frameIndex } = sprite;
-        const renderable = spriteManager.getFrame(sheetId, frameIndex);
-        const { image, frame } = renderable;
-
-        const dx = x - cameraX;
-        const dy = y - cameraY;
-
-        ctx.save();
-
-        const vel = world.getComponent<VelocityComponent>(entity, ComponentType.VELOCITY);
-        const flipLeft: number = vel && vel.vx < 0 ? 1 : 0;
-
-        ctx.translate(dx + flipLeft * frame.width, dy);
-        ctx.scale(flipLeft ? -1: 1, 1);
-
-        ctx.drawImage(image, frame.sourceX, frame.sourceY, frame.width, frame.height, 0, 0, frame.width, frame.height);
-
-        ctx.restore();
-    }
-
-    const DEBUG = true;
-    if (DEBUG) {
-        renderSystemDebug(world, ctx, camera);
     }
 }
 

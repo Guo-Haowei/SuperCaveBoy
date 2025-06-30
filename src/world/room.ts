@@ -4,7 +4,7 @@ import { BatScript } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
-import { ColliderComponent, ComponentType, ColliderLayer } from '../components';
+import { ColliderComponent, ComponentType, ColliderLayer, AnimationComponent } from '../components';
 import { ECSWorld, Entity } from '../ecs';
 
 enum TileType {
@@ -26,7 +26,9 @@ export class Room {
     ecs: ECSWorld = new ECSWorld();
 
     entities: Entity[] = [];
-    handler: any; // @TODO: define Handler type
+
+    // @TODO: get rid of handler
+    handler: any;
 
     constructor(handler) {
         this.handler = handler;
@@ -94,12 +96,30 @@ export class Room {
 
         const script = new BatScript(id, this.ecs);
         script.target = this.handler._getPlayer();
-        const sprite = { sheetId: SpriteSheets.BAT_FLY, frameIndex: 1 };
-        // const sprite = { sheetId: SpriteSheets.BAT_IDLE, frameIndex: 0 };
+        const sprite = { sheetId: SpriteSheets.BAT_IDLE, frameIndex: 0 };
+        const animation: AnimationComponent = {
+            animations: {
+                idle: {
+                    sheetId: SpriteSheets.BAT_IDLE,
+                    frames: 1,
+                    speed: 1,
+                    loop: true,
+                },
+                fly: {
+                    sheetId: SpriteSheets.BAT_FLY,
+                    frames: 5,
+                    speed: 0.5,
+                    loop: true,
+                },
+            },
+            current: 'idle',
+            elapsed: 0,
+        };
 
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.VELOCITY, { vx: 0, vy: 0 });
         this.ecs.addComponent(id, ComponentType.SPRITE, sprite);
+        this.ecs.addComponent(id, ComponentType.ANIMATION, animation);
         this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
         this.ecs.addComponent(id, ComponentType.SCRIPT, { script });
         this.entities.push(id);
