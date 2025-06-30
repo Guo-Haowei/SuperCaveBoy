@@ -94,7 +94,7 @@ export abstract class ScriptBase {
 
   onInit?(): void;
   onUpdate?(dt: number): void;
-  onCollision?(other: Entity, layer: number): void;
+  onCollision?(other: Entity, layer: number, dir: number): void;
   onDie?(): void;
 }
 

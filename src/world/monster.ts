@@ -1,4 +1,4 @@
-import { Rect } from '../math';
+import { Rect } from '../common';
 import { OldSprite } from '../sprite';
 import { audios } from '../audios';
 

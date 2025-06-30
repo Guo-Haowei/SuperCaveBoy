@@ -1,4 +1,4 @@
-import { Rect } from '../math';
+import { Rect } from '../common';
 import { BatScript, SnakeScript, SpiderScript } from './enemy';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';

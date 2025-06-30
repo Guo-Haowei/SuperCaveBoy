@@ -9,7 +9,7 @@ import {
   Velocity,
 } from './components';
 import { spriteManager } from './assets';
-import { Rect, Vec2 } from './math';
+import { Direction, Rect, Vec2 } from './common';
 
 import { Camera } from './camera';
 
@@ -212,10 +212,17 @@ export function physicsSystem(world: ECSWorld) {
 
       resolveCollision(mtv, posA, posB, colliderA, colliderB);
 
+      let direction = Direction.NONE;
+      if (mtv.x) {
+        direction = mtv.x < 0 ? Direction.LEFT : Direction.RIGHT;
+      } else {
+        direction = mtv.y < 0 ? Direction.UP : Direction.DOWN;
+      }
+
       const scriptA = world.getComponent<Script>(a, Script.name);
-      scriptA?.script.onCollision?.(b, colliderB.layer);
+      scriptA?.script.onCollision?.(b, colliderB.layer, direction);
       const scriptB = world.getComponent<Script>(b, Script.name);
-      scriptB?.script.onCollision?.(a, colliderA.layer);
+      scriptB?.script.onCollision?.(a, colliderA.layer, -direction);
     }
   }
 }

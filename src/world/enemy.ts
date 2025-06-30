@@ -1,5 +1,6 @@
 import { ECSWorld, Entity } from '../ecs';
-import { Animation, Collider, CollisionLayer, Position, ScriptBase, Velocity } from '../components';
+import { Animation, CollisionLayer, Position, ScriptBase, Velocity } from '../components';
+import { Direction } from '../common';
 
 // @TODO: health system?
 // @TODO: play sound on hit
@@ -119,9 +120,9 @@ export class SpiderScript extends ScriptBase {
     }
   }
 
-  onCollision(_other: Entity, layer: number): void {
+  onCollision(_other: Entity, layer: number, dir: number): void {
     if (this.state === 'attack') {
-      if (layer === CollisionLayer.OBSTACLE) {
+      if (layer === CollisionLayer.OBSTACLE && dir === Direction.UP) {
         this.state = 'idle';
         this.cooldown = 1.5;
 
@@ -132,43 +133,6 @@ export class SpiderScript extends ScriptBase {
     }
   }
 }
-
-//   _SpiderAttack() {
-//     this.move_animation._tick();
-//     this.sprite = this.move_animation._getFrame();
-//     if (this.hspeed !== 0) return;
-//     this.move_animation._reset();
-//     const player = this.handler._getPlayer();
-//     const leftDiff = this.x + this.bound.x - (player.x + player.bound.x + player.bound.width);
-//     const rightDiff = player.x + player.bound.x - (this.x + this.bound.x + this.bound.width);
-//     this.speed =
-//       Math.abs(
-//         this.x +
-//           this.bound.x +
-//           this.bound.width / 2 -
-//           (player.x + player.bound.x + player.bound.width),
-//       ) /
-//         30 +
-//       2;
-//     if (this.hspeed > 0) {
-//       this.face = DIRECTION.RIGHT;
-//     } else if (this.hspeed < 0) {
-//       this.face = DIRECTION.LEFT;
-//     } else {
-//       this._move = this._SpiderIdle;
-//       return;
-//     }
-//     // reset animation
-//     this.move_animation._tick();
-//     this.sprite = this.move_animation._getFrame();
-//   }
-
-//   _SpiderWait() {
-//     this.alarm0._tick();
-//     if (!this.alarm0.activated) {
-//       this._move = this._SpiderIdle;
-//     }
-//   }
 
 export class SnakeScript extends ScriptBase {
   static readonly INITIAL_SPEED = 100;

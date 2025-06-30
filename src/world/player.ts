@@ -1,4 +1,4 @@
-import { Rect } from '../math';
+import { Rect } from '../common';
 import { audios } from '../audios';
 import { inputManager } from '../input-manager';
 
