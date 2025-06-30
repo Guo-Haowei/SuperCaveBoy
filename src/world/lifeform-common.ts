@@ -1,6 +1,21 @@
 import { ECSWorld } from '../ecs';
 import { Collider, CollisionLayer, Facing, Position, Velocity } from '../components';
 
+export function findGravityAndJumpVelocity(
+  desiredJumpHeight: number,
+  timeToApex: number,
+): { GRAVITY: number; JUMP_VELOCITY: number } {
+  const GRAVITY = (2 * desiredJumpHeight) / timeToApex ** 2;
+  const JUMP_VELOCITY = GRAVITY * timeToApex;
+  return { GRAVITY, JUMP_VELOCITY };
+}
+
+const DESIRED_JUMP_HEIGHT = 170;
+const TIME_TO_APEX = 0.3;
+
+const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
+const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
+
 export function createEnemyCommon(
   ecs: ECSWorld,
   x: number,
@@ -27,6 +42,8 @@ export function createEnemyCommon(
   ecs.addComponent(id, new Facing(true));
   return id;
 }
+
+// @TODO: state machine
 
 // export class OldMonster {
 //   x: number;

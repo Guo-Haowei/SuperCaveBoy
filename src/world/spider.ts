@@ -12,13 +12,9 @@ import {
 } from '../components';
 import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
-import { createEnemyCommon } from './enemy-common';
+import { createEnemyCommon, findGravityAndJumpVelocity } from './lifeform-common';
 
-const DESIRED_JUMP_HEIGHT = 170;
-const TIME_TO_APEX = 0.3;
-
-const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
-const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
+const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
 class SpiderScript extends ScriptBase {
   private target: Entity;

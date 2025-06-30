@@ -14,12 +14,7 @@ import {
 import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
 import { inputManager } from '../input-manager';
-
-const DESIRED_JUMP_HEIGHT = 180;
-const TIME_TO_APEX = 0.4;
-
-const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
-const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
+import { findGravityAndJumpVelocity } from './lifeform-common';
 
 /* @TODO: FSM
 type StateName = 'idle' | 'walk' | 'jump' | 'fall';
@@ -107,6 +102,8 @@ walk: {
 }
 
 */
+
+const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
 class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;

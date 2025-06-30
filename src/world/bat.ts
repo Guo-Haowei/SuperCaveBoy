@@ -10,7 +10,7 @@ import {
   Velocity,
 } from '../components';
 import { SpriteSheets } from '../assets';
-import { createEnemyCommon } from './enemy-common';
+import { createEnemyCommon } from './lifeform-common';
 
 class BatScript extends ScriptBase {
   private target: Entity;
