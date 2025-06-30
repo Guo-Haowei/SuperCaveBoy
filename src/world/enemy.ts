@@ -1,108 +1,85 @@
 import { ECSWorld, Entity } from '../ecs';
-import { AnimationComponent, ComponentType, PositionComponent, ScriptBase, VelocityComponent } from '../components';
+import { Animation, Position, ScriptBase, Velocity } from '../components';
 
 // @TODO: health system?
+// @TODO: play sound on hit
 
 export class BatScript extends ScriptBase {
-    target: any; // @TODO: entity id
+  target: any; // @TODO: entity id
 
-    private speed: number;
-    private state: 'idle' | 'chase' = 'idle';
+  private speed: number;
+  private state: 'idle' | 'chase' = 'idle';
 
-    constructor(entity: Entity, world: ECSWorld) {
-        super(entity, world);
-        this.speed = 0.07;
+  constructor(entity: Entity, world: ECSWorld) {
+    super(entity, world);
+    this.speed = 0.07;
+  }
+
+  private idle() {
+    const player = this.target;
+    const position = this.world.getComponent<Position>(this.entity, Position.name);
+    const { x, y } = position;
+
+    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
+
+    if (Math.abs(x - player.x) < 350 && y - 100 < player.y) {
+      this.state = 'chase';
+      anim.current = 'fly';
+      anim.elapsed = 0;
     }
+  }
 
-    private idle() {
-        const player = this.target;
-        const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
-        const { x, y } = position;
+  private chase() {
+    const player = this.target;
+    const position = this.world.getComponent<Position>(this.entity, Position.name);
+    const { x, y } = position;
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
 
-        const anim = this.world.getComponent<AnimationComponent>(this.entity, ComponentType.ANIMATION);
+    const dx = x - player.x;
+    const dy = y - player.y;
+    const xsign = Math.abs(dx) > 5 ? Math.sign(dx) : 0;
+    const ysign = Math.abs(dy) > 5 ? Math.sign(dy) : 0;
 
-        if (Math.abs(x - player.x) < 350 && y - 100 < player.y) {
-            this.state = 'chase';
-            anim.current = 'fly';
-            anim.elapsed = 0;
-        }
+    if (velocity.vx == 0 || velocity.vy == 0) this.speed = 0.1;
+
+    velocity.vx = -xsign * this.speed;
+    velocity.vy = -ysign * this.speed;
+  }
+
+  onUpdate(_dt: number) {
+    switch (this.state) {
+      case 'idle':
+        this.idle();
+        break;
+      case 'chase':
+        this.chase();
+        break;
+      default:
+        throw new Error(`Unknown state: ${this.state}`);
     }
-
-    private chase() {
-        const player = this.target;
-        const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
-        const { x, y } = position;
-        const velocity = this.world.getComponent<VelocityComponent>(this.entity, ComponentType.VELOCITY);
-
-        const dx = x - player.x;
-        const dy = y - player.y;
-        const xsign = Math.abs(dx) > 5 ? Math.sign(dx) : 0;
-        const ysign = Math.abs(dy) > 5 ? Math.sign(dy) : 0;
-
-        if (velocity.vx == 0 || velocity.vy == 0) this.speed = 0.1;
-
-        velocity.vx = -xsign * this.speed;
-        velocity.vy = -ysign * this.speed;
-    }
-
-    onUpdate(_dt: number) {
-        switch (this.state) {
-            case 'idle':
-                this.idle();
-                break;
-            case 'chase':
-                this.chase();
-                break;
-            default:
-                throw new Error(`Unknown state: ${this.state}`);
-        }
-    }
-};
-// case MONSTER.SNAKE:
-//     this.bound = new Rect(0, 22, 62, 42);
-
-//     this.move_animation = new OldAnimation(5, this.handler._getGameAssets().spr_snake_slithe);
-//     this.sprite = this.move_animation._getFrame();
-//     this._move = this._SnakeMove;
-//     this.music = this.handler._getMusic().snd_snake;
-//     this.speed = 3;
-//     if (face) this.face = face;
-//     break;
-
-// _SnakeMove() {
-//     this.move_animation._tick();
-//     if (this.x >= this.leftBound && this.x - this.speed <= this.leftBound && this.face === DIRECTION.LEFT) {
-//         this.x = this.leftBound;
-//         this.face = DIRECTION.RIGHT;
-//     } else if (this.x + this.bound.x <= this.rightBound && this.x + this.bound.x + this.speed >= this.rightBound && this.face === DIRECTION.RIGHT) {
-//         this.x = this.rightBound - this.bound.x;
-//         this.face = DIRECTION.LEFT;
-//     }
-//     this.hspeed = this.face === DIRECTION.RIGHT ? 1 : -1
-//     this.x += this.hspeed * this.speed;
-//     this.sprite = this.move_animation._getFrame();
-// }
+  }
+}
 
 export class SnakeScript extends ScriptBase {
-    static readonly INITIAL_SPEED = 0.1;
+  static readonly INITIAL_SPEED = 0.1;
 
-    private leftBound: number;
-    private rightBound: number;
+  private leftBound: number;
+  private rightBound: number;
 
-    constructor(entity: Entity, world: ECSWorld, leftBound: number, rightBound: number) {
-        super(entity, world);
-        this.leftBound = leftBound;
-        this.rightBound = rightBound;
+  constructor(entity: Entity, world: ECSWorld, leftBound: number, rightBound: number) {
+    super(entity, world);
+    this.leftBound = leftBound;
+    this.rightBound = rightBound;
+  }
+
+  onUpdate(_dt: number) {
+    const position = this.world.getComponent<Position>(this.entity, Position.name);
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const { x } = position;
+    if (x <= this.leftBound) {
+      vel.vx = SnakeScript.INITIAL_SPEED;
+    } else if (x >= this.rightBound) {
+      vel.vx = -SnakeScript.INITIAL_SPEED;
     }
-
-    onUpdate(_dt: number) {
-        const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
-        const vel = this.world.getComponent<VelocityComponent>(this.entity, ComponentType.POSITION);
-        const { x } = position;
-        if (x <= this.leftBound) {
-            vel.vx = SnakeScript.INITIAL_SPEED;
-        } else if (x >= this.rightBound) {
-            vel.vx = -SnakeScript.INITIAL_SPEED;
-        }
-    }
-};
+  }
+}

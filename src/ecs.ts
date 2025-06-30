@@ -1,57 +1,38 @@
 export type Entity = number;
 
 export class ECSWorld {
-    private nextEntityId = 0;
-    private components = new Map<string, Map<Entity, unknown>>();
+  private nextEntityId = 0;
+  private components = new Map<string, Map<Entity, unknown>>();
 
-    createEntity(): Entity {
-        return this.nextEntityId++;
+  createEntity(): Entity {
+    return this.nextEntityId++;
+  }
+
+  addComponent(entity: Entity, data: unknown): void {
+    const id = data.constructor.name;
+    if (!this.components.has(id)) {
+      this.components.set(id, new Map());
+    }
+    this.components.get(id)?.set(entity, data);
+  }
+
+  getComponent<T>(entity: Entity, type: string): T | undefined {
+    return this.components.get(type)?.get(entity) as T;
+  }
+
+  queryEntities<T1, T2>(type1: string, type2: string): [Entity, T1, T2][] {
+    const map1 = this.components.get(type1);
+    const map2 = this.components.get(type2);
+    if (!map1 || !map2) return [];
+    const result: [Entity, T1, T2][] = [];
+
+    for (const [entity, value1] of map1) {
+      const value2 = map2.get(entity);
+      if (value2) {
+        result.push([entity, value1 as T1, value2 as T2]);
+      }
     }
 
-    addComponent<T>(entity: Entity, componentName: string, data: T): void {
-        if (!this.components.has(componentName)) {
-            this.components.set(componentName, new Map());
-        }
-        this.components.get(componentName)?.set(entity, data);
-    }
-
-    getComponent<T>(entity: Entity, componentName: string): T | undefined {
-        return this.components.get(componentName)?.get(entity) as T;
-    }
-
-    queryEntities(componentNames: string[]): Entity[] {
-        const sets = componentNames.map(name => this.components.get(name));
-        if (sets.some(set => !set)) return [];
-
-        const [first, ...rest] = sets as Map<Entity, unknown>[];
-        return [...first.keys()].filter(entity =>
-            rest.every(set => set.has(entity))
-        );
-    }
-
-    newQueryEntities(componentNames: string[]) {
-        const sets = componentNames.map(name => this.components.get(name));
-        if (sets.some(set => !set)) return [];
-
-        const [first, ...rest] = sets as Map<Entity, unknown>[];
-
-        const result: [Entity, ...unknown[]][] = [];
-
-        for (const [entity, value] of first) {
-            const entry = [entity, value];
-            let missing = false;
-            for (const set of rest) {
-                if (!set.has(entity)) {
-                    missing = true;
-                    break;
-                }
-                entry.push(set.get(entity));
-            }
-            if (!missing) {
-                result.push(entry as [Entity, ...unknown[]]);
-            }
-        }
-
-        return result;
-    }
-};
+    return result;
+  }
+}
