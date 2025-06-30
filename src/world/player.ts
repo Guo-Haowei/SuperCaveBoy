@@ -12,6 +12,7 @@ export class Player {
     vspeed = 0;
     takingJump = false;
     landed = false;
+    bound: Rect;
 
     constructor(x, y, speed, handler) {
         this.x = x;

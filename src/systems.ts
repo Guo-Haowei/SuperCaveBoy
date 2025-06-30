@@ -1,5 +1,5 @@
 import { Direction } from './common';
-import { ECSWorld } from './ecs';
+import { Entity, ECSWorld } from './ecs';
 import {
     ComponentType,
     ColliderComponent,
@@ -102,9 +102,8 @@ function getMTV(a: Rect, b: Rect): Vec2 | null {
     const bx2 = b.x + b.width;
     const by2 = b.y + b.height;
 
-    // Check for no overlap
     if (ax2 <= bx1 || ax1 >= bx2 || ay2 <= by1 || ay1 >= by2) {
-        return null; // No collision
+        return null;
     }
 
     const overlapX1 = ax2 - bx1; // from left
@@ -115,7 +114,6 @@ function getMTV(a: Rect, b: Rect): Vec2 | null {
     const mtvX = overlapX1 < overlapX2 ? -overlapX1 : overlapX2;
     const mtvY = overlapY1 < overlapY2 ? -overlapY1 : overlapY2;
 
-    // Return the smallest axis of resolution
     if (Math.abs(mtvX) < Math.abs(mtvY)) {
         return { x: mtvX, y: 0 };
     } else {
@@ -130,6 +128,24 @@ function toRect(position: PositionComponent, collider: ColliderComponent): Rect 
         width: collider.width,
         height: collider.height,
     };
+}
+
+function resolveCollision(
+    mtv: Vec2,
+    entityA: Entity,
+    entityB: Entity,
+    posA: PositionComponent,
+    posB: PositionComponent,
+    colliderA: ColliderComponent,
+    colliderB: ColliderComponent
+): void {
+    if (colliderA.mass < colliderB.mass) {
+        posA.x += mtv.x;
+        posA.y += mtv.y;
+    } else {
+        posB.x -= mtv.x;
+        posB.y -= mtv.y;
+    }
 }
 
 export function physicsSystem(world: ECSWorld, dt: number) {
@@ -152,8 +168,7 @@ export function physicsSystem(world: ECSWorld, dt: number) {
                 continue;
             }
 
-            // @TODO: resolve collision
-            resolveCollision(a, b, mtv);
+            resolveCollision(mtv, a, b, posA, posB, colliderA, colliderB);
 
             const scriptA = world.getComponent<ScriptComponent>(a, ComponentType.SCRIPT);
             scriptA?.script.onCollision?.(b, colliderB.layer);
