@@ -1,6 +1,7 @@
 import { ECSWorld, Entity } from './ecs';
 
 export const ComponentType = {
+    ANIMATION: 'Animation',
     POSITION: 'Position',
     VELOCITY: 'Velocity',
     SPRITE: 'Sprite',
@@ -21,6 +22,18 @@ export type VelocityComponent = {
 export type SpriteComponent = {
     sheetId: string;
     frameIndex: number;
+};
+
+type AnimationClip = {
+    frames: number[];       // array of frame indices
+    fps: number;            // frames per second
+    loop: boolean;
+};
+
+export type AnimationComponent = {
+    animations: Record<string, AnimationClip>;
+    current: string;
+    elapsed: number;
 };
 
 export enum ColliderLayer {

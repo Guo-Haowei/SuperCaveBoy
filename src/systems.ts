@@ -2,6 +2,7 @@ import { Direction } from './common';
 import { Entity, ECSWorld } from './ecs';
 import {
     ComponentType,
+    AnimationComponent,
     ColliderComponent,
     ColliderLayer,
     PositionComponent,
@@ -12,33 +13,33 @@ import {
 import { spriteManager } from './assets';
 import { Rect, Vec2 } from './math';
 
-// @TODO: use camera
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
+// ------------------------------ Animation System -----------------------------
+export function animationSystem(world: ECSWorld, dt: number) {
+    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.COLLIDER])) {
+        const anim = world.getComponent<AnimationComponent>(entity, ComponentType.ANIMATION);
+        const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
+        if (!anim || !sprite) continue;
+
+        const clip = anim.animations[anim.current];
+        if (!clip) continue;
+
+        anim.elapsed += dt;
+        const frameIndex = Math.floor(anim.elapsed * clip.fps);
+
+        if (clip.loop) {
+            sprite.frameIndex = clip.frames[frameIndex % clip.frames.length];
+        } else {
+            const i = Math.min(frameIndex, clip.frames.length - 1);
+            sprite.frameIndex = clip.frames[i];
+        }
+    }
+}
+
+// ------------------------------- Render System -------------------------------
+function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
     const cameraX = camera.xoffset - 0.5 * WIDTH;
     const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
 
-    // @TODO: culling
-    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
-        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
-        const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE)!;
-
-        const { x, y } = pos;
-        const { sheetId, frameIndex } = sprite;
-        const renderable = spriteManager.getFrame(sheetId, frameIndex);
-        const { image, frame } = renderable;
-
-        const dx = x + frame.sourceX - cameraX;
-        const dy = y + frame.sourceX - cameraY;
-
-        ctx.drawImage(image, dx, dy, frame.width, frame.height);
-    }
-
-    const DEBUG = true;
-    if (!DEBUG) {
-        return;
-    }
-
-    // Render debug rectangles
     for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.COLLIDER])) {
         const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
         const collider = world.getComponent<ColliderComponent>(entity, ComponentType.COLLIDER)!;
@@ -68,6 +69,43 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
     }
 }
 
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
+    const cameraX = camera.xoffset - 0.5 * WIDTH;
+    const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
+
+    // @TODO: culling
+    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
+        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION);
+        const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
+
+        const { x, y } = pos;
+        const { sheetId, frameIndex } = sprite;
+        const renderable = spriteManager.getFrame(sheetId, frameIndex);
+        const { image, frame } = renderable;
+
+        const dx = x - cameraX;
+        const dy = y - cameraY;
+
+        ctx.save();
+
+        const vel = world.getComponent<VelocityComponent>(entity, ComponentType.VELOCITY);
+        const flipLeft: number = vel && vel.vx < 0 ? 1 : 0;
+
+        ctx.translate(dx + flipLeft * frame.width, dy);
+        ctx.scale(flipLeft ? -1: 1, 1);
+
+        ctx.drawImage(image, frame.sourceX, frame.sourceY, frame.width, frame.height, 0, 0, frame.width, frame.height);
+
+        ctx.restore();
+    }
+
+    const DEBUG = true;
+    if (DEBUG) {
+        renderSystemDebug(world, ctx, camera);
+    }
+}
+
+// ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
     for (const entity of world.queryEntities([ComponentType.SCRIPT, ComponentType.POSITION])) {
         const script = world.getComponent<ScriptComponent>(entity, ComponentType.SCRIPT)!;
@@ -77,6 +115,7 @@ export function scriptSystem(world: ECSWorld, dt: number) {
     }
 }
 
+// ------------------------------ Movement System ------------------------------
 export function movementSystem(world: ECSWorld, dt: number) {
     for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.VELOCITY])) {
         const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
@@ -87,6 +126,7 @@ export function movementSystem(world: ECSWorld, dt: number) {
     }
 }
 
+// ------------------------------ Physics System -------------------------------
 function canCollide(a: ColliderComponent, b: ColliderComponent): boolean {
     return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
 }
@@ -132,8 +172,6 @@ function toRect(position: PositionComponent, collider: ColliderComponent): Rect 
 
 function resolveCollision(
     mtv: Vec2,
-    entityA: Entity,
-    entityB: Entity,
     posA: PositionComponent,
     posB: PositionComponent,
     colliderA: ColliderComponent,
@@ -168,7 +206,7 @@ export function physicsSystem(world: ECSWorld, dt: number) {
                 continue;
             }
 
-            resolveCollision(mtv, a, b, posA, posB, colliderA, colliderB);
+            resolveCollision(mtv, posA, posB, colliderA, colliderB);
 
             const scriptA = world.getComponent<ScriptComponent>(a, ComponentType.SCRIPT);
             scriptA?.script.onCollision?.(b, colliderB.layer);

@@ -94,10 +94,12 @@ export class Room {
 
         const script = new BatScript(id, this.ecs);
         script.target = this.handler._getPlayer();
+        const sprite = { sheetId: SpriteSheets.BAT_FLY, frameIndex: 1 };
+        // const sprite = { sheetId: SpriteSheets.BAT_IDLE, frameIndex: 0 };
 
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.VELOCITY, { vx: 0, vy: 0 });
-        this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.BAT_IDLE, frameIndex: 0 });
+        this.ecs.addComponent(id, ComponentType.SPRITE, sprite);
         this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
         this.ecs.addComponent(id, ComponentType.SCRIPT, { script });
         this.entities.push(id);

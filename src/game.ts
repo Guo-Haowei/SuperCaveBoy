@@ -161,7 +161,9 @@ class PlayScene implements IScene {
         // move first, then resolve collisions
         System.movementSystem(ecs, dt);
         System.physicsSystem(ecs, dt);
-        // @TODO: physics system
+
+        System.animationSystem(ecs, dt);
+        // render at last
     }
 
     render(ctx) {
