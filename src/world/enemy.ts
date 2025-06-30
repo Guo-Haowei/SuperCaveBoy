@@ -84,10 +84,25 @@ export class BatScript extends ScriptBase {
 // }
 
 export class SnakeScript extends ScriptBase {
-    private speed: number;
+    static readonly INITIAL_SPEED = 0.1;
 
-    constructor(entity: Entity, world: ECSWorld) {
+    private leftBound: number;
+    private rightBound: number;
+
+    constructor(entity: Entity, world: ECSWorld, leftBound: number, rightBound: number) {
         super(entity, world);
-        this.speed = 0.1;
+        this.leftBound = leftBound;
+        this.rightBound = rightBound;
+    }
+
+    onUpdate(_dt: number) {
+        const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
+        const vel = this.world.getComponent<VelocityComponent>(this.entity, ComponentType.POSITION);
+        const { x } = position;
+        if (x <= this.leftBound) {
+            vel.vx = SnakeScript.INITIAL_SPEED;
+        } else if (x >= this.rightBound) {
+            vel.vx = -SnakeScript.INITIAL_SPEED;
+        }
     }
 };

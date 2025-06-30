@@ -12,7 +12,7 @@ export class Rect {
     }
 };
 
-export type Vec2 = {
+export interface Vec2 {
     x: number;
     y: number;
 };

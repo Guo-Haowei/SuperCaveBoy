@@ -1,6 +1,6 @@
 import { Rect } from '../math'
 import { OldMonster } from './monster';
-import { BatScript } from './enemy';
+import { BatScript, SnakeScript } from './enemy';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
@@ -126,6 +126,43 @@ export class Room {
         this.entities.push(id);
     }
 
+    private createSnake(x: number, y: number, leftBound: number, rightBound: number) {
+        const id = this.ecs.createEntity();
+        const collider: ColliderComponent = {
+            width: 62,
+            height: 42,
+            offsetX: 0,
+            offsetY: 22,
+            layer: ColliderLayer.ENEMY,
+            mask: ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
+            mass: 10,
+        };
+
+        const sprite = { sheetId: SpriteSheets.SNAKE_MOVE, frameIndex: 0 };
+        const animation: AnimationComponent = {
+            animations: {
+                idle: {
+                    sheetId: SpriteSheets.SNAKE_MOVE,
+                    frames: 2,
+                    speed: 1,
+                    loop: true,
+                },
+            },
+            current: 'idle',
+            elapsed: 0,
+        };
+
+        const script = new SnakeScript(id, this.ecs, leftBound, rightBound);
+
+        this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
+        this.ecs.addComponent(id, ComponentType.VELOCITY, { vx: SnakeScript.INITIAL_SPEED, vy: 0 });
+        this.ecs.addComponent(id, ComponentType.SPRITE, sprite);
+        this.ecs.addComponent(id, ComponentType.ANIMATION, animation);
+        this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
+        this.ecs.addComponent(id, ComponentType.SCRIPT, { script });
+        this.entities.push(id);
+    }
+
     _init() {
         this.clearRoom();
 
@@ -168,7 +205,7 @@ export class Room {
             if (mon[2] === MONSTER.BAT) {
                 this.createBat(mon[0], mon[1]);
             } else if (mon[2] === MONSTER.SNAKE) {
-                // do nothing, snake is handled in the OldMonster class
+                this.createSnake(mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
             } else {
                 const monster = new OldMonster(this.handler, ...mon);
                 this.monsters.push(monster);

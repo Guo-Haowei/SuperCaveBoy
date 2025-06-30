@@ -9,33 +9,33 @@ export const ComponentType = {
     SCRIPT: 'Script',
 } as const;
 
-export type PositionComponent = {
+export interface PositionComponent {
     x: number;
     y: number;
-};
+}
 
-export type VelocityComponent = {
+export interface VelocityComponent {
     vx: number;
     vy: number;
-};
+}
 
-export type SpriteComponent = {
+export interface SpriteComponent {
     sheetId: string;
     frameIndex: number;
-};
+}
 
-type AnimationClip = {
+interface AnimationClip {
     sheetId: string;
     frames: number;
     speed: number; // should finish in seconds
     loop: boolean;
-};
+}
 
-export type AnimationComponent = {
+export interface AnimationComponent {
     animations: Record<string, AnimationClip>;
     current: string;
     elapsed: number;
-};
+}
 
 export enum ColliderLayer {
     PLAYER = 0b0001,
@@ -43,7 +43,7 @@ export enum ColliderLayer {
     OBSTACLE = 0b0100,
 };
 
-export type ColliderComponent = {
+export interface ColliderComponent {
     width: number;
     height: number;
     offsetX: number;
@@ -51,7 +51,7 @@ export type ColliderComponent = {
     layer: number; // e.g. 0b0001 = player, 0b0010 = enemy
     mask: number;
     mass: number;
-};
+}
 
 export abstract class ScriptBase {
     protected entity: Entity;
@@ -68,6 +68,6 @@ export abstract class ScriptBase {
     onDie?(): void;
 };
 
-export type ScriptComponent = {
+export interface ScriptComponent {
     script: ScriptBase;
-};
+}

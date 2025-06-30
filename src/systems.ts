@@ -41,12 +41,9 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
     const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
 
     // @TODO: culling
-    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
-        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION);
-        const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
-
-        const { x, y } = pos;
-        const { sheetId, frameIndex } = sprite;
+    for (const [entity, sprite, pos] of world.newQueryEntities([ComponentType.SPRITE, ComponentType.POSITION])) {
+        const { x, y } = pos as PositionComponent;
+        const { sheetId, frameIndex } = sprite as SpriteComponent;
 
         const renderable = spriteManager.getFrame(sheetId, frameIndex);
         const { image, frame } = renderable;
@@ -66,6 +63,32 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
 
         ctx.restore();
     }
+
+    // for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
+    //     const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION);
+    //     const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
+
+    //     const { x, y } = pos;
+    //     const { sheetId, frameIndex } = sprite;
+
+    //     const renderable = spriteManager.getFrame(sheetId, frameIndex);
+    //     const { image, frame } = renderable;
+
+    //     const dx = x - cameraX;
+    //     const dy = y - cameraY;
+
+    //     ctx.save();
+
+    //     const vel = world.getComponent<VelocityComponent>(entity, ComponentType.VELOCITY);
+    //     const flipLeft: number = vel && vel.vx < 0 ? 1 : 0;
+
+    //     ctx.translate(dx + flipLeft * frame.width, dy);
+    //     ctx.scale(flipLeft ? -1 : 1, 1);
+
+    //     ctx.drawImage(image, frame.sourceX, frame.sourceY, frame.width, frame.height, 0, 0, frame.width, frame.height);
+
+    //     ctx.restore();
+    // }
 
     const DEBUG = true;
     if (DEBUG) {
@@ -109,7 +132,7 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camer
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
     for (const entity of world.queryEntities([ComponentType.SCRIPT, ComponentType.POSITION])) {
-        const script = world.getComponent<ScriptComponent>(entity, ComponentType.SCRIPT)!;
+        const script = world.getComponent<ScriptComponent>(entity, ComponentType.SCRIPT);
 
         script.script.onUpdate?.(dt);
     }
@@ -118,8 +141,8 @@ export function scriptSystem(world: ECSWorld, dt: number) {
 // ------------------------------ Movement System ------------------------------
 export function movementSystem(world: ECSWorld, dt: number) {
     for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.VELOCITY])) {
-        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
-        const vel = world.getComponent<VelocityComponent>(entity, ComponentType.VELOCITY)!;
+        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION);
+        const vel = world.getComponent<VelocityComponent>(entity, ComponentType.VELOCITY);
 
         pos.x += vel.vx * dt;
         pos.y += vel.vy * dt;
