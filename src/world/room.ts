@@ -6,6 +6,7 @@ import { SpriteSheets } from '../assets';
 import { Collider, CollisionLayer, Position, Sprite } from '../components';
 import { ECSWorld } from '../ecs';
 import { createCamera } from '../camera';
+import { createPlayer } from './player';
 
 enum TileType {
   WALL = 0,
@@ -25,14 +26,6 @@ export class Room {
   ecs: ECSWorld = new ECSWorld();
   playerId = ECSWorld.INVALID_ENTITY;
   cameraId = ECSWorld.INVALID_ENTITY;
-
-  // @TODO: get rid of handler
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  handler: any;
-
-  constructor(handler) {
-    this.handler = handler;
-  }
 
   private clearRoom() {
     this.world = [];
@@ -92,9 +85,6 @@ export class Room {
     WHEIGHT = this.height * 64;
     YBOUND = WHEIGHT - 72 - 64 * 3;
 
-    // camera
-    this.cameraId = createCamera(this.ecs, 400, SpawningY, this.handler._getPlayer());
-
     // tiles
     for (let y = 0; y < this.height; ++y) {
       for (let x = 0; x < this.width; ++x) {
@@ -102,6 +92,12 @@ export class Room {
         this.createTile(TILE_SIZE * x, TILE_SIZE * y, spriteId);
       }
     }
+
+    // player
+    const playerId = createPlayer(this.ecs, SpawningX, SpawningY);
+    this.playerId = playerId;
+    // camera
+    this.cameraId = createCamera(this.ecs, 400, SpawningY, playerId);
 
     // entrance
     this.createEntrance(96, 608);
@@ -123,26 +119,26 @@ export class Room {
     for (const ele of mons) {
       const mon = ele as [number, number, number, number?, number?, number?];
       if (mon[2] === MONSTER.BAT) {
-        createBat(this.ecs, mon[0], mon[1], this.handler._getPlayer());
+        createBat(this.ecs, mon[0], mon[1], playerId);
       } else if (mon[2] === MONSTER.SNAKE) {
         createSnake(this.ecs, mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
       } else if (mon[2] === MONSTER.SPIDER) {
-        createSpider(this.ecs, mon[0], mon[1], this.handler._getPlayer());
+        createSpider(this.ecs, mon[0], mon[1], playerId);
       }
     }
 
     // objects
-    const objs = WORLD.levels[this.level].objects;
-    for (let i = 0; i < objs.length; ++i) {
-      const obj = objs[i];
-      this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
-      this.objects[i]._init();
-      if (obj[3]) {
-        this.objects[i]._init(obj[3]);
-      } else {
-        this.objects[i]._init();
-      }
-    }
+    // const objs = WORLD.levels[this.level].objects;
+    // for (let i = 0; i < objs.length; ++i) {
+    //   const obj = objs[i];
+    //   this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
+    //   this.objects[i]._init();
+    //   if (obj[3]) {
+    //     this.objects[i]._init(obj[3]);
+    //   } else {
+    //     this.objects[i]._init();
+    //   }
+    // }
 
     // if (this.level === 9) {
     //     var music = handler._getMusic()

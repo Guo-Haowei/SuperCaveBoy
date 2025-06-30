@@ -15,10 +15,6 @@ function Handler(game) {
         return this.game.entities;
     }
 
-    this._getPlayer = function() {
-        return this.game.player;
-    }
-
     this._getMusic = function() {
         return this.game.music;
     }

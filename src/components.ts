@@ -50,9 +50,11 @@ export class Animation {
 }
 
 export enum CollisionLayer {
-  PLAYER = 0b0001,
-  ENEMY = 0b0010,
-  OBSTACLE = 0b0100,
+  PLAYER = 0b1,
+  ENEMY = 0b10,
+  OBSTACLE = 0b100,
+  EVENT = 0b1000,
+  TRAP = 0b010000,
 }
 
 export class Collider {

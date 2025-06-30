@@ -1,225 +1,94 @@
-import { Rect } from '../common';
-import { audios } from '../audios';
+import { ECSWorld, Entity } from '../ecs';
+import {
+  Animation,
+  CollisionLayer,
+  Collider,
+  Position,
+  Script,
+  ScriptBase,
+  Sprite,
+  Velocity,
+} from '../components';
+import { Direction } from '../common';
+import { SpriteSheets } from '../assets';
 import { inputManager } from '../input-manager';
 
-export class Player {
-  x: number;
-  y: number;
-  speed: number;
-  handler: any;
-  face: number;
-  health = 3;
-  sapphire = 0;
-  hspeed = 0;
-  vspeed = 0;
-  takingJump = false;
-  landed = false;
-  bound: Rect;
+class PlayerScript extends ScriptBase {
+  static readonly MOVE_SPEED = 300;
 
-  constructor(x, y, speed, handler) {
-    this.x = x;
-    this.y = y;
-    this.speed = speed;
+  private state: 'walk' | 'jump';
 
-    this.handler = handler;
-    this.face = DIRECTION.RIGHT;
-
-    this.jump_animation;
-    this.walk_animation;
-
-    this.currentState;
-    this.currentFrame;
-
-    this.grabbing = false;
-    this.hurt = false;
-
-    this.bound = new Rect(16, 10, 32, 62);
-
-    this.alpha = 1;
-
-    this.pausing = false;
-
-    this.alarm0 = new Alarm(this.handler);
-
-    this.alarm1 = new Alarm(this.handler);
-    this.walk_animation = new OldAnimation(2, handler._getGameAssets().spr_player_walk);
-    this.jump_animation = handler._getGameAssets().spr_player_jump;
-    this.currentFrame = this.jump_animation[1];
-    this.currentState = this._JumpingState;
+  constructor(entity: Entity, world: ECSWorld) {
+    super(entity, world);
+    this.state = 'walk';
   }
 
-  _move() {
-    if (this.hspeed === 1) this.face = 1;
-    else if (this.hspeed === -1) this.face = 0;
-    if (this.x <= 60) {
-      this.x = 60;
-      this.state = ENTITY_STATES.IDLING;
-    } else if (this.x >= WWIDTH - 125) {
-      this.x = WWIDTH - 125;
-      this.state = ENTITY_STATES.IDLING;
-    }
-    // check collision with walls
-    if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)) {
-      this.x += this.hspeed * this.speed;
-    }
-    this.grabbing = false;
+  private walk(_dt: number) {
+    // Get the player position
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const leftDown = inputManager.isKeyDown('KeyA');
+    const rightDown = inputManager.isKeyDown('KeyD');
+    const direction = Number(rightDown) - Number(leftDown);
+    velocity.vx = direction * PlayerScript.MOVE_SPEED;
+
+    // const position = this.world.getComponent<Position>(this.entity, Position.name);
   }
 
-  _damageTrigger(x) {
-    this.grabbing = false;
-    this.alarm1._init(20);
-    this.alarm1._setScript(this.alarm1._quitDamangePlayer);
-    this._setState(this._DamagedState);
-    this.vspeed = -15;
-    if (this.x > x) {
-      this.hspeed = 1;
-    } else {
-      this.hspeed = -1;
-    }
-    audios.snd_ouch.play();
+  private jump() {
+    // todo
   }
 
-  _DamagedState() {
-    // damaged state
-    this.hurt = true;
-    this._move();
-    this.currentFrame = this.handler._getGameAssets().spr_player_damage;
+  onUpdate(dt: number) {
+    switch (this.state) {
+      case 'walk':
+        this.walk(dt);
+        break;
+      case 'jump':
+        this.jump();
+        break;
+      default:
+        throw new Error(`Unknown state: ${this.state}`);
+    }
   }
 
-  _GrabState = function () {
-    // grab state
-    this.currentFrame = this.handler._getGameAssets().spr_player_grab;
-  };
-
-  _IdlingState = function () {
-    // idling state
-    this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-    if (this.hspeed !== 0) this.currentState = this._MovingState;
-  };
-
-  _MovingState = function () {
-    // moving state
-    if (this.hspeed === 0) {
-      this.currentState == this._IdlingState;
-      this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-      return;
-    }
-    this._move();
-    this.currentFrame = this.walk_animation._getFrame();
-    this.walk_animation._tick();
-  };
-
-  _JumpingState = function () {
-    // jumping state
-    this.currentFrame = this.jump_animation[this.vspeed < 0 ? 0 : 1];
-    if (this.hspeed !== 0) this._move();
-  };
-
-  _revive = function () {
-    this.alarm0.activated = false;
-    this.alarm1.activated = false;
-    this.hspeed = 0;
-    this.vspeed = 0;
-    this.face = DIRECTION.RIGHT;
-    this.takingJump = false;
-    this.grabbing = false;
-    this.health = 3;
-    this.sapphire = 0;
-    this._setPos(SpawningX, SpawningY);
-    this._setState(this._JumpingState);
-    // reset camara pos
-    // Camera()._setoffset(480, SpawningY);
-    this.handler._getLevel()._init(true);
-  };
-
-  _tick() {
-    this.hurt = false;
-    if (this.pausing) {
-      return;
-    }
-    if (this.health <= 0) {
-      this._revive();
-    }
-    if (this.alarm0.activated) {
-      this.alarm0._tick();
-      if (this.alarm0.activated && this.alpha >= 0.1) this.alpha -= 0.1;
-      return;
-    }
-
-    // hspeed
-    if (!this.alarm1.activated && this.currentState != this._DamagedState) {
-      const leftDown = inputManager.isKeyDown('KeyA');
-      const rightDown = inputManager.isKeyDown('KeyD');
-      const direction = Number(rightDown) - Number(leftDown);
-      this.hspeed = direction;
-    }
-    // vspeed
-    const jumpPressed = inputManager.isKeyPressed('KeyW');
-    if (
-      jumpPressed &&
-      !this.alarm1.activated &&
-      this.currentState != this._DamagedState &&
-      ((this.takingJump && this.vspeed === 1.5) || this.grabbing)
-    ) {
-      if (!this.grabbing) {
-        this.vspeed = JUMPFORCE;
-      } else {
-        this.vspeed = -20;
+  onCollision(_other: Entity, layer: number, dir: number): void {
+    if (layer === CollisionLayer.OBSTACLE) {
+      if (dir === Direction.LEFT || dir === Direction.RIGHT) {
+        // @TODO: grabbing
       }
-      this.currentState = this._JumpingState;
-      this.takingJump = false;
-      this.grabbing = false;
     }
-    // check grabbing state
-    if (checkAllCollision(this, this.handler._getObstacles(), grabbingCollision)) {
-      this.grabbing = true;
-    }
-
-    if (this.alarm1.activated) {
-      this.alarm1._tick();
-    }
-    // vertical
-    if (this.grabbing && !this.hurt) {
-      this.currentState = this._GrabState;
-    } else {
-      if (checkAllCollision(this, this.handler._getObstacles(), downCollision)) {
-      } else {
-        this.y += this.vspeed;
-        this.vspeed += GRAVITY;
-      }
-      checkAllCollision(this, this.handler._getObstacles(), upCollision);
-    }
-    // tick state
-    this.currentState();
-    // tick handler
   }
+}
 
-  _land() {
-    if (this.vspeed === 0) return;
-    this.takingJump = true;
-    this.currentState = this._IdlingState;
+export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
+  const id = ecs.createEntity();
 
-    audios.snd_step.play();
-
-    this.vspeed = 0;
-  }
-
-  _render(graphics) {
-    // this.currentFrame.draw(
-    //   graphics,
-    //   this.x - xoffset,
-    //   this.y - yoffset,
-    //   this.alpha,
-    //   this.face === 0 ? HORIZONTAL_FLIP : 0,
-    // );
-  }
-
-  _setState(state) {
-    this.currentState = state;
-  }
-
-  _setPos(x, y) {
-    this.x = x;
-    this.y = y;
-  }
+  const anim = new Animation(
+    {
+      walk: {
+        sheetId: SpriteSheets.PLAYER_WALK,
+        frames: 8,
+        speed: 1,
+        loop: true,
+      },
+    },
+    'walk',
+  );
+  const collider = new Collider(
+    32,
+    62,
+    CollisionLayer.PLAYER,
+    CollisionLayer.ENEMY | CollisionLayer.OBSTACLE | CollisionLayer.EVENT | CollisionLayer.TRAP,
+    1, // mass
+    16,
+    10,
+  );
+  const script = new PlayerScript(id, ecs);
+  ecs.addComponent(id, new Position(x, y));
+  ecs.addComponent(id, new Velocity());
+  ecs.addComponent(id, collider);
+  ecs.addComponent(id, new Sprite(SpriteSheets.PLAYER_IDLE));
+  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, anim);
+  return id;
 }

@@ -2,19 +2,20 @@ import { ECSWorld } from './ecs';
 import { Position, Script, ScriptBase } from './components';
 
 class CameraScript extends ScriptBase {
-  target: any; // @TODO: entity id
+  target: number;
 
-  constructor(entity: number, world: ECSWorld) {
+  constructor(entity: number, world: ECSWorld, target: number) {
     super(entity, world);
-    this.target = null;
+    this.target = target;
   }
 
   onUpdate(_dt: number) {
     if (this.target == null) return;
 
     const pos = this.world.getComponent<Position>(this.entity, Position.name);
-    const objx = this.target.x;
-    const objy = this.target.y;
+    const targetPos = this.world.getComponent<Position>(this.target, Position.name);
+    const objx = targetPos.x;
+    const objy = targetPos.y;
 
     pos.x += (objx - pos.x) / 20.0;
     pos.y += (objy - pos.y) / 20.0;
@@ -31,14 +32,11 @@ class CameraScript extends ScriptBase {
   }
 }
 
-export function createCamera(ecs: ECSWorld, x: number, y: number, player: any): number {
+export function createCamera(ecs: ECSWorld, x: number, y: number, target: number): number {
   const id = ecs.createEntity();
-
-  const script = new CameraScript(id, ecs);
-  script.target = player;
+  const script = new CameraScript(id, ecs, target);
 
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Script(script));
-  // @TODO: script
   return id;
 }

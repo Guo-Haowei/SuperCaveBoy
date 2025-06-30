@@ -16,24 +16,26 @@ import { SpriteSheets } from '../assets';
 // @TODO: play sound on hit
 
 class BatScript extends ScriptBase {
-  target: any; // @TODO: entity id
-
+  private target: Entity;
   private speed: number;
   private state: 'idle' | 'chase' = 'idle';
 
-  constructor(entity: Entity, world: ECSWorld) {
+  constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
+
     this.speed = 70;
+    this.target = target;
   }
 
   private idle() {
-    const player = this.target;
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const { x, y } = position;
 
     const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
 
-    if (Math.abs(x - player.x) < 350 && y - 100 < player.y) {
+    const target = this.world.getComponent<Position>(this.target, Position.name);
+
+    if (Math.abs(x - target.x) < 350 && y - 100 < target.y) {
       this.state = 'chase';
       anim.current = 'fly';
       anim.elapsed = 0;
@@ -41,13 +43,14 @@ class BatScript extends ScriptBase {
   }
 
   private chase() {
-    const player = this.target;
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const { x, y } = position;
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
 
-    const dx = x - player.x;
-    const dy = y - player.y;
+    const target = this.world.getComponent<Position>(this.target, Position.name);
+
+    const dx = x - target.x;
+    const dy = y - target.y;
     const xsign = Math.abs(dx) > 5 ? Math.sign(dx) : 0;
     const ysign = Math.abs(dy) > 5 ? Math.sign(dy) : 0;
 
@@ -72,25 +75,25 @@ class BatScript extends ScriptBase {
 }
 
 class SpiderScript extends ScriptBase {
-  target: any; // @TODO: entity id
-
+  private target: Entity;
   private state: 'idle' | 'attack' = 'idle';
   private cooldown: number;
 
-  constructor(entity: Entity, world: ECSWorld) {
+  constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
     this.cooldown = 0;
+    this.target = target;
   }
 
   private idle(dt: number) {
-    const player = this.target;
+    const targetPos = this.world.getComponent<Position>(this.target, Position.name);
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const { x, y } = position;
 
     const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
 
-    const dx = x - player.x;
-    const dy = y - player.y;
+    const dx = x - targetPos.x;
+    const dy = y - targetPos.y;
 
     // always face the target
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
@@ -197,11 +200,10 @@ function createEnemyCommon(
   return id;
 }
 
-export function createBat(ecs: ECSWorld, x: number, y: number, player: any) {
+export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
   const id = createEnemyCommon(ecs, x, y, 48, 35, 10, 15);
 
-  const script = new BatScript(id, ecs);
-  script.target = player;
+  const script = new BatScript(id, ecs, target);
   const anim = new Animation(
     {
       idle: {
@@ -226,11 +228,10 @@ export function createBat(ecs: ECSWorld, x: number, y: number, player: any) {
   return id;
 }
 
-export function createSpider(ecs: ECSWorld, x: number, y: number, player: any) {
+export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity) {
   const id = createEnemyCommon(ecs, x, y, 40, 52, 12, 12);
 
-  const script = new SpiderScript(id, ecs);
-  script.target = player;
+  const script = new SpiderScript(id, ecs, target);
 
   const anim = new Animation(
     {
@@ -412,7 +413,6 @@ export function createSnake(
 //       }
 //     }
 //     if (this._move) this._move();
-//     const player = this.handler._getPlayer();
 //     const that = this;
 //     if (player.alpha != 1) return;
 //     // be destroyed

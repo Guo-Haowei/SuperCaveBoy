@@ -1,4 +1,4 @@
-import { Player } from './world/player';
+import { Player } from './world/old-player';
 import { Room } from './world/room';
 import * as System from './systems';
 import { Assets } from './assets';
@@ -29,8 +29,6 @@ export class Game {
   public init(images: Record<string, HTMLImageElement>) {
     // create assets
     this.assets = new Assets(images);
-
-    this.player = new Player(SpawningX, SpawningY, 10, this.handler);
 
     // level
     this.room = new Room(this.handler);
@@ -129,7 +127,6 @@ class PlayScene implements IScene {
   }
 
   tick(dt: number) {
-    this.handler._getPlayer()._tick();
     this.game.room._tick();
 
     const { ecs } = this.game.room;
@@ -148,7 +145,6 @@ class PlayScene implements IScene {
 
   render(ctx) {
     this.game.room._render(ctx);
-    this.handler._getPlayer()._render(ctx);
     this.handler._getGUI()._render(ctx);
   }
 }
@@ -184,18 +180,14 @@ class EndScene implements IScene {
   }
 
   private drawText(ctx: CanvasRenderingContext2D) {
-    const { handler } = this;
-    const player = handler._getPlayer();
-
-    const diff = this.game.end - this.game.start;
-    const time = `Your Time Was: ${this.formatTime(diff)}`;
-    const content = player.health <= 0 ? 'You lost!' : 'You Won!';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '64pt Arial';
-    ctx.fillText(content, 290, 220);
-    ctx.font = '36pt Arial';
-    ctx.fillText(time, 240, 320);
-    ctx.fillText('You Score was: ' + player.sapphire, 290, 400);
+    // const diff = this.game.end - this.game.start;
+    // const time = `Your Time Was: ${this.formatTime(diff)}`;
+    // const content = player.health <= 0 ? 'You lost!' : 'You Won!';
+    // ctx.fillStyle = '#ffffff';
+    // ctx.font = '64pt Arial';
+    // ctx.fillText(content, 290, 220);
+    // ctx.font = '36pt Arial';
+    // ctx.fillText(time, 240, 320);
+    // ctx.fillText('You Score was: ' + player.sapphire, 290, 400);
   }
 }
