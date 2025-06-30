@@ -1,5 +1,7 @@
 import { Rect, Vec2 } from '../common';
-import { createBat, createSnake, createSpider } from './monster';
+import { createSpider } from './spider';
+import { createSnake } from './snake';
+import { createBat } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';

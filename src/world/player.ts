@@ -15,11 +15,98 @@ import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
 import { inputManager } from '../input-manager';
 
-const DESIRED_JUMP_HEIGHT = 200;
+const DESIRED_JUMP_HEIGHT = 180;
 const TIME_TO_APEX = 0.4;
 
 const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
 const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
+
+/* @TODO: FSM
+type StateName = 'idle' | 'walk' | 'jump' | 'fall';
+
+interface State {
+  name: StateName;
+  enter?: () => void;
+  update: (dt: number) => void;
+  exit?: () => void;
+}
+
+class StateMachine {
+  private states: Record<StateName, State>;
+  private current: State;
+
+  constructor(states: Record<StateName, State>, initial: StateName) {
+    this.states = states;
+    this.current = states[initial];
+    this.current.enter?.();
+  }
+
+  update(dt: number) {
+    this.current.update(dt);
+  }
+
+  transition(to: StateName) {
+    if (this.current.name === to) return;
+    this.current.exit?.();
+    this.current = this.states[to];
+    this.current.enter?.();
+  }
+
+  get stateName() {
+    return this.current.name;
+  }
+}
+
+const playerFSM = new StateMachine({
+  idle: {
+    name: 'idle',
+    enter: () => playAnim('idle'),
+    update: (dt) => {
+      if (input.isMoving()) playerFSM.transition('walk');
+      if (input.jumpPressed) playerFSM.transition('jump');
+    },
+  },
+  walk: {
+    name: 'walk',
+    enter: () => playAnim('walk'),
+    update: (dt) => {
+      if (!input.isMoving()) playerFSM.transition('idle');
+      if (input.jumpPressed) playerFSM.transition('jump');
+    },
+  },
+  jump: {
+    name: 'jump',
+    enter: () => {
+      player.vy = -jumpVelocity;
+      playAnim('jump');
+    },
+    update: (dt) => {
+      if (player.vy > 0) playerFSM.transition('fall');
+    },
+  },
+  fall: {
+    name: 'fall',
+    update: (dt) => {
+      if (player.isGrounded()) playerFSM.transition('idle');
+    },
+  },
+}, 'idle');
+
+walk: {
+  name: 'walk',
+  enter: () => playAnim('walk'),
+  update: (dt) => {
+    if (!input.isMoving()) fsm.transition('idle');
+    if (input.jumpPressed) fsm.transition('jump');
+  },
+  handleEvent: (event: string, data: any) => {
+    if (event === 'collision' && data.tag === 'enemy') {
+      fsm.transition('hurt');
+    }
+  },
+}
+
+*/
 
 class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
