@@ -94,6 +94,7 @@ export class Room {
         script.target = this.handler._getPlayer();
 
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
+        this.ecs.addComponent(id, ComponentType.VELOCITY, { vx: 0, vy: 0 });
         this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.BAT_IDLE, frameIndex: 0 });
         this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
         this.ecs.addComponent(id, ComponentType.SCRIPT, { script });

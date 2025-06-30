@@ -1,6 +1,6 @@
 import { Rect } from '../math';
 import { ECSWorld, Entity } from '../ecs';
-import { ComponentType, PositionComponent, ScriptBase } from '../components';
+import { ComponentType, PositionComponent, ScriptBase, VelocityComponent } from '../components';
 
 // @TODO: ai system?
 // @TODO: animation system?
@@ -12,8 +12,6 @@ export class BatScript extends ScriptBase {
     target: any; // @TODO: entity id
 
     private speed: number;
-    private hspeed = 0;
-    private vspeed = 0;
     private state: 'idle' | 'chase' = 'idle';
 
     constructor(entity: Entity, world: ECSWorld) {
@@ -35,18 +33,17 @@ export class BatScript extends ScriptBase {
         const player = this.target;
         const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
         const { x, y } = position;
+        const velocity = this.world.getComponent<VelocityComponent>(this.entity, ComponentType.VELOCITY);
 
         const xsign = x - player.x > 5 ? 1 :x-player.x >= -5 ? 0 : -1;
         const ysign = y-player.y>5?1:y-player.y>=-5?0:-1;
-        this.hspeed = -xsign;
-        this.vspeed = -ysign;
+
         // this.face = this.hspeed>0? DIRECTION.RIGHT:DIRECTION.LEFT;
         // @TODO: fix this hack
-        if (this.hspeed == 0 || this.vspeed == 0) this.speed = 0.3;
+        if (velocity.vx == 0 || velocity.vy == 0) this.speed = 0.3;
 
-        // assume no collision for now
-        position.x += this.hspeed * this.speed * dt;
-        position.y += this.vspeed * this.speed * dt;
+        velocity.vx = -xsign * this.speed;
+        velocity.vy = -ysign * this.speed;
     }
 
     onUpdate(dt: number) {

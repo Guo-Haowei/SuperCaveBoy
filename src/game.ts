@@ -88,8 +88,6 @@ export class Game {
         }
 
         this.currentScene.tick(dt);
-
-        System.scriptSystem(this.room.ecs, dt);
     }
 
     render(ctx: CanvasRenderingContext2D) {
@@ -156,6 +154,12 @@ class PlayScene implements IScene {
         this.handler._getCamera()._tick();
         this.handler._getPlayer()._tick();
         this.game.room._tick();
+
+        const { ecs } = this.game.room;
+
+        System.scriptSystem(ecs, dt);
+        System.movementSystem(ecs, dt);
+        // @TODO: physics system
     }
 
     render(ctx) {

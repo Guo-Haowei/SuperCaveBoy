@@ -1,5 +1,13 @@
 import { ECSWorld } from './ecs';
-import { ComponentType, ColliderComponent, PositionComponent, SpriteComponent, ColliderLayer, ScriptComponent } from './components';
+import {
+    ComponentType,
+    ColliderComponent,
+    ColliderLayer,
+    PositionComponent,
+    SpriteComponent,
+    ScriptComponent,
+    VelocityComponent,
+} from './components';
 import { spriteManager } from './assets';
 
 // @TODO: use camera
@@ -64,5 +72,15 @@ export function scriptSystem(world: ECSWorld, dt: number) {
         const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
 
         script.script.onUpdate?.(dt);
+    }
+}
+
+export function movementSystem(world: ECSWorld, dt: number) {
+    for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.VELOCITY])) {
+        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
+        const vel = world.getComponent<VelocityComponent>(entity, ComponentType.VELOCITY)!;
+
+        pos.x += vel.vx * dt;
+        pos.y += vel.vy * dt;
     }
 }

@@ -2,6 +2,7 @@ import { ECSWorld, Entity } from './ecs';
 
 export const ComponentType = {
     POSITION: 'Position',
+    VELOCITY: 'Velocity',
     SPRITE: 'Sprite',
     COLLIDER: 'Collider',
     SCRIPT: 'Script',
@@ -10,6 +11,11 @@ export const ComponentType = {
 export type PositionComponent = {
     x: number;
     y: number;
+};
+
+export type VelocityComponent = {
+    vx: number;
+    vy: number;
 };
 
 export type SpriteComponent = {
