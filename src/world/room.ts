@@ -1,17 +1,9 @@
 import { Rect, Vec2 } from '../common';
-import { BatScript, SnakeScript, SpiderScript } from './enemy';
+import { createBat, createSnake, createSpider } from './monster';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
-import {
-  Collider,
-  CollisionLayer,
-  Animation,
-  Position,
-  Script,
-  Sprite,
-  Velocity,
-} from '../components';
+import { Collider, CollisionLayer, Position, Sprite } from '../components';
 import { ECSWorld } from '../ecs';
 import { createCamera } from '../camera';
 
@@ -88,111 +80,6 @@ export class Room {
     this.ecs.addComponent(id, collider);
   }
 
-  private createEnemyCommon(
-    x: number,
-    y: number,
-    hitWidth: number,
-    hitHeight: number,
-    hitOffsetX = 0,
-    hitOffsetY = 0,
-  ) {
-    const id = this.ecs.createEntity();
-    const collider = new Collider(
-      hitWidth,
-      hitHeight,
-      CollisionLayer.ENEMY,
-      CollisionLayer.PLAYER | CollisionLayer.OBSTACLE,
-      10, // mass
-      hitOffsetX,
-      hitOffsetY,
-    );
-
-    this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Velocity());
-    this.ecs.addComponent(id, collider);
-    return id;
-  }
-
-  private createBat(x: number, y: number) {
-    const id = this.createEnemyCommon(x, y, 48, 35, 10, 15);
-
-    const script = new BatScript(id, this.ecs);
-    script.target = this.handler._getPlayer();
-    const anim = new Animation(
-      {
-        idle: {
-          sheetId: SpriteSheets.BAT_IDLE,
-          frames: 1,
-          speed: 1,
-          loop: true,
-        },
-        fly: {
-          sheetId: SpriteSheets.BAT_FLY,
-          frames: 5,
-          speed: 0.5,
-          loop: true,
-        },
-      },
-      'idle',
-    );
-
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.BAT_IDLE));
-    this.ecs.addComponent(id, anim);
-    this.ecs.addComponent(id, new Script(script));
-  }
-
-  private createSpider(x: number, y: number) {
-    const id = this.createEnemyCommon(x, y, 40, 52, 12, 12);
-
-    const script = new SpiderScript(id, this.ecs);
-    script.target = this.handler._getPlayer();
-
-    const anim = new Animation(
-      {
-        idle: {
-          sheetId: SpriteSheets.SPIDER_JUMP,
-          frames: 1,
-          speed: 1,
-          loop: false,
-        },
-        jump: {
-          sheetId: SpriteSheets.SPIDER_JUMP,
-          frames: 5,
-          speed: 0.5,
-          loop: false,
-        },
-      },
-      'idle',
-    );
-
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.SPIDER_JUMP));
-    this.ecs.addComponent(id, anim);
-    this.ecs.addComponent(id, new Script(script));
-  }
-
-  private createSnake(x: number, y: number, leftBound: number, rightBound: number) {
-    const id = this.createEnemyCommon(x, y, 62, 42, 0, 22);
-
-    const anim = new Animation(
-      {
-        idle: {
-          sheetId: SpriteSheets.SNAKE_MOVE,
-          frames: 2,
-          speed: 1,
-          loop: true,
-        },
-      },
-      'idle',
-    );
-
-    const script = new SnakeScript(id, this.ecs, leftBound, rightBound);
-
-    this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.SNAKE_MOVE));
-    this.ecs.addComponent(id, anim);
-    this.ecs.addComponent(id, new Script(script));
-  }
-
   _init() {
     this.clearRoom();
 
@@ -236,13 +123,11 @@ export class Room {
     for (const ele of mons) {
       const mon = ele as [number, number, number, number?, number?, number?];
       if (mon[2] === MONSTER.BAT) {
-        this.createBat(mon[0], mon[1]);
+        createBat(this.ecs, mon[0], mon[1], this.handler._getPlayer());
       } else if (mon[2] === MONSTER.SNAKE) {
-        this.createSnake(mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
+        createSnake(this.ecs, mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
       } else if (mon[2] === MONSTER.SPIDER) {
-        this.createSpider(mon[0], mon[1]);
-        // const monster = new OldMonster(this.handler, ...mon);
-        // this.monsters.push(monster);
+        createSpider(this.ecs, mon[0], mon[1], this.handler._getPlayer());
       }
     }
 

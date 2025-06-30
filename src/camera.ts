@@ -31,14 +31,14 @@ class CameraScript extends ScriptBase {
   }
 }
 
-export function createCamera(world: ECSWorld, x: number, y: number, player: any): number {
-  const id = world.createEntity();
+export function createCamera(ecs: ECSWorld, x: number, y: number, player: any): number {
+  const id = ecs.createEntity();
 
-  const script = new CameraScript(id, world);
+  const script = new CameraScript(id, ecs);
   script.target = player;
 
-  world.addComponent(id, new Position(x, y));
-  world.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Position(x, y));
+  ecs.addComponent(id, new Script(script));
   // @TODO: script
   return id;
 }
