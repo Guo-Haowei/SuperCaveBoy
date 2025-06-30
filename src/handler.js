@@ -14,19 +14,7 @@ function Handler(game) {
     this._getGameEntities = function() {
         return this.game.entities;
     }
-    
-    this._getKeyManager = function() {
-        return this.game.keyManager;
-    }
-    
-    this._getPlayer = function() {
-        return this.game.player;
-    }
-    
-    this._getCamera = function() {
-        return this.game.camera;
-    }
-    
+
     this._getMusic = function() {
         return this.game.music;
     }
@@ -42,11 +30,7 @@ function Handler(game) {
     this._getObjects = function() {
         return this.game.room.objects;
     }
-    
-    this._getMonsters = function() {
-        return this.game.room.monsters;
-    }
-    
+
     this._getGUI = function() {
         return this.game.gui;
     }

@@ -2,16 +2,15 @@ import { ECSWorld } from './ecs';
 import {
   Animation,
   Collider,
-  ColliderLayer,
+  CollisionLayer,
+  Facing,
   Position,
   Sprite,
   Script,
   Velocity,
 } from './components';
 import { spriteManager } from './assets';
-import { Rect, Vec2 } from './math';
-
-import { Camera } from './camera';
+import { Direction, Rect, Vec2 } from './common';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
@@ -23,7 +22,7 @@ export function animationSystem(world: ECSWorld, dt: number) {
     if (!clip) continue;
 
     anim.elapsed += dt;
-    const index = Math.floor((anim.elapsed / (clip.speed * 1000)) * clip.frames);
+    const index = Math.floor((anim.elapsed / clip.speed) * clip.frames);
 
     sprite.sheetId = clip.sheetId;
     if (clip.loop) {
@@ -35,9 +34,9 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: Camera) {
-  const cameraX = camera.xoffset - 0.5 * WIDTH;
-  const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
+  const cameraX = offset.x - 0.5 * WIDTH;
+  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
 
   // @TODO: culling
   for (const [id, sprite, pos] of world.queryEntities<Sprite, Position>(
@@ -55,8 +54,8 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
 
     ctx.save();
 
-    const vel = world.getComponent<Velocity>(id, Velocity.name);
-    const flipLeft: number = vel && vel.vx < 0 ? 1 : 0;
+    const facing = world.getComponent<Facing>(id, Facing.name);
+    const flipLeft: number = facing && facing.left ? 1 : 0;
 
     ctx.translate(dx + flipLeft * frame.width, dy);
     ctx.scale(flipLeft ? -1 : 1, 1);
@@ -78,13 +77,13 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
 
   const DEBUG = true;
   if (DEBUG) {
-    renderSystemDebug(world, ctx, camera);
+    renderSystemDebug(world, ctx, offset);
   }
 }
 
-function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: Camera) {
-  const cameraX = camera.xoffset - 0.5 * WIDTH;
-  const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
+function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
+  const cameraX = offset.x - 0.5 * WIDTH;
+  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
 
   for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
     Position.name,
@@ -98,10 +97,10 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camer
 
     let color: string;
     switch (layer) {
-      case ColliderLayer.PLAYER:
+      case CollisionLayer.PLAYER:
         color = 'green';
         break;
-      case ColliderLayer.ENEMY:
+      case CollisionLayer.ENEMY:
         color = 'red';
         break;
       default:
@@ -117,10 +116,7 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camer
 
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
-  for (const [_id, script, _pos] of world.queryEntities<Script, Position>(
-    Script.name,
-    Position.name,
-  )) {
+  for (const [_id, script] of world.queryEntities<Script>(Script.name)) {
     script.script.onUpdate?.(dt);
   }
 }
@@ -133,6 +129,9 @@ export function movementSystem(world: ECSWorld, dt: number) {
   )) {
     pos.x += vel.vx * dt;
     pos.y += vel.vy * dt;
+    if (vel.gravity) {
+      vel.vy += vel.gravity * dt;
+    }
   }
 }
 
@@ -196,7 +195,7 @@ function resolveCollision(
   }
 }
 
-export function physicsSystem(world: ECSWorld) {
+export function physicsSystem(world: ECSWorld, _dt: number) {
   const entities = world.queryEntities<Collider, Position>(Collider.name, Position.name);
 
   for (let i = 0; i < entities.length - 1; ++i) {
@@ -213,12 +212,25 @@ export function physicsSystem(world: ECSWorld) {
         continue;
       }
 
-      resolveCollision(mtv, posA, posB, colliderA, colliderB);
+      // only resolve if one of the colliders is an obstacle
+      if (
+        colliderA.layer === CollisionLayer.OBSTACLE ||
+        colliderB.layer === CollisionLayer.OBSTACLE
+      ) {
+        resolveCollision(mtv, posA, posB, colliderA, colliderB);
+      }
+
+      let direction = Direction.NONE;
+      if (mtv.x) {
+        direction = mtv.x < 0 ? Direction.LEFT : Direction.RIGHT;
+      } else {
+        direction = mtv.y < 0 ? Direction.UP : Direction.DOWN;
+      }
 
       const scriptA = world.getComponent<Script>(a, Script.name);
-      scriptA?.script.onCollision?.(b, colliderB.layer);
+      scriptA?.script.onCollision?.(b, colliderB.layer, direction);
       const scriptB = world.getComponent<Script>(b, Script.name);
-      scriptB?.script.onCollision?.(a, colliderA.layer);
+      scriptB?.script.onCollision?.(a, colliderA.layer, -direction);
     }
   }
 }

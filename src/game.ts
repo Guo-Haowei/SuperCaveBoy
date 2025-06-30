@@ -1,8 +1,8 @@
-import { Player } from './world/player';
+import { Player } from './world/old-player';
 import { Room } from './world/room';
 import * as System from './systems';
 import { Assets } from './assets';
-import { Camera } from './camera';
+import { inputManager } from './input-manager';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -24,29 +24,17 @@ export class Game {
     this.assets;
     // handler
     this.handler = new Handler(this);
-    // key manager
-    this.keyManager = keyManager;
-    this.keyManager._setTakeInput(true);
-    this.keyManager._init();
-    // game objects
-    // camera
-    // level
-    this.room;
   }
 
   public init(images: Record<string, HTMLImageElement>) {
     // create assets
     this.assets = new Assets(images);
 
-    this.player = new Player(SpawningX, SpawningY, 10, this.handler);
-
     // level
     this.room = new Room(this.handler);
     this.room._init();
 
     // create entities
-    this.camera = new Camera(480, SpawningY);
-    this.camera._setTarget(this.player);
 
     // gui
     this.gui = new GUI(this.handler);
@@ -78,7 +66,7 @@ export class Game {
       this.lastTick = timestamp;
     }
 
-    this.currentScene.tick(dt);
+    this.currentScene.tick(dt / 1000);
   }
 
   render(ctx: CanvasRenderingContext2D) {
@@ -107,9 +95,8 @@ class MenuScene implements IScene {
     this.handler = game.handler;
   }
 
-  tick(dt: number) {
-    this.handler._getKeyManager()._tick();
-    if (this.handler._getKeyManager().spaceKey === BOOL.TRUE) {
+  tick(_dt: number) {
+    if (inputManager.isKeyPressed('Space')) {
       this.game.setScene('PLAY');
       this.game.start = Date.now();
     }
@@ -140,8 +127,6 @@ class PlayScene implements IScene {
   }
 
   tick(dt: number) {
-    this.handler._getCamera()._tick();
-    this.handler._getPlayer()._tick();
     this.game.room._tick();
 
     const { ecs } = this.game.room;
@@ -153,12 +138,13 @@ class PlayScene implements IScene {
 
     System.animationSystem(ecs, dt);
     // render at last
-    System.renderSystem(ecs, ctx, this.game.camera);
+
+    const offset = this.game.room.getCameraOffset();
+    System.renderSystem(ecs, ctx, offset);
   }
 
   render(ctx) {
     this.game.room._render(ctx);
-    this.handler._getPlayer()._render(ctx);
     this.handler._getGUI()._render(ctx);
   }
 }
@@ -194,18 +180,14 @@ class EndScene implements IScene {
   }
 
   private drawText(ctx: CanvasRenderingContext2D) {
-    const { handler } = this;
-    const player = handler._getPlayer();
-
-    const diff = this.game.end - this.game.start;
-    const time = `Your Time Was: ${this.formatTime(diff)}`;
-    const content = player.health <= 0 ? 'You lost!' : 'You Won!';
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '64pt Arial';
-    ctx.fillText(content, 290, 220);
-    ctx.font = '36pt Arial';
-    ctx.fillText(time, 240, 320);
-    ctx.fillText('You Score was: ' + player.sapphire, 290, 400);
+    // const diff = this.game.end - this.game.start;
+    // const time = `Your Time Was: ${this.formatTime(diff)}`;
+    // const content = player.health <= 0 ? 'You lost!' : 'You Won!';
+    // ctx.fillStyle = '#ffffff';
+    // ctx.font = '64pt Arial';
+    // ctx.fillText(content, 290, 220);
+    // ctx.font = '36pt Arial';
+    // ctx.fillText(time, 240, 320);
+    // ctx.fillText('You Score was: ' + player.sapphire, 290, 400);
   }
 }

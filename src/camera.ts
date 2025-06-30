@@ -1,48 +1,43 @@
-export class Camera {
-    xoffset: number;
-    yoffset: number;
-    target = null;
+import { ECSWorld } from './ecs';
+import { Name, Position, Script, ScriptBase } from './components';
 
-    constructor(x, y) {
-        this.xoffset = x;
-        this.yoffset = y;
-    }
+class CameraScript extends ScriptBase {
+  target: number;
 
-    _getxoffset() {
-        return this.xoffset;
-    }
+  constructor(entity: number, world: ECSWorld, target: number) {
+    super(entity, world);
+    this.target = target;
+  }
 
-    _getyoffset() {
-        return this.yoffset;
-    }
+  onUpdate(_dt: number) {
+    if (this.target == null) return;
 
-    _setoffset(x, y) {
-        this.xoffset = x;
-        this.yoffset = y;
-    }
+    const pos = this.world.getComponent<Position>(this.entity, Position.name);
+    const targetPos = this.world.getComponent<Position>(this.target, Position.name);
+    const objx = targetPos.x;
+    const objy = targetPos.y;
 
-    _tick() {
-        this._followTarget();
+    pos.x += (objx - pos.x) / 20.0;
+    pos.y += (objy - pos.y) / 20.0;
+    if (pos.x <= WIDTH / 2) {
+      pos.x = WIDTH / 2;
+    } else if (pos.x >= WWIDTH - WIDTH / 2) {
+      pos.x = WWIDTH - WIDTH / 2;
     }
+    if (pos.y <= HEIGHT / 2 + YOFFSET) {
+      pos.y = HEIGHT / 2 + YOFFSET;
+    } else if (pos.y >= WHEIGHT - HEIGHT / 2) {
+      pos.y = WHEIGHT - HEIGHT / 2;
+    }
+  }
+}
 
-    _setTarget(obj) {
-        this.target = obj;
-    }
+export function createCamera(ecs: ECSWorld, x: number, y: number, target: number): number {
+  const id = ecs.createEntity();
+  const script = new CameraScript(id, ecs, target);
 
-    _followTarget() {
-        if (this.target == null) return;
-        const objx = this.target.x, objy = this.target.y;
-        this.xoffset += (objx - this.xoffset) / 20.0;
-        this.yoffset += (objy - this.yoffset) / 20.0;
-        if (this.xoffset <= WIDTH / 2) {
-            this.xoffset = WIDTH / 2;
-        } else if (this.xoffset >= WWIDTH - WIDTH / 2) {
-            this.xoffset = WWIDTH - WIDTH / 2;
-        }
-        if (this.yoffset <= HEIGHT / 2 + YOFFSET) {
-            this.yoffset = HEIGHT / 2 + YOFFSET;
-        } else if (this.yoffset >= WHEIGHT - HEIGHT / 2) {
-            this.yoffset = WHEIGHT - HEIGHT / 2;
-        }
-    }
+  ecs.addComponent(id, new Name('Camera'));
+  ecs.addComponent(id, new Position(x, y));
+  ecs.addComponent(id, new Script(script));
+  return id;
 }

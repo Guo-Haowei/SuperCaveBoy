@@ -1,5 +1,13 @@
 import { ECSWorld, Entity } from './ecs';
 
+export class Name {
+  value: string;
+
+  constructor(value: string) {
+    this.value = value;
+  }
+}
+
 export class Position {
   x: number;
   y: number;
@@ -13,6 +21,7 @@ export class Position {
 export class Velocity {
   vx: number;
   vy: number;
+  gravity?: number;
 
   constructor(vx = 0, vy = 0) {
     this.vx = vx;
@@ -27,6 +36,18 @@ export class Sprite {
   constructor(sheetId: string, frameIndex = 0) {
     this.sheetId = sheetId;
     this.frameIndex = frameIndex;
+  }
+}
+
+export class Facing {
+  left: boolean;
+
+  constructor(value: boolean) {
+    this.left = value;
+  }
+
+  toggle() {
+    this.left = !this.left;
   }
 }
 
@@ -49,10 +70,12 @@ export class Animation {
   }
 }
 
-export enum ColliderLayer {
-  PLAYER = 0b0001,
-  ENEMY = 0b0010,
-  OBSTACLE = 0b0100,
+export enum CollisionLayer {
+  PLAYER = 0b1,
+  ENEMY = 0b10,
+  OBSTACLE = 0b100,
+  EVENT = 0b1000,
+  TRAP = 0b010000,
 }
 
 export class Collider {
@@ -67,8 +90,8 @@ export class Collider {
   constructor(
     width: number,
     height: number,
-    layer: ColliderLayer,
-    mask: ColliderLayer,
+    layer: CollisionLayer,
+    mask: CollisionLayer,
     mass: number,
     offsetX = 0,
     offsetY = 0,
@@ -94,7 +117,7 @@ export abstract class ScriptBase {
 
   onInit?(): void;
   onUpdate?(dt: number): void;
-  onCollision?(other: Entity, layer: number): void;
+  onCollision?(other: Entity, layer: number, dir: number): void;
   onDie?(): void;
 }
 

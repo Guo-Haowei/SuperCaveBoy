@@ -1,4 +1,4 @@
-import { Rect } from '../math';
+import { Rect } from '../common';
 import { audios } from '../audios';
 
 export class SpecialObject {
@@ -60,42 +60,42 @@ export class SpecialObject {
   }
 
   _CameraTrigger() {
-    this.triggerActivated = true;
-    const camera = this.handler._getCamera();
-    camera._setTarget(this);
-    this.handler._getPlayer().pausing = true;
-    if (this.x < 900) {
-      this.x += (920 - this.x) / 70;
-    } else {
-      this.boss._setState(this.boss._BossIdling);
-      this.alarm0._init(10);
-      this.trigger = this._tickAlarm;
-    }
+    // this.triggerActivated = true;
+    // const camera = this.handler._getCamera();
+    // camera._setTarget(this);
+    // this.handler._getPlayer().pausing = true;
+    // if (this.x < 900) {
+    //   this.x += (920 - this.x) / 70;
+    // } else {
+    //   this.boss._setState(this.boss._BossIdling);
+    //   this.alarm0._init(10);
+    //   this.trigger = this._tickAlarm;
+    // }
   }
 
   _tickAlarm() {
-    // alarm for boss
-    if (!this.alarm0.activated) {
-      if (this.x > 300) {
-        this.x -= this.hspeed;
-        this.hspeed += 0.04;
-      } else {
-        this.handler._getCamera()._setTarget(this.handler._getPlayer());
-        this.destroyed = true;
-        this.handler._getPlayer().pausing = false;
-        this.boss._setState(this.boss._BossRising);
-      }
-    } else {
-      this.alarm0._tick();
-    }
+    // // alarm for boss
+    // if (!this.alarm0.activated) {
+    //   if (this.x > 300) {
+    //     this.x -= this.hspeed;
+    //     this.hspeed += 0.04;
+    //   } else {
+    //     this.handler._getCamera()._setTarget(this.handler._getPlayer());
+    //     this.destroyed = true;
+    //     this.handler._getPlayer().pausing = false;
+    //     this.boss._setState(this.boss._BossRising);
+    //   }
+    // } else {
+    //   this.alarm0._tick();
+    // }
   }
 
   _cameraSkip() {
-    this.triggerActivated = false;
-    this.handler._getCamera()._setTarget(this.handler._getPlayer());
-    this.destroyed = true;
-    this.handler._getPlayer().pausing = false;
-    this.boss._setState(this.boss._BossRising);
+    // this.triggerActivated = false;
+    // this.handler._getCamera()._setTarget(this.handler._getPlayer());
+    // this.destroyed = true;
+    // this.handler._getPlayer().pausing = false;
+    // this.boss._setState(this.boss._BossRising);
   }
 
   _ExitTrigger() {
@@ -122,7 +122,7 @@ export class SpecialObject {
       this.trigger();
       return;
     }
-    var player = this.handler._getPlayer(),
+    const player = this.handler._getPlayer(),
       bound1 = player.bound,
       bound2 = this.bound,
       co = 5; // collision offsets
@@ -141,42 +141,42 @@ export class SpecialObject {
 
     if (this.type === TYPE.LAVA) {
       // check monsters
-      const objs = this.handler._getMonsters();
-      for (let i = 0; i < objs.length; ++i) {
-        var monster = objs[i],
-          bound1 = monster.bound,
-          bound2 = this.bound,
-          co = 5; // collision offsets
-        if (
-          monster.x + bound1.x + co <= this.x + bound2.x + bound2.width &&
-          monster.x + bound1.x + bound1.width - co >= this.x + bound2.x &&
-          monster.y + bound1.y + co <= this.y + bound2.y + bound2.height &&
-          monster.y + bound1.y + bound1.height - co >= this.y + bound2.y
-        ) {
-          if (objs[i].health && objs[i].takingDamage) {
-            --objs[i].health;
-            objs[i].takingDamage = false;
-            if (objs[i].type === MONSTER.BOSS && objs[i].health <= 0) {
-              objs[i].alarm2._init(90);
-            }
-          }
-        }
-      }
+      //   const objs = this.handler._getMonsters();
+      //   for (let i = 0; i < objs.length; ++i) {
+      //     var monster = objs[i],
+      //       bound1 = monster.bound,
+      //       bound2 = this.bound,
+      //       co = 5; // collision offsets
+      //     if (
+      //       monster.x + bound1.x + co <= this.x + bound2.x + bound2.width &&
+      //       monster.x + bound1.x + bound1.width - co >= this.x + bound2.x &&
+      //       monster.y + bound1.y + co <= this.y + bound2.y + bound2.height &&
+      //       monster.y + bound1.y + bound1.height - co >= this.y + bound2.y
+      //     ) {
+      //       if (objs[i].health && objs[i].takingDamage) {
+      //         --objs[i].health;
+      //         objs[i].takingDamage = false;
+      //         if (objs[i].type === MONSTER.BOSS && objs[i].health <= 0) {
+      //           objs[i].alarm2._init(90);
+      //         }
+      //       }
+      //     }
+      //   }
       this.lavaAnimation._tick();
       this.sprite = this.lavaAnimation._getFrame();
     }
   }
 
   _render(graphics) {
-    if (!this.sprite) return;
-    const xoffset = this.handler._getCamera()._getxoffset() - WIDTH / 2,
-      yoffset = this.handler._getCamera()._getyoffset() - HEIGHT / 2 - YOFFSET;
-    if (this.type !== TYPE.LAVA) {
-      this.sprite.draw(graphics, this.x - xoffset, this.y - yoffset);
-    } else {
-      for (let i = 0; i < this.length; ++i) {
-        this.sprite.draw(graphics, this.x + i * 64 - xoffset, this.y - yoffset);
-      }
-    }
+    // if (!this.sprite) return;
+    // const xoffset = this.handler._getCamera()._getxoffset() - WIDTH / 2,
+    //   yoffset = this.handler._getCamera()._getyoffset() - HEIGHT / 2 - YOFFSET;
+    // if (this.type !== TYPE.LAVA) {
+    //   this.sprite.draw(graphics, this.x - xoffset, this.y - yoffset);
+    // } else {
+    //   for (let i = 0; i < this.length; ++i) {
+    //     this.sprite.draw(graphics, this.x + i * 64 - xoffset, this.y - yoffset);
+    //   }
+    // }
   }
 }

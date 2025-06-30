@@ -1,222 +1,142 @@
-import { Rect } from '../math';
-import { audios } from '../audios';
+import { ECSWorld, Entity } from '../ecs';
+import {
+  Animation,
+  CollisionLayer,
+  Collider,
+  Name,
+  Position,
+  Script,
+  ScriptBase,
+  Sprite,
+  Velocity,
+  Facing,
+} from '../components';
+import { Direction } from '../common';
+import { SpriteSheets } from '../assets';
+import { inputManager } from '../input-manager';
 
-export class Player {
-  x: number;
-  y: number;
-  speed: number;
-  handler: any;
-  face: number;
-  health = 3;
-  sapphire = 0;
-  hspeed = 0;
-  vspeed = 0;
-  takingJump = false;
-  landed = false;
-  bound: Rect;
+const DESIRED_JUMP_HEIGHT = 200;
+const TIME_TO_APEX = 0.4;
 
-  constructor(x, y, speed, handler) {
-    this.x = x;
-    this.y = y;
-    this.speed = speed;
+const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
+const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
 
-    this.handler = handler;
-    this.face = DIRECTION.RIGHT;
+class PlayerScript extends ScriptBase {
+  static readonly MOVE_SPEED = 400;
 
-    this.jump_animation;
-    this.walk_animation;
+  private state: 'walk' | 'jump';
+  private grounded = false;
+  private lastY: number;
 
-    this.currentState;
-    this.currentFrame;
+  constructor(entity: Entity, world: ECSWorld) {
+    super(entity, world);
+    this.state = 'walk';
 
-    this.grabbing = false;
-    this.hurt = false;
-
-    this.bound = new Rect(16, 10, 32, 62);
-
-    this.alpha = 1;
-
-    this.pausing = false;
-
-    this.alarm0 = new Alarm(this.handler);
-
-    this.alarm1 = new Alarm(this.handler);
-    this.walk_animation = new OldAnimation(2, handler._getGameAssets().spr_player_walk);
-    this.jump_animation = handler._getGameAssets().spr_player_jump;
-    this.currentFrame = this.jump_animation[1];
-    this.currentState = this._JumpingState;
+    const pos = this.world.getComponent<Position>(this.entity, Position.name);
+    this.lastY = pos.y;
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    vel.gravity = GRAVITY;
   }
 
-  _move() {
-    if (this.hspeed === 1) this.face = 1;
-    else if (this.hspeed === -1) this.face = 0;
-    if (this.x <= 60) {
-      this.x = 60;
-      this.state = ENTITY_STATES.IDLING;
-    } else if (this.x >= WWIDTH - 125) {
-      this.x = WWIDTH - 125;
-      this.state = ENTITY_STATES.IDLING;
+  private updateHorizonalMove(velocity: Velocity) {
+    const leftDown = inputManager.isKeyDown('KeyA');
+    const rightDown = inputManager.isKeyDown('KeyD');
+    const direction = Number(rightDown) - Number(leftDown);
+    const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
+
+    velocity.vx = direction * PlayerScript.MOVE_SPEED;
+    if (leftDown || rightDown) {
+      facing.left = direction < 0;
     }
-    // check collision with walls
-    if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)) {
-      this.x += this.hspeed * this.speed;
-    }
-    this.grabbing = false;
   }
 
-  _damageTrigger(x) {
-    this.grabbing = false;
-    this.alarm1._init(20);
-    this.alarm1._setScript(this.alarm1._quitDamangePlayer);
-    this._setState(this._DamagedState);
-    this.vspeed = -15;
-    if (this.x > x) {
-      this.hspeed = 1;
+  private startJump(velocity: Velocity) {
+    velocity.vy = -JUMP_VELOCITY;
+    this.state = 'jump';
+  }
+
+  private walk(_dt: number) {
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    this.updateHorizonalMove(velocity);
+
+    if (inputManager.isKeyPressed('KeyW') && this.grounded) {
+      this.startJump(velocity);
+    }
+    // const position = this.world.getComponent<Position>(this.entity, Position.name);
+  }
+
+  private jump(_dt: number) {
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    this.updateHorizonalMove(velocity);
+  }
+
+  onUpdate(dt: number) {
+    const pos = this.world.getComponent<Position>(this.entity, Position.name);
+    if (Math.abs(pos.y - this.lastY) < 0.00000001) {
+      this.grounded = true;
     } else {
-      this.hspeed = -1;
+      this.grounded = false;
+      this.lastY = pos.y;
+      this.state = 'walk';
     }
-    audios.snd_ouch.play();
+
+    switch (this.state) {
+      case 'walk':
+        this.walk(dt);
+        break;
+      case 'jump':
+        this.jump(dt);
+        break;
+      default:
+        throw new Error(`Unknown state: ${this.state}`);
+    }
   }
 
-  _DamagedState() {
-    // damaged state
-    this.hurt = true;
-    this._move();
-    this.currentFrame = this.handler._getGameAssets().spr_player_damage;
-  }
-
-  _GrabState = function () {
-    // grab state
-    this.currentFrame = this.handler._getGameAssets().spr_player_grab;
-  };
-
-  _IdlingState = function () {
-    // idling state
-    this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-    if (this.hspeed !== 0) this.currentState = this._MovingState;
-  };
-
-  _MovingState = function () {
-    // moving state
-    if (this.hspeed === 0) {
-      this.currentState == this._IdlingState;
-      this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-      return;
-    }
-    this._move();
-    this.currentFrame = this.walk_animation._getFrame();
-    this.walk_animation._tick();
-  };
-
-  _JumpingState = function () {
-    // jumping state
-    this.currentFrame = this.jump_animation[this.vspeed < 0 ? 0 : 1];
-    if (this.hspeed !== 0) this._move();
-  };
-
-  _revive = function () {
-    this.alarm0.activated = false;
-    this.alarm1.activated = false;
-    this.hspeed = 0;
-    this.vspeed = 0;
-    this.face = DIRECTION.RIGHT;
-    this.takingJump = false;
-    this.grabbing = false;
-    this.health = 3;
-    this.sapphire = 0;
-    this._setPos(SpawningX, SpawningY);
-    this._setState(this._JumpingState);
-    // reset camara pos
-    this.handler._getCamera()._setoffset(480, SpawningY);
-    this.handler._getLevel()._init(true);
-  };
-
-  _tick() {
-    this.hurt = false;
-    if (this.pausing) {
-      return;
-    }
-    if (this.health <= 0) {
-      this._revive();
-    }
-    if (this.alarm0.activated) {
-      this.alarm0._tick();
-      if (this.alarm0.activated && this.alpha >= 0.1) this.alpha -= 0.1;
-      return;
-    }
-
-    // hspeed
-    if (!this.alarm1.activated && this.currentState != this._DamagedState)
-      this.hspeed = this.handler._getKeyManager().rightKey - this.handler._getKeyManager().leftKey;
-    // vspeed
-    if (
-      this.handler._getKeyManager().upKey > 0 &&
-      !this.alarm1.activated &&
-      this.currentState != this._DamagedState &&
-      ((this.takingJump && this.vspeed === 1.5) || this.grabbing)
-    ) {
-      if (!this.grabbing) {
-        this.vspeed = JUMPFORCE;
-      } else {
-        this.vspeed = -20;
+  onCollision(_other: Entity, layer: number, dir: number): void {
+    if (layer === CollisionLayer.OBSTACLE) {
+      if (dir === Direction.LEFT || dir === Direction.RIGHT) {
+        // @TODO: grabbing
+      } else if (dir === Direction.UP) {
+        const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+        vel.vy = 0;
       }
-      this.currentState = this._JumpingState;
-      this.takingJump = false;
-      this.grabbing = false;
     }
-    // check grabbing state
-    if (checkAllCollision(this, this.handler._getObstacles(), grabbingCollision)) {
-      this.grabbing = true;
-    }
-
-    if (this.alarm1.activated) {
-      this.alarm1._tick();
-    }
-    // vertical
-    if (this.grabbing && !this.hurt) {
-      this.currentState = this._GrabState;
-    } else {
-      if (checkAllCollision(this, this.handler._getObstacles(), downCollision)) {
-      } else {
-        this.y += this.vspeed;
-        this.vspeed += GRAVITY;
-      }
-      checkAllCollision(this, this.handler._getObstacles(), upCollision);
-    }
-    // tick state
-    this.currentState();
-    // tick handler
-    this.handler._getKeyManager()._tick();
   }
+}
 
-  _land() {
-    if (this.vspeed === 0) return;
-    this.takingJump = true;
-    this.currentState = this._IdlingState;
+export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
+  const id = ecs.createEntity();
 
-    audios.snd_step.play();
+  const anim = new Animation(
+    {
+      walk: {
+        sheetId: SpriteSheets.PLAYER_WALK,
+        frames: 8,
+        speed: 1,
+        loop: true,
+      },
+    },
+    'walk',
+  );
 
-    this.vspeed = 0;
-  }
+  const collider = new Collider(
+    32,
+    62,
+    CollisionLayer.PLAYER,
+    CollisionLayer.ENEMY | CollisionLayer.OBSTACLE | CollisionLayer.EVENT | CollisionLayer.TRAP,
+    1, // mass
+    16,
+    10,
+  );
 
-  _render(graphics) {
-    const xoffset = this.handler._getCamera()._getxoffset() - WIDTH / 2,
-      yoffset = this.handler._getCamera()._getyoffset() - HEIGHT / 2 - YOFFSET;
-    this.currentFrame.draw(
-      graphics,
-      this.x - xoffset,
-      this.y - yoffset,
-      this.alpha,
-      this.face === 0 ? HORIZONTAL_FLIP : 0,
-    );
-  }
-
-  _setState(state) {
-    this.currentState = state;
-  }
-
-  _setPos(x, y) {
-    this.x = x;
-    this.y = y;
-  }
+  ecs.addComponent(id, new Name('Player'));
+  ecs.addComponent(id, new Position(x, y));
+  ecs.addComponent(id, new Velocity());
+  ecs.addComponent(id, new Facing(false));
+  ecs.addComponent(id, collider);
+  ecs.addComponent(id, new Sprite(SpriteSheets.PLAYER_IDLE));
+  const script = new PlayerScript(id, ecs);
+  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, anim);
+  return id;
 }

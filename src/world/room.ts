@@ -1,19 +1,12 @@
-import { Rect } from '../math';
-import { OldMonster } from './monster';
-import { BatScript, SnakeScript } from './enemy';
+import { Rect, Vec2 } from '../common';
+import { createBat, createSnake, createSpider } from './monster';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
-import {
-  Collider,
-  ColliderLayer,
-  Animation,
-  Position,
-  Script,
-  Sprite,
-  Velocity,
-} from '../components';
-import { ECSWorld, Entity } from '../ecs';
+import { Collider, CollisionLayer, Position, Sprite } from '../components';
+import { ECSWorld } from '../ecs';
+import { createCamera } from '../camera';
+import { createPlayer } from './player';
 
 enum TileType {
   WALL = 0,
@@ -29,41 +22,33 @@ export class Room {
   width: number;
   height: number;
   obstacles: GameObject[] = [];
-  monsters: OldMonster[] = [];
   objects: SpecialObject[] = [];
   ecs: ECSWorld = new ECSWorld();
-
-  entities: Entity[] = [];
-
-  // @TODO: get rid of handler
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  handler: any;
-
-  constructor(handler) {
-    this.handler = handler;
-  }
+  playerId = ECSWorld.INVALID_ENTITY;
+  cameraId = ECSWorld.INVALID_ENTITY;
 
   private clearRoom() {
     this.world = [];
     this.obstacles = [];
-    this.monsters = [];
     this.objects = [];
     this.ecs = new ECSWorld();
-    this.entities = [];
+  }
+
+  public getCameraOffset(): Vec2 {
+    const pos = this.ecs.getComponent<Position>(this.cameraId, Position.name);
+    return { x: pos.x, y: pos.y };
   }
 
   private createTile(x: number, y: number, sheetId: string) {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, new Sprite(sheetId));
-    this.entities.push(id);
   }
 
   private createEntrance(x: number, y: number) {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, new Sprite(SpriteSheets.ENTRANCE));
-    this.entities.push(id);
   }
 
   private createCollider(x: number, y: number, width: number, height: number) {
@@ -79,90 +64,13 @@ export class Room {
     const collider = new Collider(
       width,
       height,
-      ColliderLayer.OBSTACLE,
-      ColliderLayer.PLAYER | ColliderLayer.ENEMY,
+      CollisionLayer.OBSTACLE,
+      CollisionLayer.PLAYER | CollisionLayer.ENEMY,
       Number.MAX_SAFE_INTEGER,
     );
 
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, collider);
-    this.entities.push(id);
-  }
-
-  private createBat(x: number, y: number) {
-    const id = this.ecs.createEntity();
-    const collider = new Collider(
-      48,
-      35,
-      ColliderLayer.ENEMY,
-      ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
-      10,
-      10,
-      15,
-    );
-
-    const script = new BatScript(id, this.ecs);
-    script.target = this.handler._getPlayer();
-    const anim = new Animation(
-      {
-        idle: {
-          sheetId: SpriteSheets.BAT_IDLE,
-          frames: 1,
-          speed: 1,
-          loop: true,
-        },
-        fly: {
-          sheetId: SpriteSheets.BAT_FLY,
-          frames: 5,
-          speed: 0.5,
-          loop: true,
-        },
-      },
-      'idle',
-    );
-
-    this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Velocity());
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.BAT_IDLE));
-    this.ecs.addComponent(id, anim);
-    this.ecs.addComponent(id, collider);
-    this.ecs.addComponent(id, new Script(script));
-    this.entities.push(id);
-  }
-
-  private createSnake(x: number, y: number, leftBound: number, rightBound: number) {
-    const id = this.ecs.createEntity();
-    const collider = new Collider(
-      62,
-      42,
-      ColliderLayer.ENEMY,
-      ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
-      10,
-      0,
-      22,
-    );
-
-    const anim = new Animation(
-      {
-        idle: {
-          sheetId: SpriteSheets.SNAKE_MOVE,
-          frames: 2,
-          speed: 1,
-          loop: true,
-        },
-      },
-      'idle',
-    );
-
-    const script = new SnakeScript(id, this.ecs, leftBound, rightBound);
-
-    this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Velocity(SnakeScript.INITIAL_SPEED));
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.SNAKE_MOVE));
-    this.ecs.addComponent(id, anim);
-    this.ecs.addComponent(id, collider);
-    this.ecs.addComponent(id, new Script(script));
-    this.entities.push(id);
   }
 
   _init() {
@@ -185,6 +93,12 @@ export class Room {
       }
     }
 
+    // player
+    const playerId = createPlayer(this.ecs, SpawningX, SpawningY);
+    this.playerId = playerId;
+    // camera
+    this.cameraId = createCamera(this.ecs, 400, SpawningY, playerId);
+
     // entrance
     this.createEntrance(96, 608);
 
@@ -205,27 +119,26 @@ export class Room {
     for (const ele of mons) {
       const mon = ele as [number, number, number, number?, number?, number?];
       if (mon[2] === MONSTER.BAT) {
-        this.createBat(mon[0], mon[1]);
+        createBat(this.ecs, mon[0], mon[1], playerId);
       } else if (mon[2] === MONSTER.SNAKE) {
-        this.createSnake(mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
-      } else {
-        const monster = new OldMonster(this.handler, ...mon);
-        this.monsters.push(monster);
+        createSnake(this.ecs, mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
+      } else if (mon[2] === MONSTER.SPIDER) {
+        createSpider(this.ecs, mon[0], mon[1], playerId);
       }
     }
 
     // objects
-    const objs = WORLD.levels[this.level].objects;
-    for (let i = 0; i < objs.length; ++i) {
-      const obj = objs[i];
-      this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
-      this.objects[i]._init();
-      if (obj[3]) {
-        this.objects[i]._init(obj[3]);
-      } else {
-        this.objects[i]._init();
-      }
-    }
+    // const objs = WORLD.levels[this.level].objects;
+    // for (let i = 0; i < objs.length; ++i) {
+    //   const obj = objs[i];
+    //   this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
+    //   this.objects[i]._init();
+    //   if (obj[3]) {
+    //     this.objects[i]._init(obj[3]);
+    //   } else {
+    //     this.objects[i]._init();
+    //   }
+    // }
 
     // if (this.level === 9) {
     //     var music = handler._getMusic()
@@ -240,12 +153,6 @@ export class Room {
         this.objects.splice(i, 1);
       }
     }
-    for (let i = 0; i < this.monsters.length; ++i) {
-      this.monsters[i]._tick();
-      if (this.monsters[i].destroyed) {
-        this.monsters.splice(i, 1);
-      }
-    }
   }
 
   _render(graphics) {
@@ -254,9 +161,6 @@ export class Room {
       if (obj.type !== TYPE.LAVA) obj._render(graphics);
     }
     // monsters
-    for (const monster of this.monsters) {
-      monster._render(graphics);
-    }
     for (const obj of this.objects) {
       if (obj.type === TYPE.LAVA) obj._render(graphics);
     }
