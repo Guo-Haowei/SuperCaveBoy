@@ -89,7 +89,7 @@ export class Game {
 
         this.currentScene.tick(dt);
 
-        System.followSystem(this.room.ecs, dt);
+        System.scriptSystem(this.room.ecs, dt);
     }
 
     render(ctx: CanvasRenderingContext2D) {

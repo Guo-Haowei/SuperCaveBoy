@@ -1,6 +1,6 @@
 import { Rect } from '../math'
 import { OldMonster } from './monster';
-import { Bat } from './bat';
+import { BatScript } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
@@ -90,10 +90,13 @@ export class Room {
             mask: ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
         };
 
+        const script = new BatScript(id, this.ecs);
+        script.target = this.handler._getPlayer();
+
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.BAT_IDLE, frameIndex: 0 });
         this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
-        this.ecs.addComponent(id, ComponentType.FOLLOW, { target: this.handler._getPlayer(), speed: 0.2 });
+        this.ecs.addComponent(id, ComponentType.SCRIPT, { script });
         this.entities.push(id);
     }
 

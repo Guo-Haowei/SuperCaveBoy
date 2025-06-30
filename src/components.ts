@@ -1,8 +1,10 @@
+import { ECSWorld, Entity } from './ecs';
+
 export const ComponentType = {
     POSITION: 'Position',
-    SPRITE: 'SpriteComponent',
-    COLLIDER: 'ColliderComponent',
-    FOLLOW: 'Follow',
+    SPRITE: 'Sprite',
+    COLLIDER: 'Collider',
+    SCRIPT: 'Script',
 } as const;
 
 export type PositionComponent = {
@@ -30,7 +32,21 @@ export type ColliderComponent = {
     mask: number;
 };
 
-export type FollowComponent = {
-    target: any; // @TODO: entity id
-    speed: number;
+export abstract class ScriptBase {
+    protected entity: Entity;
+    protected world: ECSWorld;
+
+    constructor(entity: Entity, world: ECSWorld) {
+        this.entity = entity;
+        this.world = world;
+    }
+
+    onInit?(): void;
+    onUpdate?(dt: number): void;
+    onCollision?(other: Entity): void;
+    onDie?(): void;
+};
+
+export type ScriptComponent = {
+    script: ScriptBase;
 };

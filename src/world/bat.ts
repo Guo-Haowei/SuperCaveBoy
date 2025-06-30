@@ -1,38 +1,69 @@
 import { Rect } from '../math';
-import { SpriteComponent } from '../sprite';
+import { ECSWorld, Entity } from '../ecs';
+import { ComponentType, PositionComponent, ScriptBase } from '../components';
 
-// @TODO: script system
 // @TODO: ai system?
 // @TODO: animation system?
 // @TODO: health system?
 
-// class ScriptBase {
-//     onUpdate?(world: World, id: EntityId, dt: number): void;
-//     onCollide?(world: World, self: EntityId, other: EntityId): void;
-//     onDamaged?(world: World, id: EntityId, damage: number): void;
-//     onDie?(world: World, id: EntityId): void;
-// };
-
-// class ChasingEnemyScript extends ScriptBase {
-//     onUpdate(world: World, id: EntityId, dt: number) {
-//         // move toward player
-//     }
-
-//     onCollide(world: World, self: EntityId, other: EntityId) {
-//         if (world.hasComponent(other, "Player")) {
-//             // attack or damage player
-//         }
-//     }
-
-//     onDie(world: World, id: EntityId) {
-//         console.log("chasing enemy died");
-//         // maybe spawn explosion, play sound, etc.
-//     }
-// };
-
 type EnemyState = "idle" | "chase" | "attack" | "die";
 
-export class Bat {
+export class BatScript extends ScriptBase {
+    target: any; // @TODO: entity id
+
+    private speed: number;
+    private hspeed = 0;
+    private vspeed = 0;
+    private state: 'idle' | 'chase' = 'idle';
+
+    constructor(entity: Entity, world: ECSWorld) {
+        super(entity, world);
+        this.speed = 0.2;
+    }
+
+    private idle() {
+        const player = this.target;
+        const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
+        const { x, y } = position;
+
+        if (Math.abs(x - player.x) < 350 && y - 100 < player.y) {
+            this.state = 'chase';
+        }
+    }
+
+    private chase(dt: number) {
+        const player = this.target;
+        const position = this.world.getComponent<PositionComponent>(this.entity, ComponentType.POSITION);
+        const { x, y } = position;
+
+        const xsign = x - player.x > 5 ? 1 :x-player.x >= -5 ? 0 : -1;
+        const ysign = y-player.y>5?1:y-player.y>=-5?0:-1;
+        this.hspeed = -xsign;
+        this.vspeed = -ysign;
+        // this.face = this.hspeed>0? DIRECTION.RIGHT:DIRECTION.LEFT;
+        // @TODO: fix this hack
+        if (this.hspeed == 0 || this.vspeed == 0) this.speed = 0.3;
+
+        // assume no collision for now
+        position.x += this.hspeed * this.speed * dt;
+        position.y += this.vspeed * this.speed * dt;
+    }
+
+    onUpdate(dt: number) {
+        switch (this.state) {
+            case 'idle':
+                this.idle();
+                break;
+            case 'chase':
+                this.chase(dt);
+                break;
+            default:
+                throw new Error(`Unknown state: ${this.state}`);
+        }
+    }
+};
+
+class Bat {
     x: number;
     y: number;
     destroyed = false;
@@ -128,17 +159,14 @@ export class Bat {
             player._damageTrigger(that.x);
         }
 
-        // check collision
-        if (this.type !== MONSTER.SNAKE) {
-            // vertical
-            if (!(this.vspeed > 0 && checkAllCollision(this, this.handler._getObstacles(), downCollision)) &&
-                !(this.vspeed < 0 && checkAllCollision(this, this.handler._getObstacles(), upCollision))) {
-                this.y += this.vspeed*this.speed;
-            }
-            // horizontal
-            if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)){
-                this.x += this.hspeed*this.speed;
-            }
+        // vertical
+        if (!(this.vspeed > 0 && checkAllCollision(this, this.handler._getObstacles(), downCollision)) &&
+            !(this.vspeed < 0 && checkAllCollision(this, this.handler._getObstacles(), upCollision))) {
+            this.y += this.vspeed*this.speed;
+        }
+        // horizontal
+        if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)){
+            this.x += this.hspeed*this.speed;
         }
     }
 

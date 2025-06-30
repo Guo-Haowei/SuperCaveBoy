@@ -1,5 +1,5 @@
 import { ECSWorld } from './ecs';
-import { ComponentType, ColliderComponent, PositionComponent, SpriteComponent, ColliderLayer, FollowComponent } from './components';
+import { ComponentType, ColliderComponent, PositionComponent, SpriteComponent, ColliderLayer, ScriptComponent } from './components';
 import { spriteManager } from './assets';
 
 // @TODO: use camera
@@ -58,23 +58,11 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
     }
 }
 
-export function followSystem(world: ECSWorld, dt: number) {
-    for (const entity of world.queryEntities([ComponentType.FOLLOW, ComponentType.POSITION])) {
-        const follow = world.getComponent<FollowComponent>(entity, ComponentType.FOLLOW)!;
+export function scriptSystem(world: ECSWorld, dt: number) {
+    for (const entity of world.queryEntities([ComponentType.SCRIPT, ComponentType.POSITION])) {
+        const script = world.getComponent<ScriptComponent>(entity, ComponentType.SCRIPT)!;
         const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
 
-        const { target } = follow;
-        if (!target) continue;
-
-        const dx = target.x - pos.x;
-        const dy = target.y - pos.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        const speed = follow.speed * dt;
-
-        if (distance > 0) {
-            pos.x += (dx / distance) * speed;
-            pos.y += (dy / distance) * speed;
-        }
+        script.script.onUpdate?.(dt);
     }
 }
