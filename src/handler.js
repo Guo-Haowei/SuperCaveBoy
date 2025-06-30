@@ -18,11 +18,7 @@ function Handler(game) {
     this._getPlayer = function() {
         return this.game.player;
     }
-    
-    this._getCamera = function() {
-        return this.game.camera;
-    }
-    
+
     this._getMusic = function() {
         return this.game.music;
     }

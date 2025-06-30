@@ -1,11 +1,13 @@
 export type Entity = number;
 
 export class ECSWorld {
+  static readonly INVALID_ENTITY: Entity = 0;
+
   private nextEntityId = 0;
   private components = new Map<string, Map<Entity, unknown>>();
 
   createEntity(): Entity {
-    return this.nextEntityId++;
+    return ++this.nextEntityId;
   }
 
   addComponent(entity: Entity, data: unknown): void {

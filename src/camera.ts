@@ -1,48 +1,44 @@
-export class Camera {
-    xoffset: number;
-    yoffset: number;
-    target = null;
+import { ECSWorld } from './ecs';
+import { Position, Script, ScriptBase } from './components';
 
-    constructor(x, y) {
-        this.xoffset = x;
-        this.yoffset = y;
-    }
+class CameraScript extends ScriptBase {
+  target: any; // @TODO: entity id
 
-    _getxoffset() {
-        return this.xoffset;
-    }
+  constructor(entity: number, world: ECSWorld) {
+    super(entity, world);
+    this.target = null;
+  }
 
-    _getyoffset() {
-        return this.yoffset;
-    }
+  onUpdate(_dt: number) {
+    if (this.target == null) return;
 
-    _setoffset(x, y) {
-        this.xoffset = x;
-        this.yoffset = y;
-    }
+    const pos = this.world.getComponent<Position>(this.entity, Position.name);
+    const objx = this.target.x;
+    const objy = this.target.y;
 
-    _tick() {
-        this._followTarget();
+    pos.x += (objx - pos.x) / 20.0;
+    pos.y += (objy - pos.y) / 20.0;
+    if (pos.x <= WIDTH / 2) {
+      pos.x = WIDTH / 2;
+    } else if (pos.x >= WWIDTH - WIDTH / 2) {
+      pos.x = WWIDTH - WIDTH / 2;
     }
+    if (pos.y <= HEIGHT / 2 + YOFFSET) {
+      pos.y = HEIGHT / 2 + YOFFSET;
+    } else if (pos.y >= WHEIGHT - HEIGHT / 2) {
+      pos.y = WHEIGHT - HEIGHT / 2;
+    }
+  }
+}
 
-    _setTarget(obj) {
-        this.target = obj;
-    }
+export function createCamera(world: ECSWorld, x: number, y: number, player: any): number {
+  const id = world.createEntity();
 
-    _followTarget() {
-        if (this.target == null) return;
-        const objx = this.target.x, objy = this.target.y;
-        this.xoffset += (objx - this.xoffset) / 20.0;
-        this.yoffset += (objy - this.yoffset) / 20.0;
-        if (this.xoffset <= WIDTH / 2) {
-            this.xoffset = WIDTH / 2;
-        } else if (this.xoffset >= WWIDTH - WIDTH / 2) {
-            this.xoffset = WWIDTH - WIDTH / 2;
-        }
-        if (this.yoffset <= HEIGHT / 2 + YOFFSET) {
-            this.yoffset = HEIGHT / 2 + YOFFSET;
-        } else if (this.yoffset >= WHEIGHT - HEIGHT / 2) {
-            this.yoffset = WHEIGHT - HEIGHT / 2;
-        }
-    }
+  const script = new CameraScript(id, world);
+  script.target = player;
+
+  world.addComponent(id, new Position(x, y));
+  world.addComponent(id, new Script(script));
+  // @TODO: script
+  return id;
 }

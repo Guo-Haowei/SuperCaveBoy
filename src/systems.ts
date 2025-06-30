@@ -11,8 +11,6 @@ import {
 import { spriteManager } from './assets';
 import { Direction, Rect, Vec2 } from './common';
 
-import { Camera } from './camera';
-
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
   for (const [_id, anim, sprite] of world.queryEntities<Animation, Sprite>(
@@ -35,9 +33,9 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: Camera) {
-  const cameraX = camera.xoffset - 0.5 * WIDTH;
-  const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
+  const cameraX = offset.x - 0.5 * WIDTH;
+  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
 
   // @TODO: culling
   for (const [id, sprite, pos] of world.queryEntities<Sprite, Position>(
@@ -78,13 +76,13 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
 
   const DEBUG = true;
   if (DEBUG) {
-    renderSystemDebug(world, ctx, camera);
+    renderSystemDebug(world, ctx, offset);
   }
 }
 
-function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: Camera) {
-  const cameraX = camera.xoffset - 0.5 * WIDTH;
-  const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
+function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
+  const cameraX = offset.x - 0.5 * WIDTH;
+  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
 
   for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
     Position.name,
@@ -193,7 +191,7 @@ function resolveCollision(
   }
 }
 
-export function physicsSystem(world: ECSWorld) {
+export function physicsSystem(world: ECSWorld, _dt: number) {
   const entities = world.queryEntities<Collider, Position>(Collider.name, Position.name);
 
   for (let i = 0; i < entities.length - 1; ++i) {

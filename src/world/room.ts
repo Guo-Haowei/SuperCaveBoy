@@ -1,4 +1,4 @@
-import { Rect } from '../common';
+import { Rect, Vec2 } from '../common';
 import { BatScript, SnakeScript, SpiderScript } from './enemy';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
@@ -13,6 +13,7 @@ import {
   Velocity,
 } from '../components';
 import { ECSWorld } from '../ecs';
+import { createCamera } from '../camera';
 
 enum TileType {
   WALL = 0,
@@ -30,6 +31,8 @@ export class Room {
   obstacles: GameObject[] = [];
   objects: SpecialObject[] = [];
   ecs: ECSWorld = new ECSWorld();
+  playerId = ECSWorld.INVALID_ENTITY;
+  cameraId = ECSWorld.INVALID_ENTITY;
 
   // @TODO: get rid of handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -44,6 +47,11 @@ export class Room {
     this.obstacles = [];
     this.objects = [];
     this.ecs = new ECSWorld();
+  }
+
+  public getCameraOffset(): Vec2 {
+    const pos = this.ecs.getComponent<Position>(this.cameraId, Position.name);
+    return { x: pos.x, y: pos.y };
   }
 
   private createTile(x: number, y: number, sheetId: string) {
@@ -196,6 +204,9 @@ export class Room {
     WWIDTH = this.width * 64;
     WHEIGHT = this.height * 64;
     YBOUND = WHEIGHT - 72 - 64 * 3;
+
+    // camera
+    this.cameraId = createCamera(this.ecs, 400, SpawningY, this.handler._getPlayer());
 
     // tiles
     for (let y = 0; y < this.height; ++y) {

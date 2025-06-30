@@ -2,7 +2,6 @@ import { Player } from './world/player';
 import { Room } from './world/room';
 import * as System from './systems';
 import { Assets } from './assets';
-import { Camera } from './camera';
 import { inputManager } from './input-manager';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
@@ -38,8 +37,6 @@ export class Game {
     this.room._init();
 
     // create entities
-    this.camera = new Camera(480, SpawningY);
-    this.camera._setTarget(this.player);
 
     // gui
     this.gui = new GUI(this.handler);
@@ -132,7 +129,6 @@ class PlayScene implements IScene {
   }
 
   tick(dt: number) {
-    this.handler._getCamera()._tick();
     this.handler._getPlayer()._tick();
     this.game.room._tick();
 
@@ -145,7 +141,9 @@ class PlayScene implements IScene {
 
     System.animationSystem(ecs, dt);
     // render at last
-    System.renderSystem(ecs, ctx, this.game.camera);
+
+    const offset = this.game.room.getCameraOffset();
+    System.renderSystem(ecs, ctx, offset);
   }
 
   render(ctx) {

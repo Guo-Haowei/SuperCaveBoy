@@ -128,7 +128,7 @@ export class Player {
     this._setPos(SpawningX, SpawningY);
     this._setState(this._JumpingState);
     // reset camara pos
-    this.handler._getCamera()._setoffset(480, SpawningY);
+    // Camera()._setoffset(480, SpawningY);
     this.handler._getLevel()._init(true);
   };
 
@@ -205,15 +205,13 @@ export class Player {
   }
 
   _render(graphics) {
-    const xoffset = this.handler._getCamera()._getxoffset() - WIDTH / 2,
-      yoffset = this.handler._getCamera()._getyoffset() - HEIGHT / 2 - YOFFSET;
-    this.currentFrame.draw(
-      graphics,
-      this.x - xoffset,
-      this.y - yoffset,
-      this.alpha,
-      this.face === 0 ? HORIZONTAL_FLIP : 0,
-    );
+    // this.currentFrame.draw(
+    //   graphics,
+    //   this.x - xoffset,
+    //   this.y - yoffset,
+    //   this.alpha,
+    //   this.face === 0 ? HORIZONTAL_FLIP : 0,
+    // );
   }
 
   _setState(state) {
