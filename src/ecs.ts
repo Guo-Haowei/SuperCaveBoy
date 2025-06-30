@@ -2,7 +2,7 @@ export type Entity = number;
 
 export class ECSWorld {
     private nextEntityId = 0;
-    private components: Map<string, Map<Entity, any>> = new Map();
+    private components: Map<string, Map<Entity, unknown>> = new Map();
 
     createEntity(): Entity {
         return this.nextEntityId++;
@@ -16,14 +16,14 @@ export class ECSWorld {
     }
 
     getComponent<T>(entity: Entity, componentName: string): T | undefined {
-        return this.components.get(componentName)?.get(entity);
+        return this.components.get(componentName)?.get(entity) as T;
     }
 
     queryEntities(componentNames: string[]): Entity[] {
         const sets = componentNames.map(name => this.components.get(name));
         if (!sets) return [];
 
-        const [first, ...rest] = sets as Map<Entity, any>[];
+        const [first, ...rest] = sets as Map<Entity, unknown>[];
         return [...first.keys()].filter(entity =>
             rest.every(set => set.has(entity))
         );

@@ -28,6 +28,7 @@ export class Room {
     entities: Entity[] = [];
 
     // @TODO: get rid of handler
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handler: any;
 
     constructor(handler) {
@@ -125,7 +126,7 @@ export class Room {
         this.entities.push(id);
     }
 
-    _init(bool) {
+    _init() {
         this.clearRoom();
 
         ++this.level;
@@ -162,7 +163,7 @@ export class Room {
 
         // monsters
         const mons = WORLD.levels[this.level].monsters;
-        for (var i = 0; i < mons.length; ++i) {
+        for (let i = 0; i < mons.length; ++i) {
             const mon = mons[i] as [number, number, number, number?, number?, number?];
             if (mon[2] === MONSTER.BAT) {
                 this.createBat(mon[0], mon[1]);
@@ -174,8 +175,8 @@ export class Room {
 
         // objects
         const objs = WORLD.levels[this.level].objects;
-        for (var i = 0; i < objs.length; ++i) {
-            var obj = objs[i];
+        for (let i = 0; i < objs.length; ++i) {
+            const obj = objs[i];
             this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
             this.objects[i]._init();
             if (obj[3])
@@ -190,11 +191,11 @@ export class Room {
     }
 
     _tick() {
-        for (var i = 0; i < this.objects.length; ++i) {
+        for (let i = 0; i < this.objects.length; ++i) {
             this.objects[i]._tick();
             if (this.objects[i].destroyed) {this.objects.splice(i, 1);}
         }
-        for (var i = 0; i < this.monsters.length; ++i) {
+        for (let i = 0; i < this.monsters.length; ++i) {
             this.monsters[i]._tick();
             if (this.monsters[i].destroyed) {this.monsters.splice(i, 1);}
         }
@@ -202,14 +203,14 @@ export class Room {
 
     _render(graphics) {
         // objects
-        for (var i = 0; i < this.objects.length; ++i) {
+        for (let i = 0; i < this.objects.length; ++i) {
             if(this.objects[i].type !== TYPE.LAVA) this.objects[i]._render(graphics);
         }
         // monsters
-        for (var i = 0; i < this.monsters.length; ++i) {
+        for (let i = 0; i < this.monsters.length; ++i) {
             this.monsters[i]._render(graphics);
         }
-        for (var i = 0; i < this.objects.length; ++i) {
+        for (let i = 0; i < this.objects.length; ++i) {
             if(this.objects[i].type === TYPE.LAVA) this.objects[i]._render(graphics);
         }
     }

@@ -19,7 +19,7 @@ export class OldSprite {
 	    const flip = (typeof Flip === 'undefined')? 0 : Flip;
         graphics.globalAlpha = alpha;
 
-        var hFlip = flip & 1,
+        const hFlip = flip & 1,
         vFlip = (flip & 2) >> 1;
 
         graphics.translate(x+hFlip*this.width,y+vFlip*this.height);

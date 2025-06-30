@@ -2,6 +2,7 @@ import { Player } from './world/player';
 import { Room } from './world/room';
 import * as System from './systems';
 import { Assets } from './assets';
+import { Camera } from './camera';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -125,7 +126,7 @@ class MenuScene implements IScene {
     }
 
     render(ctx: CanvasRenderingContext2D) {
-        this.handler._getGameAssets().bg_menu.draw(ctx, 0, HEIGHT/2-270);
+        this.handler._getGameAssets().bg_menu.draw(ctx, 0, HEIGHT / 2 - 270);
         this.drawText(ctx);
     }
 
@@ -186,9 +187,9 @@ class EndScene implements IScene {
     }
 
     render(ctx) {
-        for (var h = 0; h < hTile; ++h) {
-            for (var w = 0; w < wTile; ++w) {
-                this.sprite.draw(ctx, w*64, h*64);
+        for (let h = 0; h < hTile; ++h) {
+            for (let w = 0; w < wTile; ++w) {
+                this.sprite.draw(ctx, w * 64, h * 64);
             }
         }
         this.drawText(ctx);
@@ -208,7 +209,7 @@ class EndScene implements IScene {
 
         const diff = this.game.end - this.game.start;
         const time = `Your Time Was: ${this.formatTime(diff)}`;
-        const content = player.health <= 0 ?  'You lost!' : 'You Won!';
+        const content = player.health <= 0 ? 'You lost!' : 'You Won!';
 
         ctx.fillStyle = '#ffffff';
         ctx.font = '64pt Arial';

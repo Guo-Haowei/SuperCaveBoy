@@ -104,7 +104,7 @@ export class Assets {
         // player idle
         this.spr_player_idle = new OldSprite(images.spr_player_idle, 0, 0, 64, 72);
         // player walk
-        for (var i = 0; i < 8; ++i) {
+        for (let i = 0; i < 8; ++i) {
             this.spr_player_walk[7-i] = new OldSprite(images.spr_player_walk, (7-i)*64, 0, 64, 72);
         }
         //player jump
@@ -134,7 +134,7 @@ export class Assets {
         this.spr_snake_slithe[1] = new OldSprite(images.spr_snake_slithe, 64, 0, 64, 64);
 
         this.spr_bat_idle = new OldSprite(images.spr_bat_idle, 0, 0, 64, 64);
-        for (var i = 0; i < 5; ++i) {
+        for (let i = 0; i < 5; ++i) {
             this.spr_bat_fly[i] = new OldSprite(images.spr_bat_fly, 64*i, 0, 64, 64);
             this.spr_spider_jump[i] = new OldSprite(images.spr_spider_jump, 64*i, 0, 64, 68);
         }

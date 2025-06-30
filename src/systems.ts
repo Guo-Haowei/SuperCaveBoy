@@ -1,4 +1,4 @@
-import { Entity, ECSWorld } from './ecs';
+import { ECSWorld } from './ecs';
 import {
     ComponentType,
     AnimationComponent,
@@ -11,6 +11,8 @@ import {
 } from './components';
 import { spriteManager } from './assets';
 import { Rect, Vec2 } from './math';
+
+import { Camera } from './camera';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
@@ -34,7 +36,7 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: Camera) {
     const cameraX = camera.xoffset - 0.5 * WIDTH;
     const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
 
@@ -42,10 +44,9 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
     for (const entity of world.queryEntities([ComponentType.POSITION, ComponentType.SPRITE])) {
         const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION);
         const sprite = world.getComponent<SpriteComponent>(entity, ComponentType.SPRITE);
-        const animation = world.getComponent<AnimationComponent>(entity, ComponentType.ANIMATION);
 
         const { x, y } = pos;
-        let { sheetId, frameIndex } = sprite;
+        const { sheetId, frameIndex } = sprite;
 
         const renderable = spriteManager.getFrame(sheetId, frameIndex);
         const { image, frame } = renderable;
@@ -59,7 +60,7 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
         const flipLeft: number = vel && vel.vx < 0 ? 1 : 0;
 
         ctx.translate(dx + flipLeft * frame.width, dy);
-        ctx.scale(flipLeft ? -1: 1, 1);
+        ctx.scale(flipLeft ? -1 : 1, 1);
 
         ctx.drawImage(image, frame.sourceX, frame.sourceY, frame.width, frame.height, 0, 0, frame.width, frame.height);
 
@@ -72,7 +73,7 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
     }
 }
 
-function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: any) {
+function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camera: Camera) {
     const cameraX = camera.xoffset - 0.5 * WIDTH;
     const cameraY = camera.yoffset - 0.5 * HEIGHT - YOFFSET;
 
@@ -109,7 +110,6 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, camer
 export function scriptSystem(world: ECSWorld, dt: number) {
     for (const entity of world.queryEntities([ComponentType.SCRIPT, ComponentType.POSITION])) {
         const script = world.getComponent<ScriptComponent>(entity, ComponentType.SCRIPT)!;
-        const pos = world.getComponent<PositionComponent>(entity, ComponentType.POSITION)!;
 
         script.script.onUpdate?.(dt);
     }
@@ -186,7 +186,7 @@ function resolveCollision(
     }
 }
 
-export function physicsSystem(world: ECSWorld, dt: number) {
+export function physicsSystem(world: ECSWorld) {
     const entities = world.queryEntities(["Position", "Collider"]);
     for (let i = 0; i < entities.length - 1; ++i) {
         for (let j = i + 1; j < entities.length; ++j) {
