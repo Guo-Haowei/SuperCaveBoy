@@ -5,6 +5,7 @@ export const SpriteSheets = {
     DIRY: 'dirt',
     WALL: 'wall',
     ENTRANCE: 'entrance',
+    BAT_IDLE: 'bat_idle',
 } as const;
 
 type SpriteFrame = {
@@ -34,6 +35,8 @@ class SpriteManager {
         this.loadSheet(SpriteSheets.DIRY, images.spr_dirt, TILE_SIZE, TILE_SIZE);
         this.loadSheet(SpriteSheets.WALL, images.bg_dirt, TILE_SIZE, TILE_SIZE);
         this.loadSheet(SpriteSheets.ENTRANCE, images.spr_entrance, 96, 96);
+
+        this.loadSheet(SpriteSheets.BAT_IDLE, images.spr_bat_idle, TILE_SIZE, TILE_SIZE);
     }
 
     private loadSheet(name: string, image: HTMLImageElement, frameWidth: number, frameHeight: number) {

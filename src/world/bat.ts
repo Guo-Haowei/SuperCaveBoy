@@ -1,5 +1,5 @@
 import { Rect } from '../math';
-import { Sprite } from '../sprite';
+import { SpriteComponent } from '../sprite';
 
 // @TODO: script system
 // @TODO: ai system?
@@ -30,12 +30,14 @@ import { Sprite } from '../sprite';
 //     }
 // };
 
+type EnemyState = "idle" | "chase" | "attack" | "die";
+
 export class Bat {
     x: number;
     y: number;
     destroyed = false;
     alpha = 1;
-    sprite: Sprite;
+    sprite: SpriteComponent;
     leftBound?: number;
     rightBound?: number;
     face: number;

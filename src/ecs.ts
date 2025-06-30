@@ -29,20 +29,3 @@ export class ECSWorld {
         );
     }
 };
-
-
-// function RenderSystem(world: ECSWorld, spriteManager: SpriteManager, ctx: CanvasRenderingContext2D) {
-//     for (const entity of world.queryEntities(['Position', 'Renderable'])) {
-//         const pos = world.getComponent<Position>(entity, 'Position')!;
-//         const render = world.getComponent<Renderable>(entity, 'Renderable')!;
-
-//         const img = spriteManager.get(render.sheetId);
-//         const spriteSize = 32;
-
-//         ctx.drawImage(
-//             img,
-//             render.frame * spriteSize, 0, spriteSize, spriteSize, // source
-//             pos.x, pos.y, spriteSize, spriteSize                  // destination
-//         );
-//     }
-// }

@@ -1,6 +1,6 @@
 import { Player } from './world/player';
 import { Room } from './world/room';
-import { renderSystem } from './renderer';
+import * as System from './systems';
 import { Assets } from './assets';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
@@ -87,7 +87,9 @@ export class Game {
             this.lastTick = timestamp;
         }
 
-        this.currentScene.tick(timestamp);
+        this.currentScene.tick(dt);
+
+        System.followSystem(this.room.ecs, dt);
     }
 
     render(ctx: CanvasRenderingContext2D) {
@@ -95,7 +97,7 @@ export class Game {
         ctx.fillStyle = '#1C0909';
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-        renderSystem(this.room.ecs, ctx, this.camera);
+        System.renderSystem(this.room.ecs, ctx, this.camera);
 
         this.currentScene.render(ctx);
     }

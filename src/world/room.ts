@@ -4,7 +4,7 @@ import { Bat } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
-import { Collider, ComponentType, ColliderLayer } from '../components';
+import { ColliderComponent, ComponentType, ColliderLayer } from '../components';
 import { ECSWorld, Entity } from '../ecs';
 
 enum TileType {
@@ -32,16 +32,27 @@ export class Room {
         this.handler = handler;
     }
 
+    private clearRoom() {
+        this.world = [];
+        this.obstacles = [];
+        this.monsters = [];
+        this.objects = [];
+        this.ecs = new ECSWorld();
+        this.entities = [];
+    }
+
     private createTile(x: number, y: number, sheetId: string) {
         const id = this.ecs.createEntity();
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId, frameIndex: 0 });
+        this.entities.push(id);
     }
 
     private createEntrance(x: number, y: number) {
         const id = this.ecs.createEntity();
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.ENTRANCE, frameIndex: 0 });
+        this.entities.push(id);
     }
 
     private createCollider(x: number, y: number, width: number, height: number) {
@@ -51,10 +62,10 @@ export class Room {
         height = height * TILE_SIZE;
 
         // TODO: remove GameObject
-        this.obstacles.push( new GameObject(x, y, new Rect(0, 0, width, height)));
+        this.obstacles.push(new GameObject(x, y, new Rect(0, 0, width, height)));
 
         const id = this.ecs.createEntity();
-        const collider : Collider = {
+        const collider : ColliderComponent = {
             width,
             height,
             offsetX: 0,
@@ -65,14 +76,25 @@ export class Room {
 
         this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
         this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
+        this.entities.push(id);
     }
 
-    private clearRoom() {
-        this.world = [];
-        this.obstacles = [];
-        this.monsters = [];
-        this.objects = [];
-        this.ecs = new ECSWorld();
+    private createBat(x: number, y: number) {
+        const id = this.ecs.createEntity();
+        const collider : ColliderComponent = {
+            width: 48,
+            height: 35,
+            offsetX: 10,
+            offsetY: 15,
+            layer: ColliderLayer.ENEMY,
+            mask: ColliderLayer.PLAYER | ColliderLayer.OBSTACLE,
+        };
+
+        this.ecs.addComponent(id, ComponentType.POSITION, { x, y });
+        this.ecs.addComponent(id, ComponentType.SPRITE, { sheetId: SpriteSheets.BAT_IDLE, frameIndex: 0 });
+        this.ecs.addComponent(id, ComponentType.COLLIDER, collider);
+        this.ecs.addComponent(id, ComponentType.FOLLOW, { target: this.handler._getPlayer(), speed: 0.2 });
+        this.entities.push(id);
     }
 
     _init(bool) {
@@ -114,13 +136,12 @@ export class Room {
         const mons = WORLD.levels[this.level].monsters;
         for (var i = 0; i < mons.length; ++i) {
             const mon = mons[i] as [number, number, number, number?, number?, number?];
-            let monster = null;
             if (mon[2] === MONSTER.BAT) {
-                monster = new Bat(this.handler, ...mon);
+                this.createBat(mon[0], mon[1]);
             } else {
-                monster = new OldMonster(this.handler, ...mon);
+                const monster = new OldMonster(this.handler, ...mon);
+                this.monsters.push(monster);
             }
-            this.monsters.push(monster);
         }
 
         // objects
