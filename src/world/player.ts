@@ -1,5 +1,6 @@
 import { Rect } from '../math';
 import { audios } from '../audios';
+import { inputManager } from '../input-manager';
 
 export class Player {
   x: number;
@@ -146,11 +147,16 @@ export class Player {
     }
 
     // hspeed
-    if (!this.alarm1.activated && this.currentState != this._DamagedState)
-      this.hspeed = this.handler._getKeyManager().rightKey - this.handler._getKeyManager().leftKey;
+    if (!this.alarm1.activated && this.currentState != this._DamagedState) {
+      const leftDown = inputManager.isKeyDown('KeyA');
+      const rightDown = inputManager.isKeyDown('KeyD');
+      const direction = Number(rightDown) - Number(leftDown);
+      this.hspeed = direction;
+    }
     // vspeed
+    const jumpPressed = inputManager.isKeyPressed('KeyW');
     if (
-      this.handler._getKeyManager().upKey > 0 &&
+      jumpPressed &&
       !this.alarm1.activated &&
       this.currentState != this._DamagedState &&
       ((this.takingJump && this.vspeed === 1.5) || this.grabbing)
@@ -186,7 +192,6 @@ export class Player {
     // tick state
     this.currentState();
     // tick handler
-    this.handler._getKeyManager()._tick();
   }
 
   _land() {

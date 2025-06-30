@@ -14,11 +14,7 @@ function Handler(game) {
     this._getGameEntities = function() {
         return this.game.entities;
     }
-    
-    this._getKeyManager = function() {
-        return this.game.keyManager;
-    }
-    
+
     this._getPlayer = function() {
         return this.game.player;
     }

@@ -3,6 +3,7 @@ import { Room } from './world/room';
 import * as System from './systems';
 import { Assets } from './assets';
 import { Camera } from './camera';
+import { inputManager } from './input-manager';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -24,14 +25,6 @@ export class Game {
     this.assets;
     // handler
     this.handler = new Handler(this);
-    // key manager
-    this.keyManager = keyManager;
-    this.keyManager._setTakeInput(true);
-    this.keyManager._init();
-    // game objects
-    // camera
-    // level
-    this.room;
   }
 
   public init(images: Record<string, HTMLImageElement>) {
@@ -107,9 +100,8 @@ class MenuScene implements IScene {
     this.handler = game.handler;
   }
 
-  tick(dt: number) {
-    this.handler._getKeyManager()._tick();
-    if (this.handler._getKeyManager().spaceKey === BOOL.TRUE) {
+  tick(_dt: number) {
+    if (inputManager.isKeyPressed('Space')) {
       this.game.setScene('PLAY');
       this.game.start = Date.now();
     }
