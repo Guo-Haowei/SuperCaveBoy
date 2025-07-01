@@ -38,14 +38,14 @@ export function animationSystem(world: ECSWorld, dt: number) {
 
 // ------------------------------- Render System -------------------------------
 export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
+  // @TODO: camera culling
   const cameraX = offset.x - 0.5 * WIDTH;
   const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
 
-  // @TODO: culling
-  for (const [id, sprite, pos] of world.queryEntities<Sprite, Position>(
-    Sprite.name,
-    Position.name,
-  )) {
+  const renderables = world.queryEntities<Sprite, Position>(Sprite.name, Position.name);
+  const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
+
+  for (const [id, sprite, pos] of sorted) {
     const { x, y } = pos as Position;
     const { sheetId, frameIndex } = sprite as Sprite;
 

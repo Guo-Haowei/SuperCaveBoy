@@ -44,13 +44,13 @@ export class Room {
   private createTile(x: number, y: number, sheetId: string) {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Sprite(sheetId));
+    this.ecs.addComponent(id, new Sprite(sheetId, 0, 2));
   }
 
   private createEntrance(x: number, y: number) {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.ENTRANCE));
+    this.ecs.addComponent(id, new Sprite(SpriteSheets.ENTRANCE, 0, 1));
   }
 
   private createCollider(x: number, y: number, width: number, height: number) {

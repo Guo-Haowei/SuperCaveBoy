@@ -33,10 +33,12 @@ export class Velocity {
 export class Sprite {
   sheetId: string;
   frameIndex: number;
+  zIndex: number;
 
-  constructor(sheetId: string, frameIndex = 0) {
+  constructor(sheetId: string, frameIndex = 0, zIndex = 0) {
     this.sheetId = sheetId;
     this.frameIndex = frameIndex;
+    this.zIndex = zIndex;
   }
 }
 

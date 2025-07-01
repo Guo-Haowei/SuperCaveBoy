@@ -1,5 +1,3 @@
-import { OldSprite } from './sprite';
-
 export const SpriteSheets = {
   DIRY: 'dirt',
   WALL: 'wall',
