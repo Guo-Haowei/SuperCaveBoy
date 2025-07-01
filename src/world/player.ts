@@ -13,21 +13,42 @@ import {
 import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
 import { inputManager } from '../input-manager';
-import { findGravityAndJumpVelocity, createLifeform } from './lifeform-common';
+import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
+
+type PlayerStateName = 'idle' | 'walk' | 'jump';
 
 class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
 
-  private state: 'walk' | 'jump';
+  private fsm: StateMachine<PlayerStateName>;
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
-    this.state = 'walk';
 
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     vel.gravity = GRAVITY;
+
+    this.fsm = new StateMachine<PlayerStateName>(
+      {
+        idle: {
+          name: 'idle',
+          enter: () => this.playAnim('idle'),
+          update: () => this.idle(),
+        },
+        walk: {
+          name: 'walk',
+          enter: () => this.playAnim('walk'),
+          update: () => this.walk(),
+        },
+        jump: {
+          name: 'jump',
+          update: () => this.jump(),
+        },
+      },
+      'walk',
+    );
   }
 
   private inputLeft() {
@@ -42,52 +63,80 @@ class PlayerScript extends ScriptBase {
     return inputManager.isKeyPressed('ArrowUp') || inputManager.isKeyPressed('KeyW');
   }
 
-  private updateHorizonalMove(velocity: Velocity) {
+  private tryWalk(velocity: Velocity) {
     const leftDown = this.inputLeft();
     const rightDown = this.inputRight();
     const direction = Number(rightDown) - Number(leftDown);
-    const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
 
     velocity.vx = direction * PlayerScript.MOVE_SPEED;
     if (leftDown || rightDown) {
+      const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
       facing.left = direction < 0;
+      return true;
     }
+    return false;
   }
 
-  private startJump(velocity: Velocity) {
-    velocity.vy = -JUMP_VELOCITY;
-    this.state = 'jump';
-  }
-
-  private walk(_dt: number) {
-    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    this.updateHorizonalMove(velocity);
-
+  private tryJump(velocity: Velocity) {
     if (this.inputUp() && this.isGrounded()) {
-      this.startJump(velocity);
+      velocity.vy = -JUMP_VELOCITY;
+      return true;
+    }
+    return false;
+  }
+
+  private checkFalling(velocity: Velocity) {
+    if (this.isGrounded()) {
+      return false;
+    }
+    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
+    anim.current = 'jump';
+    if (velocity.vy < 0) {
+      anim.elapsed = 0.1;
+    } else {
+      anim.elapsed = 5.1;
+    }
+    return true;
+  }
+
+  private idle() {
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const walking = this.tryWalk(vel);
+    this.tryJump(vel);
+    if (!this.isGrounded()) {
+      this.fsm.transition('jump');
+      return;
+    }
+    if (walking) {
+      this.fsm.transition('walk');
     }
   }
 
-  private jump(_dt: number) {
+  private walk() {
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const walking = this.tryWalk(vel);
+    this.tryJump(vel);
+    if (!this.isGrounded()) {
+      this.fsm.transition('jump');
+      return;
+    }
+    if (!walking) {
+      this.fsm.transition('idle');
+    }
+  }
+
+  private jump() {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    this.updateHorizonalMove(velocity);
+    const walking = this.tryWalk(velocity);
+    const jumping = this.checkFalling(velocity);
+    if (jumping) {
+      return;
+    }
+    this.fsm.transition(walking ? 'walk' : 'idle');
   }
 
   onUpdate(dt: number) {
-    if (this.isGrounded()) {
-      this.state = 'walk';
-    }
-
-    switch (this.state) {
-      case 'walk':
-        this.walk(dt);
-        break;
-      case 'jump':
-        this.jump(dt);
-        break;
-      default:
-        throw new Error(`Unknown state: ${this.state}`);
-    }
+    this.fsm.update(dt);
   }
 
   onCollision(_other: Entity, layer: number, dir: number): void {
@@ -115,14 +164,26 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
 
   const anim = new Animation(
     {
+      idle: {
+        sheetId: SpriteSheets.PLAYER_IDLE,
+        frames: 1,
+        speed: 1,
+        loop: true,
+      },
       walk: {
         sheetId: SpriteSheets.PLAYER_WALK,
         frames: 8,
         speed: 1,
         loop: true,
       },
+      jump: {
+        sheetId: SpriteSheets.PLAYER_JUMP,
+        frames: 2,
+        speed: 10.0,
+        loop: false,
+      },
     },
-    'walk',
+    'idle',
   );
 
   ecs.addComponent(id, new Name('Player'));
