@@ -98,41 +98,41 @@ class SpriteManager {
 export const spriteManager = new SpriteManager();
 
 // @TODO: deprecate Assets
-export class Assets {
-  // map
-  bg_menu: OldSprite;
-  spr_lava = new Array(2);
-  spr_exit: OldSprite;
-  spr_small_sapphire: OldSprite;
-  // GUI
-  spr_gui_sapphire: OldSprite;
-  spr_gui_heart: OldSprite;
-  // enemies
-  spr_boss: OldSprite[] = new Array(2);
-  spr_boss_damaged: OldSprite;
-  // effect
-  spr_sapphire_chunk: OldSprite[] = new Array(4);
-  spr_fire_bubble: OldSprite[] = new Array(4);
+// export class Assets {
+//   // map
+//   bg_menu: OldSprite;
+//   spr_lava = new Array(2);
+//   spr_exit: OldSprite;
+//   spr_small_sapphire: OldSprite;
+//   // GUI
+//   spr_gui_sapphire: OldSprite;
+//   spr_gui_heart: OldSprite;
+//   // enemies
+//   spr_boss: OldSprite[] = new Array(2);
+//   spr_boss_damaged: OldSprite;
+//   // effect
+//   spr_sapphire_chunk: OldSprite[] = new Array(4);
+//   spr_fire_bubble: OldSprite[] = new Array(4);
 
-  constructor(images) {
-    // background
-    this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
+//   constructor(images) {
+//     // background
+//     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
 
-    // map
-    this.spr_exit = new OldSprite(images.spr_exit, 0, 0, 96, 96);
-    this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
-    this.spr_lava[0] = new OldSprite(images.spr_lava, 0, -20, 64, 84);
-    this.spr_lava[1] = new OldSprite(images.spr_lava, 64, -20, 64, 84);
+//     // map
+//     this.spr_exit = new OldSprite(images.spr_exit, 0, 0, 96, 96);
+//     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
+//     this.spr_lava[0] = new OldSprite(images.spr_lava, 0, -20, 64, 84);
+//     this.spr_lava[1] = new OldSprite(images.spr_lava, 64, -20, 64, 84);
 
-    // gui
-    this.spr_gui_sapphire = new OldSprite(images.spr_gui_sapphire, 0, 0, 64, 64);
-    this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
+//     // gui
+//     this.spr_gui_sapphire = new OldSprite(images.spr_gui_sapphire, 0, 0, 64, 64);
+//     this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
 
-    // monsters
+//     // monsters
 
-    this.spr_boss[0] = new OldSprite(images.spr_boss, 160, 0, 160, 188);
-    this.spr_boss[1] = new OldSprite(images.spr_boss, 0, 0, 160, 188);
-    this.spr_boss_damaged = new OldSprite(images.spr_boss_damaged, 0, 0, 160, 188);
-    // effects
-  }
-}
+//     this.spr_boss[0] = new OldSprite(images.spr_boss, 160, 0, 160, 188);
+//     this.spr_boss[1] = new OldSprite(images.spr_boss, 0, 0, 160, 188);
+//     this.spr_boss_damaged = new OldSprite(images.spr_boss_damaged, 0, 0, 160, 188);
+//     // effects
+//   }
+// }

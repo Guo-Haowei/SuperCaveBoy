@@ -1,7 +1,6 @@
 import { Player } from './world/old-player';
 import { Room } from './world/room';
 import * as System from './systems';
-import { Assets } from './assets';
 import { inputManager } from './input-manager';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
@@ -16,34 +15,29 @@ export class Game {
   private lastTick = 0;
   room: Room;
 
-  camera: any; // @TODO: define Camera type
   handler: any; // @TODO: define Handler type
 
   constructor() {
-    // assets
-    this.assets;
     // handler
     this.handler = new Handler(this);
   }
 
-  public init(images: Record<string, HTMLImageElement>) {
+  public init() {
     // create assets
-    this.assets = new Assets(images);
 
     // level
-    this.room = new Room(this.handler);
+    this.room = new Room();
     this.room._init();
 
     // create entities
 
     // gui
-    this.gui = new GUI(this.handler);
 
     this.scenes['MENU'] = new MenuScene(this);
     this.scenes['PLAY'] = new PlayScene(this);
     this.scenes['END'] = new EndScene(this);
 
-    this.currentScene = this.scenes['MENU'];
+    this.currentScene = this.scenes['PLAY'];
   }
 
   public changeScene(newScene: IScene) {
@@ -103,8 +97,8 @@ class MenuScene implements IScene {
   }
 
   render(ctx: CanvasRenderingContext2D) {
-    this.handler._getGameAssets().bg_menu.draw(ctx, 0, HEIGHT / 2 - 270);
-    this.drawText(ctx);
+    // this.handler._getGameAssets().bg_menu.draw(ctx, 0, HEIGHT / 2 - 270);
+    // this.drawText(ctx);
   }
 
   private drawText(ctx) {
@@ -145,7 +139,6 @@ class PlayScene implements IScene {
 
   render(ctx) {
     this.game.room._render(ctx);
-    this.handler._getGUI()._render(ctx);
   }
 }
 
@@ -155,7 +148,6 @@ class EndScene implements IScene {
   constructor(game: Game) {
     this.game = game;
     this.handler = game.handler;
-    this.sprite = this.handler._getGameAssets().spr_dirt;
   }
 
   tick(dt: number) {

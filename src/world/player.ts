@@ -30,9 +30,21 @@ class PlayerScript extends ScriptBase {
     vel.gravity = GRAVITY;
   }
 
+  private inputLeft() {
+    return inputManager.isKeyDown('ArrowLeft') || inputManager.isKeyDown('KeyA');
+  }
+
+  private inputRight() {
+    return inputManager.isKeyDown('ArrowRight') || inputManager.isKeyDown('KeyD');
+  }
+
+  private inputUp() {
+    return inputManager.isKeyPressed('ArrowUp') || inputManager.isKeyPressed('KeyW');
+  }
+
   private updateHorizonalMove(velocity: Velocity) {
-    const leftDown = inputManager.isKeyDown('KeyA');
-    const rightDown = inputManager.isKeyDown('KeyD');
+    const leftDown = this.inputLeft();
+    const rightDown = this.inputRight();
     const direction = Number(rightDown) - Number(leftDown);
     const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
 
@@ -51,10 +63,9 @@ class PlayerScript extends ScriptBase {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     this.updateHorizonalMove(velocity);
 
-    if (inputManager.isKeyPressed('KeyW') && this.isGrounded()) {
+    if (this.inputUp() && this.isGrounded()) {
       this.startJump(velocity);
     }
-    // const position = this.world.getComponent<Position>(this.entity, Position.name);
   }
 
   private jump(_dt: number) {
@@ -83,6 +94,9 @@ class PlayerScript extends ScriptBase {
     if (layer === CollisionLayer.OBSTACLE) {
       if (dir === Direction.LEFT || dir === Direction.RIGHT) {
         // @TODO: grabbing
+      } else if (dir === Direction.DOWN) {
+        const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+        velocity.vy += JUMP_VELOCITY * 0.2;
       }
     }
   }

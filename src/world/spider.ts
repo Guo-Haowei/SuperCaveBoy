@@ -1,7 +1,6 @@
 import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
-  CollisionLayer,
   Facing,
   Name,
   Position,
@@ -10,7 +9,6 @@ import {
   Sprite,
   Velocity,
 } from '../components';
-import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
 import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform-common';
 
