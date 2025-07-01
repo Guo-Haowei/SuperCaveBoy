@@ -1,71 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
-	<meta name="mobile-web-app-capable" content="yes">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
     <!-- address bar icon -->
-    <link rel="icon" type="image/png" href="resources/icon.png">
+    <link rel="icon" type="image/png" href="resources/icon.png" />
     <title>Cave Boy</title>
-    <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Karma">
-    <style>
-        h1,h2,h3,h4,h5,h6 {font-family: "Karma", sans-serif}
-        .w3-sidenav a {padding:20px}
-        canvas {
-            display: block;
-            position: absolute;
-            margin: auto;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-        }
-    </style>
-</head>
-<body>
-    <!-- images -->
-    <img src="./img/bg_menu.png" style="display: none;">
-    <img src='./img/player/spr_player_walk.png' style="display: none;">
-    <img src='./img/player/spr_player_idle.png' style="display: none;">
-    <img src='./img/player/spr_player_jump.png' style="display: none;">
-    <img src='./img/player/spr_player_grab.png' style="display: none;">
-    <img src='./img/player/spr_player_damage.png' style="display: none;">
+    <link rel="stylesheet" href="http://www.w3schools.com/lib/w3.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Karma" />
 
-    <img src='./img/level/spr_dirt.png' style="display: none;">
-    <img src='./img/guiicons/spr_gui_heart.png' style="display: none;">
-    <img src='./img/guiicons/spr_gui_sapphire.png' style="display: none;">
-    <img src='./img/level/spr_entrance.png' style="display: none;">
-    <img src='./img/level/spr_exit.png' style="display: none;">
-    <img src='./img/level/spr_sapphire.png' style="display: none;">
-    <img src='./img/level/spr_lava.png' style="display: none;">
-    <img src='./img/level/bg_dirt.png' style="display: none;">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
 
-    <img src='./img/enemies/spr_snake_slithe.png' style="display: none;">
-    <img src='./img/enemies/spr_bat_fly.png' style="display: none;">
-    <img src='./img/enemies/spr_bat_idle.png' style="display: none;">
-    <img src='./img/enemies/spr_spider_jump.png' style="display: none;">
-    <img src='./img/enemies/spr_boss.png' style="display: none;">
-    <img src='./img/enemies/spr_boss_damaged.png' style="display: none;">
+  <body>
+    <div class="menu-bar">
+      <div class="menu-item">
+        File
+        <div class="dropdown">
+          <div class="dropdown-item">New</div>
+          <div class="dropdown-item">Open</div>
+          <div class="dropdown-item">Save</div>
+        </div>
+      </div>
+      <div class="menu-item">
+        Edit
+        <div class="dropdown">
+          <div class="dropdown-item">Undo</div>
+          <div class="dropdown-item">Redo</div>
+        </div>
+      </div>
+      <div class="menu-item">
+        Options
+        <div class="dropdown">
+          <input id="debugGrid" type="checkbox" checked />
+          Debug Grid
+          <br />
+          <input id="debugCollisions" type="checkbox" checked />
+          Debug Collisions
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <canvas id="gameCanvas" width="960" height="600"></canvas>
+      <button id="playBtn" class="play-button">▶ Play</button>
+    </div>
 
     <!-- @TODO: remove these includes -->
     <script src="src/world/data.js"></script>
 
-    <script src="src/utils/helpers.js"></script>
-    <script src="src/utils/defs.js"></script>
-
-    <script src="src/graphics/gui.js"></script>
-    <script src="src/graphics/animation.js"></script>
-
-    <script src="src/objects/alarm.js"></script>
-
-    <script src="src/handler.js"></script>
-
-    <script type="module" src="src/game.js"></script>
-
-    <script src="src/ui.js"></script>
-
     <!-- main -->
     <script type="module" src="src/main.ts"></script>
-</body>
+
+    <script>
+      const playBtn = document.getElementById('playBtn');
+      let isPlaying = false;
+
+      playBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        playBtn.classList.toggle('active', isPlaying);
+        playBtn.textContent = isPlaying ? '■ Stop' : '▶ Play';
+        // TODO: Add game start/stop logic here
+      });
+
+      const menuItems = document.querySelectorAll('.menu-item');
+
+      menuItems.forEach((item) => {
+        item.addEventListener('click', (e) => {
+          // Toggle active class on clicked item
+          const isActive = item.classList.contains('active');
+
+          // Close all dropdowns
+          menuItems.forEach((i) => i.classList.remove('active'));
+
+          // If not already active, open this one
+          if (!isActive) {
+            item.classList.add('active');
+          }
+
+          // Prevent event from bubbling up (optional)
+          e.stopPropagation();
+        });
+      });
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', () => {
+        menuItems.forEach((i) => i.classList.remove('active'));
+      });
+    </script>
+  </body>
 </html>

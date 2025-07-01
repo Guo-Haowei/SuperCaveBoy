@@ -1,16 +1,23 @@
 import { ECSWorld } from './ecs';
 import {
   Animation,
+  Camera,
   Collider,
   CollisionLayer,
+  Dynamic,
   Facing,
+  PendingDelete,
   Position,
   Sprite,
   Script,
+  Static,
   Velocity,
+  Grounded,
 } from './components';
-import { spriteManager } from './assets';
-import { Direction, Rect, Vec2 } from './common';
+import { Room } from './world/room';
+import { assetManager } from './engine/assets-manager';
+import { Direction, AABB, Vec2 } from './common';
+import { EditorState } from './editor-state';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
@@ -34,30 +41,35 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
-  const cameraX = offset.x - 0.5 * WIDTH;
-  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, room: Room) {
+  const cameraId = room.editorCameraId;
 
-  // @TODO: culling
-  for (const [id, sprite, pos] of world.queryEntities<Sprite, Position>(
-    Sprite.name,
-    Position.name,
-  )) {
+  const camera = world.getComponent<Camera>(cameraId, Camera.name);
+
+  ctx.clearRect(0, 0, camera.width, camera.height);
+
+  const cameraPos = world.getComponent<Position>(cameraId, Position.name);
+  const offset = camera.getOffset(cameraPos);
+  ctx.save();
+  ctx.translate(-offset.x, -offset.y);
+  ctx.scale(camera.zoom, camera.zoom);
+
+  const renderables = world.queryEntities<Sprite, Position>(Sprite.name, Position.name);
+  const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
+
+  for (const [id, sprite, pos] of sorted) {
     const { x, y } = pos as Position;
     const { sheetId, frameIndex } = sprite as Sprite;
 
-    const renderable = spriteManager.getFrame(sheetId, frameIndex);
+    const renderable = assetManager.getFrame(sheetId, frameIndex);
     const { image, frame } = renderable;
-
-    const dx = x - cameraX;
-    const dy = y - cameraY;
 
     ctx.save();
 
     const facing = world.getComponent<Facing>(id, Facing.name);
     const flipLeft: number = facing && facing.left ? 1 : 0;
 
-    ctx.translate(dx + flipLeft * frame.width, dy);
+    ctx.translate(x + flipLeft * frame.width, y);
     ctx.scale(flipLeft ? -1 : 1, 1);
 
     ctx.drawImage(
@@ -75,16 +87,41 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, off
     ctx.restore();
   }
 
-  const DEBUG = true;
-  if (DEBUG) {
-    renderSystemDebug(world, ctx, offset);
+  if (EditorState.debugCollisions) {
+    renderSystemDebug(world, ctx);
   }
+
+  if (EditorState.debugGrid) {
+    drawDebugGrid(ctx, room);
+  }
+
+  ctx.restore();
 }
 
-function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
-  const cameraX = offset.x - 0.5 * WIDTH;
-  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
+function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
+  ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
 
+  const { width, height, tileSize } = room;
+
+  for (let x = 0; x <= width; ++x) {
+    const pixelX = x * tileSize;
+    ctx.beginPath();
+    ctx.moveTo(pixelX, 0);
+    ctx.lineTo(pixelX, height * tileSize);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y <= height; ++y) {
+    const pixelY = y * tileSize;
+    ctx.beginPath();
+    ctx.moveTo(0, pixelY);
+    ctx.lineTo(width * tileSize, pixelY);
+    ctx.stroke();
+  }
+}
+function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
     Position.name,
     Collider.name,
@@ -92,8 +129,8 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offse
     const { x, y } = pos;
     const { width, height, offsetX, offsetY, layer } = collider;
 
-    const dx = x + offsetX - cameraX;
-    const dy = y + offsetY - cameraY;
+    const dx = x + offsetX;
+    const dy = y + offsetY;
 
     let color: string;
     switch (layer) {
@@ -117,7 +154,7 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offse
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
   for (const [_id, script] of world.queryEntities<Script>(Script.name)) {
-    script.script.onUpdate?.(dt);
+    script.onUpdate(dt);
   }
 }
 
@@ -140,16 +177,16 @@ function canCollide(a: Collider, b: Collider): boolean {
   return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
 }
 
-function getMTV(a: Rect, b: Rect): Vec2 | null {
-  const ax1 = a.x;
-  const ay1 = a.y;
-  const ax2 = a.x + a.width;
-  const ay2 = a.y + a.height;
+function getMTV(a: AABB, b: AABB): Vec2 | null {
+  const ax1 = a.xMin;
+  const ay1 = a.yMin;
+  const ax2 = a.xMax;
+  const ay2 = a.yMax;
 
-  const bx1 = b.x;
-  const by1 = b.y;
-  const bx2 = b.x + b.width;
-  const by2 = b.y + b.height;
+  const bx1 = b.xMin;
+  const by1 = b.yMin;
+  const bx2 = b.xMax;
+  const by2 = b.yMax;
 
   if (ax2 <= bx1 || ax1 >= bx2 || ay2 <= by1 || ay1 >= by2) {
     return null;
@@ -170,67 +207,103 @@ function getMTV(a: Rect, b: Rect): Vec2 | null {
   }
 }
 
-function toRect(position: Position, collider: Collider): Rect {
-  return {
-    x: position.x + collider.offsetX,
-    y: position.y + collider.offsetY,
-    width: collider.width,
-    height: collider.height,
-  };
-}
-
-function resolveCollision(
-  mtv: Vec2,
-  posA: Position,
-  posB: Position,
-  colliderA: Collider,
-  colliderB: Collider,
-): void {
-  if (colliderA.mass < colliderB.mass) {
-    posA.x += mtv.x;
-    posA.y += mtv.y;
+function mtvToDirection(mtv: Vec2): Direction {
+  if (mtv.x) {
+    return mtv.x < 0 ? Direction.LEFT : Direction.RIGHT;
   } else {
-    posB.x -= mtv.x;
-    posB.y -= mtv.y;
+    return mtv.y < 0 ? Direction.UP : Direction.DOWN;
   }
 }
 
+function toAABB(pos: Position, collider: Collider): AABB {
+  const { offsetX, offsetY, width, height } = collider;
+  return new AABB(
+    pos.x + offsetX,
+    pos.y + offsetY,
+    pos.x + offsetX + width,
+    pos.y + offsetY + height,
+  );
+}
+
 export function physicsSystem(world: ECSWorld, _dt: number) {
-  const entities = world.queryEntities<Collider, Position>(Collider.name, Position.name);
+  const staticColliders = world.queryEntities<Static, Collider, Position>(
+    Static.name,
+    Collider.name,
+    Position.name,
+  );
+  const dynamicColliders = world.queryEntities<Dynamic, Collider, Position>(
+    Dynamic.name,
+    Collider.name,
+    Position.name,
+  );
 
-  for (let i = 0; i < entities.length - 1; ++i) {
-    for (let j = i + 1; j < entities.length; ++j) {
-      const [a, colliderA, posA] = entities[i];
-      const [b, colliderB, posB] = entities[j];
+  world.removeAllComponents(Grounded.name);
 
-      if (!canCollide(colliderA, colliderB)) {
+  // test static dynamic collisions
+  for (const [s, _static, staticCollider, staticPos] of staticColliders) {
+    for (const [d, _dynamic, dynamicCollider, dynamicPos] of dynamicColliders) {
+      if (!canCollide(staticCollider, dynamicCollider)) {
         continue;
       }
 
-      const mtv = getMTV(toRect(posA, colliderA), toRect(posB, colliderB));
+      const aabb1 = toAABB(staticPos, staticCollider);
+      const aabb2 = toAABB(dynamicPos, dynamicCollider);
+      const mtv = getMTV(aabb1, aabb2);
       if (!mtv) {
         continue;
       }
 
-      // only resolve if one of the colliders is an obstacle
-      if (
-        colliderA.layer === CollisionLayer.OBSTACLE ||
-        colliderB.layer === CollisionLayer.OBSTACLE
-      ) {
-        resolveCollision(mtv, posA, posB, colliderA, colliderB);
-      }
+      // push the dynamic collider out of the static one
+      dynamicPos.x -= mtv.x;
+      dynamicPos.y -= mtv.y;
 
-      let direction = Direction.NONE;
-      if (mtv.x) {
-        direction = mtv.x < 0 ? Direction.LEFT : Direction.RIGHT;
-      } else {
-        direction = mtv.y < 0 ? Direction.UP : Direction.DOWN;
-      }
+      const direction = mtvToDirection(mtv);
 
-      const scriptA = world.getComponent<Script>(a, Script.name);
-      scriptA?.script.onCollision?.(b, colliderB.layer, direction);
-      const scriptB = world.getComponent<Script>(b, Script.name);
-      scriptB?.script.onCollision?.(a, colliderA.layer, -direction);
+      world
+        .getComponent<Script>(s, Script.name)
+        ?.onCollision(d, dynamicCollider.layer, aabb1, aabb2);
+      world
+        .getComponent<Script>(d, Script.name)
+        ?.onCollision(s, staticCollider.layer, aabb2, aabb1);
+
+      if (direction === Direction.DOWN && staticCollider.layer === CollisionLayer.OBSTACLE) {
+        world.addComponent(d, new Grounded());
+        const vel = world.getComponent<Velocity>(d, Velocity.name);
+        if (vel) {
+          vel.vy = 1;
+        }
+      }
     }
   }
+
+  for (let i = 0; i < dynamicColliders.length - 1; ++i) {
+    for (let j = i + 1; j < dynamicColliders.length; ++j) {
+      const [d1, _dynamic1, collider1, pos1] = dynamicColliders[i];
+      const [d2, _dynamic2, collider2, pos2] = dynamicColliders[j];
+
+      if (!canCollide(collider1, collider2)) {
+        continue;
+      }
+
+      const aabb1 = toAABB(pos1, collider1);
+      const aabb2 = toAABB(pos2, collider2);
+      const mtv = getMTV(aabb1, aabb2);
+      if (!mtv) {
+        continue;
+      }
+
+      world.getComponent<Script>(d1, Script.name)?.onCollision(d2, collider2.layer, aabb1, aabb2);
+      world.getComponent<Script>(d2, Script.name)?.onCollision(d1, collider1.layer, aabb2, aabb1);
+    }
+  }
+
+  // @TODO: test dynamic dynamic collisions
+}
+
+export function deleteSystem(world: ECSWorld) {
+  const pendingDeletes = world.queryEntities<PendingDelete>(PendingDelete.name);
+  for (const [id] of pendingDeletes) {
+    world.removeEntity(id);
+  }
+  world.removeAllComponents(PendingDelete.name);
 }

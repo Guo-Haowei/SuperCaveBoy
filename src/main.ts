@@ -1,43 +1,87 @@
-import { Game } from './game.js';
-import { spriteManager } from './assets';
+import { Runtime } from './engine/runtime';
+import { EditorState } from './editor-state';
 
-// @TODO: remove this global variable
-// eslint-disable-next-line no-var
-var game = new Game();
+const imageAssets: Record<string, HTMLImageElement> = {};
 
-function main(imageAssets: Record<string, HTMLImageElement>) {
-    spriteManager.init(imageAssets);
-
-    game.init(imageAssets);
-
-    const loop = () => {
-        game.tick();
-        game.render(ctx);
-
-        requestAnimationFrame(loop);
-    };
-
-    loop();
+function bindDebugButton(name, callback: (checked: boolean) => void) {
+  const button = document.getElementById(name) as HTMLInputElement;
+  if (button) {
+    button.addEventListener('change', () => {
+      callback(button.checked);
+    });
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(`Button with id "${name}" not found.`);
+  }
 }
 
-window.onload = () => {
-    const images = Array.from(document.querySelectorAll('img'));
-    const imageAssets: Record<string, HTMLImageElement> = {};
-    Promise.all(images.map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise<void>(resolve => {
-            img.onload = () => {
-                resolve();
-            };
-            img.onerror = () => resolve();
-        });
-    })).then(() => {
-        images.forEach(img => {
+function main() {
+  bindDebugButton('debugGrid', (checked) => {
+    EditorState.debugGrid = checked;
+  });
+  bindDebugButton('debugCollisions', (checked) => {
+    EditorState.debugCollisions = checked;
+  });
+
+  const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+  const game = new Runtime(canvas, imageAssets);
+
+  const loop = () => {
+    game.tick();
+
+    requestAnimationFrame(loop);
+  };
+
+  loop();
+}
+
+function loadImages(urls) {
+  return Promise.all(
+    urls.map(
+      (url) =>
+        new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
             let name = img.src.split('/').pop() || '';
             name = name.split('.').shift() || '';
             imageAssets[name] = img;
-        });
+            resolve(img);
+          };
+          img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+          img.src = url;
+        }),
+    ),
+  );
+}
 
-        main(imageAssets);
-    });
+const urls = [
+  './img/bg_menu.png',
+  './img/player/spr_player_walk.png',
+  './img/player/spr_player_idle.png',
+  './img/player/spr_player_jump.png',
+  './img/player/spr_player_grab.png',
+  './img/player/spr_player_damage.png',
+  './img/level/spr_dirt.png',
+  './img/guiicons/spr_gui_heart.png',
+  './img/guiicons/spr_gui_sapphire.png',
+  './img/level/spr_entrance.png',
+  './img/level/spr_exit.png',
+  './img/level/spr_sapphire.png',
+  './img/level/spr_lava.png',
+  './img/level/bg_dirt.png',
+  './img/enemies/spr_snake_slithe.png',
+  './img/enemies/spr_bat_fly.png',
+  './img/enemies/spr_bat_idle.png',
+  './img/enemies/spr_spider_jump.png',
+  './img/enemies/spr_boss.png',
+  './img/enemies/spr_boss_damaged.png',
+];
+
+window.onload = () => {
+  loadImages(urls).then(() => {
+    // eslint-disable-next-line no-console
+    console.log('✅ All assets loaded');
+
+    main();
+  });
 };

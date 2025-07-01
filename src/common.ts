@@ -20,6 +20,31 @@ export class Rect {
   }
 }
 
+export class AABB {
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
+
+  constructor(xMin: number, yMin: number, xMax: number, yMax: number) {
+    this.xMin = xMin;
+    this.yMin = yMin;
+    this.xMax = xMax;
+    this.yMax = yMax;
+  }
+
+  above(other: AABB): boolean {
+    return this.yMax > other.yMin && this.yMax < other.yMax;
+  }
+
+  center(): Vec2 {
+    return {
+      x: (this.xMin + this.xMax) / 2,
+      y: (this.yMin + this.yMax) / 2,
+    };
+  }
+}
+
 export interface Vec2 {
   x: number;
   y: number;

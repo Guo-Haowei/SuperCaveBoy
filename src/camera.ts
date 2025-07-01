@@ -1,12 +1,24 @@
 import { ECSWorld } from './ecs';
-import { Name, Position, Script, ScriptBase } from './components';
+import { Name, Position, Camera, Script, ScriptBase } from './components';
+import { inputManager } from './engine/input-manager';
 
-class CameraScript extends ScriptBase {
-  target: number;
+// @TODO: camera controller script
+class CameraFollowScript extends ScriptBase {
+  private target: number;
+  private roomWidth: number;
+  private roomHeight: number;
 
-  constructor(entity: number, world: ECSWorld, target: number) {
+  constructor(
+    entity: number,
+    world: ECSWorld,
+    target: number,
+    roomWidth: number,
+    roomHeight: number,
+  ) {
     super(entity, world);
     this.target = target;
+    this.roomWidth = roomWidth;
+    this.roomHeight = roomHeight;
   }
 
   onUpdate(_dt: number) {
@@ -19,25 +31,70 @@ class CameraScript extends ScriptBase {
 
     pos.x += (objx - pos.x) / 20.0;
     pos.y += (objy - pos.y) / 20.0;
-    if (pos.x <= WIDTH / 2) {
-      pos.x = WIDTH / 2;
-    } else if (pos.x >= WWIDTH - WIDTH / 2) {
-      pos.x = WWIDTH - WIDTH / 2;
+
+    // const { roomWidth, roomHeight } = this;
+    // if (pos.x <= WIDTH / 2) {
+    //   pos.x = WIDTH / 2;
+    // } else if (pos.x >= roomWidth - WIDTH / 2) {
+    //   pos.x = roomWidth - WIDTH / 2;
+    // }
+    // if (pos.y <= HEIGHT / 2 + YOFFSET) {
+    //   pos.y = HEIGHT / 2 + YOFFSET;
+    // } else if (pos.y >= roomHeight - HEIGHT / 2) {
+    //   pos.y = roomHeight - HEIGHT / 2;
+    // }
+  }
+}
+
+class EditorCameraScript extends ScriptBase {
+  onUpdate(_dt: number) {
+    if (inputManager.isMouseDragging()) {
+      const pos = this.world.getComponent<Position>(this.entity, Position.name);
+      const delta = inputManager.getDragDelta();
+      pos.x -= delta.x;
+      pos.y -= delta.y;
     }
-    if (pos.y <= HEIGHT / 2 + YOFFSET) {
-      pos.y = HEIGHT / 2 + YOFFSET;
-    } else if (pos.y >= WHEIGHT - HEIGHT / 2) {
-      pos.y = WHEIGHT - HEIGHT / 2;
+
+    const scroll = inputManager.getScroll();
+    if (scroll !== 0) {
+      const camera = this.world.getComponent<Camera>(this.entity, Camera.name);
+      camera.setZoom(scroll);
     }
   }
 }
 
-export function createCamera(ecs: ECSWorld, x: number, y: number, target: number): number {
+export function createGameCamera(
+  ecs: ECSWorld,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  target: number,
+  roomWidth: number,
+  roomHeight: number,
+): number {
   const id = ecs.createEntity();
-  const script = new CameraScript(id, ecs, target);
+  const script = new CameraFollowScript(id, ecs, target, roomWidth, roomHeight);
 
   ecs.addComponent(id, new Name('Camera'));
+  ecs.addComponent(id, new Camera(width, height));
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Script(script));
+  return id;
+}
+
+export function createEditorCamera(
+  ecs: ECSWorld,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+): number {
+  const id = ecs.createEntity();
+
+  ecs.addComponent(id, new Name('EditorCamera'));
+  ecs.addComponent(id, new Camera(width, height));
+  ecs.addComponent(id, new Position(x, y));
+  ecs.addComponent(id, new Script(new EditorCameraScript(id, ecs)));
   return id;
 }

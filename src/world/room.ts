@@ -1,20 +1,23 @@
-import { Rect, Vec2 } from '../common';
-import { createBat, createSnake, createSpider } from './monster';
+import { Rect } from '../common';
+import { createSpider } from './spider';
+import { createSnake } from './snake';
+import { createBat } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
-import { SpriteSheets } from '../assets';
-import { Collider, CollisionLayer, Position, Sprite } from '../components';
+import { SpriteSheets } from '../engine/assets-manager';
+import { Collider, CollisionLayer, Position, Sprite, Static } from '../components';
 import { ECSWorld } from '../ecs';
-import { createCamera } from '../camera';
+import { createGameCamera, createEditorCamera } from '../camera';
 import { createPlayer } from './player';
+import { WIDTH, HEIGHT, TILE_SIZE } from '../constants';
 
 enum TileType {
   WALL = 0,
   DIRT = 1,
 }
 
-// @TODO: use constants for these
-const TILE_SIZE = 64;
+const SPAWNING_X = 192;
+const SPAWNING_Y = 600;
 
 export class Room {
   level = WORLD.startLevel;
@@ -26,6 +29,8 @@ export class Room {
   ecs: ECSWorld = new ECSWorld();
   playerId = ECSWorld.INVALID_ENTITY;
   cameraId = ECSWorld.INVALID_ENTITY;
+  editorCameraId = ECSWorld.INVALID_ENTITY;
+  tileSize = TILE_SIZE;
 
   private clearRoom() {
     this.world = [];
@@ -34,21 +39,16 @@ export class Room {
     this.ecs = new ECSWorld();
   }
 
-  public getCameraOffset(): Vec2 {
-    const pos = this.ecs.getComponent<Position>(this.cameraId, Position.name);
-    return { x: pos.x, y: pos.y };
-  }
-
   private createTile(x: number, y: number, sheetId: string) {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Sprite(sheetId));
+    this.ecs.addComponent(id, new Sprite(sheetId, 0, 2));
   }
 
   private createEntrance(x: number, y: number) {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.ENTRANCE));
+    this.ecs.addComponent(id, new Sprite(SpriteSheets.ENTRANCE, 0, 1));
   }
 
   private createCollider(x: number, y: number, width: number, height: number) {
@@ -66,14 +66,14 @@ export class Room {
       height,
       CollisionLayer.OBSTACLE,
       CollisionLayer.PLAYER | CollisionLayer.ENEMY,
-      Number.MAX_SAFE_INTEGER,
     );
 
+    this.ecs.addComponent(id, new Static());
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, collider);
   }
 
-  _init() {
+  init() {
     this.clearRoom();
 
     ++this.level;
@@ -81,9 +81,6 @@ export class Room {
     this.world = world;
     this.width = world[this.level].length;
     this.height = world.length;
-    WWIDTH = this.width * 64;
-    WHEIGHT = this.height * 64;
-    YBOUND = WHEIGHT - 72 - 64 * 3;
 
     // tiles
     for (let y = 0; y < this.height; ++y) {
@@ -94,10 +91,29 @@ export class Room {
     }
 
     // player
-    const playerId = createPlayer(this.ecs, SpawningX, SpawningY);
+    const mapWidth = this.width * TILE_SIZE;
+    const mapHeight = this.height * TILE_SIZE;
+    const playerId = createPlayer(this.ecs, SPAWNING_X, SPAWNING_Y);
     this.playerId = playerId;
     // camera
-    this.cameraId = createCamera(this.ecs, 400, SpawningY, playerId);
+    this.cameraId = createGameCamera(
+      this.ecs,
+      400,
+      SPAWNING_Y,
+      WIDTH,
+      HEIGHT,
+      playerId,
+      mapWidth,
+      mapHeight,
+    );
+
+    this.editorCameraId = createEditorCamera(
+      this.ecs,
+      0.5 * mapWidth,
+      0.5 * mapHeight,
+      WIDTH,
+      HEIGHT,
+    );
 
     // entrance
     this.createEntrance(96, 608);
@@ -109,10 +125,10 @@ export class Room {
       this.createCollider(...collider);
     }
 
-    // WTF is this?
-    if (this.level < 5) YOFFSET = 50;
-    else if (this.level === 6 || this.level === 9) YOFFSET = 35;
-    else YOFFSET = 0;
+    // // WTF is this?
+    // if (this.level < 5) YOFFSET = 50;
+    // else if (this.level === 6 || this.level === 9) YOFFSET = 35;
+    // else YOFFSET = 0;
 
     // monsters
     const mons = WORLD.levels[this.level].monsters;
@@ -144,25 +160,5 @@ export class Room {
     //     var music = handler._getMusic()
     //     music._setCurrent(music.snd_boss);
     // }
-  }
-
-  _tick() {
-    for (let i = 0; i < this.objects.length; ++i) {
-      this.objects[i]._tick();
-      if (this.objects[i].destroyed) {
-        this.objects.splice(i, 1);
-      }
-    }
-  }
-
-  _render(graphics) {
-    // objects
-    for (const obj of this.objects) {
-      if (obj.type !== TYPE.LAVA) obj._render(graphics);
-    }
-    // monsters
-    for (const obj of this.objects) {
-      if (obj.type === TYPE.LAVA) obj._render(graphics);
-    }
   }
 }

@@ -2,7 +2,6 @@ import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
   CollisionLayer,
-  Collider,
   Name,
   Position,
   Script,
@@ -11,132 +10,230 @@ import {
   Velocity,
   Facing,
 } from '../components';
-import { Direction } from '../common';
-import { SpriteSheets } from '../assets';
-import { inputManager } from '../input-manager';
+import { SpriteSheets, assetManager } from '../engine/assets-manager';
+import { inputManager } from '../engine/input-manager';
+import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
+import { AABB } from '../common';
 
-const DESIRED_JUMP_HEIGHT = 200;
-const TIME_TO_APEX = 0.4;
+const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
-const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
-const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
+type PlayerStateName = 'idle' | 'walk' | 'jump' | 'hurt';
 
 class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
+  static readonly HURT_COOLDOWN = 0.5;
 
-  private state: 'walk' | 'jump';
-  private grounded = false;
-  private lastY: number;
+  private cooldown: number;
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
-    this.state = 'walk';
 
-    const pos = this.world.getComponent<Position>(this.entity, Position.name);
-    this.lastY = pos.y;
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     vel.gravity = GRAVITY;
+
+    this.fsm = new StateMachine<PlayerStateName>(
+      {
+        idle: {
+          name: 'idle',
+          enter: () => this.playAnim('idle'),
+          update: () => this.idle(),
+        },
+        walk: {
+          name: 'walk',
+          enter: () => this.playAnim('walk'),
+          update: () => this.walk(),
+        },
+        jump: {
+          name: 'jump',
+          update: () => this.jump(),
+        },
+        hurt: {
+          name: 'hurt',
+          enter: () => {
+            this.playAnim('hurt');
+            assetManager.snd_ouch.play();
+            this.cooldown = PlayerScript.HURT_COOLDOWN;
+          },
+          update: (dt) => this.hurt(dt),
+        },
+      },
+      'walk',
+    );
   }
 
-  private updateHorizonalMove(velocity: Velocity) {
-    const leftDown = inputManager.isKeyDown('KeyA');
-    const rightDown = inputManager.isKeyDown('KeyD');
+  private inputLeft() {
+    return inputManager.isKeyDown('ArrowLeft') || inputManager.isKeyDown('KeyA');
+  }
+
+  private inputRight() {
+    return inputManager.isKeyDown('ArrowRight') || inputManager.isKeyDown('KeyD');
+  }
+
+  private inputUp() {
+    return inputManager.isKeyPressed('ArrowUp') || inputManager.isKeyPressed('KeyW');
+  }
+
+  private tryWalk(velocity: Velocity) {
+    const leftDown = this.inputLeft();
+    const rightDown = this.inputRight();
     const direction = Number(rightDown) - Number(leftDown);
-    const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
 
     velocity.vx = direction * PlayerScript.MOVE_SPEED;
     if (leftDown || rightDown) {
+      const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
       facing.left = direction < 0;
+      return true;
     }
+    return false;
   }
 
-  private startJump(velocity: Velocity) {
-    velocity.vy = -JUMP_VELOCITY;
-    this.state = 'jump';
-  }
-
-  private walk(_dt: number) {
-    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    this.updateHorizonalMove(velocity);
-
-    if (inputManager.isKeyPressed('KeyW') && this.grounded) {
-      this.startJump(velocity);
+  private tryJump(velocity: Velocity) {
+    if (this.inputUp() && this.isGrounded()) {
+      velocity.vy = -JUMP_VELOCITY;
+      return true;
     }
-    // const position = this.world.getComponent<Position>(this.entity, Position.name);
+    return false;
   }
 
-  private jump(_dt: number) {
-    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    this.updateHorizonalMove(velocity);
-  }
-
-  onUpdate(dt: number) {
-    const pos = this.world.getComponent<Position>(this.entity, Position.name);
-    if (Math.abs(pos.y - this.lastY) < 0.00000001) {
-      this.grounded = true;
+  private checkFalling(velocity: Velocity) {
+    if (this.isGrounded()) {
+      return false;
+    }
+    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
+    anim.current = 'jump';
+    if (velocity.vy < 0) {
+      anim.elapsed = 0.1;
     } else {
-      this.grounded = false;
-      this.lastY = pos.y;
-      this.state = 'walk';
+      anim.elapsed = 5.1;
     }
+    return true;
+  }
 
-    switch (this.state) {
-      case 'walk':
-        this.walk(dt);
-        break;
-      case 'jump':
-        this.jump(dt);
-        break;
-      default:
-        throw new Error(`Unknown state: ${this.state}`);
+  private idle() {
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const walking = this.tryWalk(vel);
+    this.tryJump(vel);
+    if (!this.isGrounded()) {
+      this.fsm.transition('jump');
+      return;
+    }
+    if (walking) {
+      this.fsm.transition('walk');
     }
   }
 
-  onCollision(_other: Entity, layer: number, dir: number): void {
+  private walk() {
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const walking = this.tryWalk(vel);
+    this.tryJump(vel);
+    if (!this.isGrounded()) {
+      this.fsm.transition('jump');
+      return;
+    }
+    if (!walking) {
+      this.fsm.transition('idle');
+    }
+  }
+
+  private jump() {
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const walking = this.tryWalk(velocity);
+    const jumping = this.checkFalling(velocity);
+    if (jumping) {
+      return;
+    }
+
+    assetManager.snd_step.play();
+    this.fsm.transition(walking ? 'walk' : 'idle');
+  }
+
+  private hurt(dt: number) {
+    this.cooldown -= dt;
+    this.cooldown = Math.max(this.cooldown, 0);
+    if (this.cooldown == 0) {
+      this.fsm.transition('idle');
+    }
+  }
+
+  onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void {
     if (layer === CollisionLayer.OBSTACLE) {
-      if (dir === Direction.LEFT || dir === Direction.RIGHT) {
-        // @TODO: grabbing
-      } else if (dir === Direction.UP) {
-        const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-        vel.vy = 0;
+      if (otherBound.above(selfBound)) {
+        const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+        velocity.vy += JUMP_VELOCITY * 0.2;
+        // @TODO: grab ledge
       }
+      return;
+    }
+    if (layer === CollisionLayer.ENEMY) {
+      const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+      if (selfBound.above(otherBound)) {
+        // kill the enemy
+        const script = this.world.getComponent<Script>(other, Script.name);
+        script?.onDie();
+        velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
+      } else {
+        const center = selfBound.center();
+        const otherCenter = otherBound.center();
+
+        const dx = center.x - otherCenter.x;
+        velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
+        velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
+        this.fsm.transition('hurt');
+      }
+      return;
     }
   }
 }
 
 export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
-  const id = ecs.createEntity();
+  const id = createLifeform(
+    ecs,
+    32,
+    62,
+    CollisionLayer.PLAYER,
+    CollisionLayer.ENEMY | CollisionLayer.OBSTACLE | CollisionLayer.EVENT | CollisionLayer.TRAP,
+    16,
+    10,
+  );
 
   const anim = new Animation(
     {
+      idle: {
+        sheetId: SpriteSheets.PLAYER_IDLE,
+        frames: 1,
+        speed: 1,
+        loop: true,
+      },
       walk: {
         sheetId: SpriteSheets.PLAYER_WALK,
         frames: 8,
         speed: 1,
         loop: true,
       },
+      jump: {
+        sheetId: SpriteSheets.PLAYER_JUMP,
+        frames: 2,
+        speed: 10.0,
+        loop: false,
+      },
+      hurt: {
+        sheetId: SpriteSheets.PLAYER_DAMAGE,
+        frames: 1,
+        speed: 1,
+        loop: false,
+      },
     },
-    'walk',
-  );
-
-  const collider = new Collider(
-    32,
-    62,
-    CollisionLayer.PLAYER,
-    CollisionLayer.ENEMY | CollisionLayer.OBSTACLE | CollisionLayer.EVENT | CollisionLayer.TRAP,
-    1, // mass
-    16,
-    10,
+    'idle',
   );
 
   ecs.addComponent(id, new Name('Player'));
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Velocity());
   ecs.addComponent(id, new Facing(false));
-  ecs.addComponent(id, collider);
   ecs.addComponent(id, new Sprite(SpriteSheets.PLAYER_IDLE));
+  ecs.addComponent(id, anim);
+
   const script = new PlayerScript(id, ecs);
   ecs.addComponent(id, new Script(script));
-  ecs.addComponent(id, anim);
   return id;
 }
