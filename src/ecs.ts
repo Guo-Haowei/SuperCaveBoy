@@ -50,7 +50,7 @@ export class ECSWorld {
 
       return result;
     }
-    const map3 = this.components.get(types[1]);
+    const map3 = this.components.get(types[2]);
     if (!map3) return [];
     if (types.length === 3) {
       const result: [Entity, unknown, unknown, unknown][] = [];

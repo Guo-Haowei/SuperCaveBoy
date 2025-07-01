@@ -16,8 +16,8 @@ export function createLifeform(
   hitHeight: number,
   layer: number,
   mask: number,
-  hitOffsetX = 0,
-  hitOffsetY = 0,
+  hitOffsetX,
+  hitOffsetY,
 ) {
   const id = ecs.createEntity();
   const collider = new Collider(hitWidth, hitHeight, layer, mask, hitOffsetX, hitOffsetY);
@@ -33,8 +33,8 @@ export function createEnemyCommon(
   y: number,
   hitWidth: number,
   hitHeight: number,
-  hitOffsetX = 0,
-  hitOffsetY = 0,
+  hitOffsetX,
+  hitOffsetY,
 ) {
   const id = createLifeform(
     ecs,

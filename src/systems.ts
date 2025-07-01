@@ -172,13 +172,10 @@ function getMTV(a: Rect, b: Rect): Vec2 | null {
   }
 }
 
-function toRect(position: Position, collider: Collider): Rect {
-  return {
-    x: position.x + collider.offsetX,
-    y: position.y + collider.offsetY,
-    width: collider.width,
-    height: collider.height,
-  };
+function toRect(pos: Position, collider: Collider): Rect {
+  const { offsetX, offsetY, width, height } = collider;
+  const rect = { x: pos.x + offsetX, y: pos.y + offsetY, width, height };
+  return rect;
 }
 
 export function physicsSystem(world: ECSWorld, _dt: number) {
