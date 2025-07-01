@@ -34,8 +34,27 @@ export interface Renderable {
   frame: SpriteFrame;
 }
 
-class SpriteManager {
+class AssetManager {
   private sheets: Record<string, SpriteSheet> = {};
+
+  // @TODO: refactor
+  snd_bat: HTMLAudioElement;
+  snd_boss: HTMLAudioElement;
+  snd_ouch: HTMLAudioElement;
+  snd_snake: HTMLAudioElement;
+  snd_spider: HTMLAudioElement;
+  snd_step: HTMLAudioElement;
+  snd_tink: HTMLAudioElement;
+
+  constructor() {
+    this.snd_bat = new Audio('resources/sounds/snd_bat.wav');
+    this.snd_boss = new Audio('resources/sounds/snd_boss_music.mp3');
+    this.snd_ouch = new Audio('resources/sounds/snd_ouch.wav');
+    this.snd_snake = new Audio('resources/sounds/snd_snake.wav');
+    this.snd_spider = new Audio('resources/sounds/snd_spider.wav');
+    this.snd_step = new Audio('resources/sounds/snd_step.wav');
+    this.snd_tink = new Audio('resources/sounds/snd_tink.wav');
+  }
 
   init(images: Record<string, HTMLImageElement>) {
     const TILE_SIZE = 64;
@@ -54,6 +73,23 @@ class SpriteManager {
 
     this.loadSheet(SpriteSheets.SNAKE_MOVE, images.spr_snake_slithe, TILE_SIZE, TILE_SIZE);
     this.loadSheet(SpriteSheets.SPIDER_JUMP, images.spr_spider_jump, TILE_SIZE, TILE_SIZE);
+    //     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
+
+    //     // map
+    //     this.spr_exit = new OldSprite(images.spr_exit, 0, 0, 96, 96);
+    //     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
+    //     this.spr_lava[0] = new OldSprite(images.spr_lava, 0, -20, 64, 84);
+    //     this.spr_lava[1] = new OldSprite(images.spr_lava, 64, -20, 64, 84);
+
+    //     // gui
+    //     this.spr_gui_sapphire = new OldSprite(images.spr_gui_sapphire, 0, 0, 64, 64);
+    //     this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
+
+    //     // monsters
+
+    //     this.spr_boss[0] = new OldSprite(images.spr_boss, 160, 0, 160, 188);
+    //     this.spr_boss[1] = new OldSprite(images.spr_boss, 0, 0, 160, 188);
+    //     this.spr_boss_damaged = new OldSprite(images.spr_boss_damaged, 0, 0, 160, 188);
   }
 
   private loadSheet(
@@ -93,44 +129,4 @@ class SpriteManager {
   }
 }
 
-export const spriteManager = new SpriteManager();
-
-// @TODO: deprecate Assets
-// export class Assets {
-//   // map
-//   bg_menu: OldSprite;
-//   spr_lava = new Array(2);
-//   spr_exit: OldSprite;
-//   spr_small_sapphire: OldSprite;
-//   // GUI
-//   spr_gui_sapphire: OldSprite;
-//   spr_gui_heart: OldSprite;
-//   // enemies
-//   spr_boss: OldSprite[] = new Array(2);
-//   spr_boss_damaged: OldSprite;
-//   // effect
-//   spr_sapphire_chunk: OldSprite[] = new Array(4);
-//   spr_fire_bubble: OldSprite[] = new Array(4);
-
-//   constructor(images) {
-//     // background
-//     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
-
-//     // map
-//     this.spr_exit = new OldSprite(images.spr_exit, 0, 0, 96, 96);
-//     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
-//     this.spr_lava[0] = new OldSprite(images.spr_lava, 0, -20, 64, 84);
-//     this.spr_lava[1] = new OldSprite(images.spr_lava, 64, -20, 64, 84);
-
-//     // gui
-//     this.spr_gui_sapphire = new OldSprite(images.spr_gui_sapphire, 0, 0, 64, 64);
-//     this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
-
-//     // monsters
-
-//     this.spr_boss[0] = new OldSprite(images.spr_boss, 160, 0, 160, 188);
-//     this.spr_boss[1] = new OldSprite(images.spr_boss, 0, 0, 160, 188);
-//     this.spr_boss_damaged = new OldSprite(images.spr_boss_damaged, 0, 0, 160, 188);
-//     // effects
-//   }
-// }
+export const assetManager = new AssetManager();

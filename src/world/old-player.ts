@@ -1,5 +1,5 @@
 // import { Rect } from '../common';
-// import { audios } from '../audios';
+// import { assetManager } from '../assetManager';
 // import { inputManager } from '../input-manager';
 
 // export class Player {
@@ -74,7 +74,7 @@
 //     } else {
 //       this.hspeed = -1;
 //     }
-//     audios.snd_ouch.play();
+//     assetManager.snd_ouch.play();
 //   }
 
 //   _DamagedState() {
@@ -197,7 +197,7 @@
 //     this.takingJump = true;
 //     this.currentState = this._IdlingState;
 
-//     audios.snd_step.play();
+//     assetManager.snd_step.play();
 
 //     this.vspeed = 0;
 //   }

@@ -8,7 +8,7 @@ class KeyManager {
   private delta = { x: 0, y: 0 };
   private scroll = 0;
 
-  constructor() {
+  init(canvas: HTMLCanvasElement) {
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       this.downKeys.add(e.code);
       if (!e.repeat) {
@@ -20,8 +20,6 @@ class KeyManager {
       this.pressedKeys.delete(e.code);
       this.downKeys.delete(e.code);
     });
-
-    const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 
     canvas.addEventListener('mousedown', (e) => {
       this.isDragging = true;

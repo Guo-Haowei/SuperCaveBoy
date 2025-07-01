@@ -9,9 +9,8 @@ import {
   Sprite,
   Velocity,
 } from '../components';
-import { SpriteSheets } from '../assets';
+import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform-common';
-import { audios } from '../audios';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
@@ -50,7 +49,7 @@ class SpiderScript extends ScriptBase {
           name: 'die',
           update: () => {
             super.markDelete();
-            audios.snd_spider.play();
+            assetManager.snd_spider.play();
           },
         },
       },

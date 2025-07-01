@@ -13,7 +13,7 @@ import {
   Velocity,
   Grounded,
 } from './components';
-import { spriteManager } from './assets';
+import { assetManager } from './engine/assets-manager';
 import { Direction, AABB, Vec2 } from './common';
 
 // ------------------------------ Animation System -----------------------------
@@ -46,7 +46,7 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     const { x, y } = pos as Position;
     const { sheetId, frameIndex } = sprite as Sprite;
 
-    const renderable = spriteManager.getFrame(sheetId, frameIndex);
+    const renderable = assetManager.getFrame(sheetId, frameIndex);
     const { image, frame } = renderable;
 
     ctx.save();
@@ -106,12 +106,6 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     ctx.lineWidth = 1;
     ctx.strokeRect(dx, dy, width, height);
   }
-}
-
-function renderSystemDrawTileGrid(ctx: CanvasRenderingContext2D, room: Room) {
-  const width = room.width;
-  const height = room.height;
-  const tileSize = room.tileSize;
 }
 
 // ------------------------------- Script System -------------------------------

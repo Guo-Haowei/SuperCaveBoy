@@ -10,11 +10,10 @@ import {
   Velocity,
   Facing,
 } from '../components';
-import { SpriteSheets } from '../assets';
-import { inputManager } from '../input-manager';
+import { SpriteSheets, assetManager } from '../engine/assets-manager';
+import { inputManager } from '../engine/input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
 import { AABB } from '../common';
-import { audios } from '../audios';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
@@ -52,7 +51,7 @@ class PlayerScript extends ScriptBase {
           name: 'hurt',
           enter: () => {
             this.playAnim('hurt');
-            audios.snd_ouch.play();
+            assetManager.snd_ouch.play();
             this.cooldown = PlayerScript.HURT_COOLDOWN;
           },
           update: (dt) => this.hurt(dt),
@@ -144,7 +143,7 @@ class PlayerScript extends ScriptBase {
       return;
     }
 
-    audios.snd_step.play();
+    assetManager.snd_step.play();
     this.fsm.transition(walking ? 'walk' : 'idle');
   }
 

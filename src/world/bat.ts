@@ -9,9 +9,8 @@ import {
   Sprite,
   Velocity,
 } from '../components';
-import { SpriteSheets } from '../assets';
+import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { createEnemyCommon, StateMachine } from './lifeform-common';
-import { audios } from '../audios';
 
 type BatStateName = 'idle' | 'fly' | 'die';
 
@@ -41,7 +40,7 @@ class BatScript extends ScriptBase {
           name: 'die',
           update: () => {
             super.markDelete();
-            audios.snd_bat.play();
+            assetManager.snd_bat.play();
           },
         },
       },

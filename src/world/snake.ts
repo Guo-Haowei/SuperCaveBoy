@@ -9,9 +9,8 @@ import {
   Sprite,
   Velocity,
 } from '../components';
-import { SpriteSheets } from '../assets';
 import { createEnemyCommon, StateMachine } from './lifeform-common';
-import { audios } from '../audios';
+import { SpriteSheets, assetManager } from '../engine/assets-manager';
 
 type SnakeStateName = 'idle' | 'die';
 
@@ -40,7 +39,7 @@ class SnakeScript extends ScriptBase {
           name: 'die',
           update: () => {
             super.markDelete();
-            audios.snd_snake.play();
+            assetManager.snd_snake.play();
           },
         },
       },

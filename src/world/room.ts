@@ -4,7 +4,7 @@ import { createSnake } from './snake';
 import { createBat } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
-import { SpriteSheets } from '../assets';
+import { SpriteSheets } from '../engine/assets-manager';
 import { Collider, CollisionLayer, Position, Sprite, Static } from '../components';
 import { ECSWorld } from '../ecs';
 import { createGameCamera, createEditorCamera } from '../camera';
@@ -72,7 +72,7 @@ export class Room {
     this.ecs.addComponent(id, collider);
   }
 
-  _init() {
+  init() {
     this.clearRoom();
 
     ++this.level;
@@ -159,25 +159,5 @@ export class Room {
     //     var music = handler._getMusic()
     //     music._setCurrent(music.snd_boss);
     // }
-  }
-
-  _tick() {
-    for (let i = 0; i < this.objects.length; ++i) {
-      this.objects[i]._tick();
-      if (this.objects[i].destroyed) {
-        this.objects.splice(i, 1);
-      }
-    }
-  }
-
-  _render(graphics) {
-    // objects
-    for (const obj of this.objects) {
-      if (obj.type !== TYPE.LAVA) obj._render(graphics);
-    }
-    // monsters
-    for (const obj of this.objects) {
-      if (obj.type === TYPE.LAVA) obj._render(graphics);
-    }
   }
 }

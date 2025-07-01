@@ -1,5 +1,5 @@
 import { Rect } from '../common';
-import { audios } from '../audios';
+import { assetManager } from '../assetManager';
 
 export class SpecialObject {
   type: number;
@@ -110,7 +110,7 @@ export class SpecialObject {
     this.destroyed = true;
     ++this.handler._getPlayer().sapphire;
 
-    audios.snd_tink.play();
+    assetManager.snd_tink.play();
   }
 
   _LavaTrigger() {
