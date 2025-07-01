@@ -9,14 +9,15 @@ import { Collider, CollisionLayer, Position, Sprite, Static } from '../component
 import { ECSWorld } from '../ecs';
 import { createCamera } from '../camera';
 import { createPlayer } from './player';
+import { TILE_SIZE } from '../constants';
 
 enum TileType {
   WALL = 0,
   DIRT = 1,
 }
 
-// @TODO: use constants for these
-const TILE_SIZE = 64;
+const SPAWNING_X = 192;
+const SPAWNING_Y = 600;
 
 export class Room {
   level = WORLD.startLevel;
@@ -83,9 +84,6 @@ export class Room {
     this.world = world;
     this.width = world[this.level].length;
     this.height = world.length;
-    WWIDTH = this.width * 64;
-    WHEIGHT = this.height * 64;
-    YBOUND = WHEIGHT - 72 - 64 * 3;
 
     // tiles
     for (let y = 0; y < this.height; ++y) {
@@ -96,10 +94,17 @@ export class Room {
     }
 
     // player
-    const playerId = createPlayer(this.ecs, SpawningX, SpawningY);
+    const playerId = createPlayer(this.ecs, SPAWNING_X, SPAWNING_Y);
     this.playerId = playerId;
     // camera
-    this.cameraId = createCamera(this.ecs, 400, SpawningY, playerId);
+    this.cameraId = createCamera(
+      this.ecs,
+      400,
+      SPAWNING_Y,
+      playerId,
+      this.width * TILE_SIZE,
+      this.height * TILE_SIZE,
+    );
 
     // entrance
     this.createEntrance(96, 608);
@@ -111,10 +116,10 @@ export class Room {
       this.createCollider(...collider);
     }
 
-    // WTF is this?
-    if (this.level < 5) YOFFSET = 50;
-    else if (this.level === 6 || this.level === 9) YOFFSET = 35;
-    else YOFFSET = 0;
+    // // WTF is this?
+    // if (this.level < 5) YOFFSET = 50;
+    // else if (this.level === 6 || this.level === 9) YOFFSET = 35;
+    // else YOFFSET = 0;
 
     // monsters
     const mons = WORLD.levels[this.level].monsters;

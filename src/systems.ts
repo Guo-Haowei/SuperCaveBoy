@@ -14,6 +14,8 @@ import {
 } from './components';
 import { spriteManager } from './assets';
 import { Direction, Rect, Vec2 } from './common';
+// @TODO: fix this
+import { WIDTH, HEIGHT, YOFFSET } from './constants';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {

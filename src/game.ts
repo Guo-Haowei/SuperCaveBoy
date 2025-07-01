@@ -11,10 +11,13 @@ export class Game {
   private currentScene: IScene;
   private scenes = new Map<Scene, IScene>();
   private lastTick = 0;
+  ctx: CanvasRenderingContext2D;
   room: Room;
 
-  public constructor() {
+  public constructor(ctx: CanvasRenderingContext2D) {
     // level
+    this.ctx = ctx;
+
     this.room = new Room();
     this.room._init();
 
@@ -116,7 +119,7 @@ class PlayScene implements IScene {
     // render at last
 
     const offset = this.game.room.getCameraOffset();
-    System.renderSystem(ecs, ctx, offset);
+    System.renderSystem(ecs, this.game.ctx, offset);
   }
 
   render(ctx) {

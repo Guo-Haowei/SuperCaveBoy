@@ -1,12 +1,16 @@
 import { Game } from './game.js';
 import { spriteManager } from './assets';
-
-// @TODO: remove this global variable
-// eslint-disable-next-line no-var
-var game = new Game();
+import { WIDTH, HEIGHT } from './constants.js';
 
 function main(imageAssets: Record<string, HTMLImageElement>) {
   spriteManager.init(imageAssets);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = WIDTH;
+  canvas.height = HEIGHT;
+  const ctx = canvas.getContext('2d');
+  document.body.appendChild(canvas);
+  const game = new Game(ctx);
 
   const loop = () => {
     game.tick();
