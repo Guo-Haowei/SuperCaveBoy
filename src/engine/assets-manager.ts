@@ -2,6 +2,7 @@ export const SpriteSheets = {
   DIRY: 'dirt',
   WALL: 'wall',
   ENTRANCE: 'entrance',
+  PORTAL: 'portal',
 
   PLAYER_IDLE: 'player_idle',
   PLAYER_WALK: 'player_walk',
@@ -73,10 +74,10 @@ class AssetManager {
 
     this.loadSheet(SpriteSheets.SNAKE_MOVE, images.spr_snake_slithe, TILE_SIZE, TILE_SIZE);
     this.loadSheet(SpriteSheets.SPIDER_JUMP, images.spr_spider_jump, TILE_SIZE, TILE_SIZE);
+    this.loadSheet(SpriteSheets.PORTAL, images.spr_exit, 96, 96);
     //     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
 
     //     // map
-    //     this.spr_exit = new OldSprite(images.spr_exit, 0, 0, 96, 96);
     //     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
     //     this.spr_lava[0] = new OldSprite(images.spr_lava, 0, -20, 64, 84);
     //     this.spr_lava[1] = new OldSprite(images.spr_lava, 64, -20, 64, 84);

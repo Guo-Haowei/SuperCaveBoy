@@ -1,15 +1,13 @@
-import { Rect } from '../common';
 import { createSpider } from './spider';
 import { createSnake } from './snake';
 import { createBat } from './bat';
-import { SpecialObject } from './specialobject';
-import { GameObject } from './gameobject';
 import { SpriteSheets } from '../engine/assets-manager';
-import { Collider, CollisionLayer, Position, Sprite, Static } from '../components';
+import { Collider, Position, Sprite, Static } from '../components';
 import { ECSWorld } from '../ecs';
 import { createGameCamera } from '../camera';
 import { createPlayer } from './player';
-import { WIDTH, HEIGHT, TILE_SIZE } from '../constants';
+import { WIDTH, HEIGHT } from '../constants';
+import { createPoartal } from './portal';
 
 enum TileType {
   WALL = 0,
@@ -19,31 +17,35 @@ enum TileType {
 const SPAWNING_X = 192;
 const SPAWNING_Y = 600;
 
+// @TODO: remove manager
 export class Room {
   level = WORLD.startLevel;
   world: number[][] = [];
   width: number;
   height: number;
-  obstacles: GameObject[] = [];
-  objects: SpecialObject[] = [];
   ecs: ECSWorld = new ECSWorld();
   playerId = ECSWorld.INVALID_ENTITY;
 
-  tileSize = TILE_SIZE;
+  tileSize: number;
 
   cameraId = ECSWorld.INVALID_ENTITY;
 
+  constructor(tileSize: number) {
+    this.tileSize = tileSize;
+
+    // Initialize the room with the first level
+    this.init();
+  }
+
   private clearRoom() {
     this.world = [];
-    this.obstacles = [];
-    this.objects = [];
     this.ecs = new ECSWorld();
   }
 
   private createTile(x: number, y: number, sheetId: string) {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, new Sprite(sheetId, 0, 2));
+    this.ecs.addComponent(id, new Sprite(sheetId, 0, 10));
   }
 
   private createEntrance(x: number, y: number) {
@@ -53,20 +55,18 @@ export class Room {
   }
 
   private createCollider(x: number, y: number, width: number, height: number) {
-    x = x * TILE_SIZE;
-    y = y * TILE_SIZE;
-    width = width * TILE_SIZE;
-    height = height * TILE_SIZE;
-
-    // TODO: remove GameObject
-    this.obstacles.push(new GameObject(x, y, new Rect(0, 0, width, height)));
+    const { tileSize } = this;
+    x = x * tileSize;
+    y = y * tileSize;
+    width = width * tileSize;
+    height = height * tileSize;
 
     const id = this.ecs.createEntity();
     const collider = new Collider(
       width,
       height,
-      CollisionLayer.OBSTACLE,
-      CollisionLayer.PLAYER | CollisionLayer.ENEMY,
+      Collider.OBSTACLE,
+      Collider.PLAYER | Collider.ENEMY,
     );
 
     this.ecs.addComponent(id, new Static());
@@ -83,19 +83,22 @@ export class Room {
     this.width = world[this.level].length;
     this.height = world.length;
 
+    const { tileSize, width, height } = this;
+
     // tiles
-    for (let y = 0; y < this.height; ++y) {
-      for (let x = 0; x < this.width; ++x) {
+    for (let y = 0; y < height; ++y) {
+      for (let x = 0; x < width; ++x) {
         const spriteId = this.world[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
-        this.createTile(TILE_SIZE * x, TILE_SIZE * y, spriteId);
+        this.createTile(tileSize * x, tileSize * y, spriteId);
       }
     }
 
     // player
-    const mapWidth = this.width * TILE_SIZE;
-    const mapHeight = this.height * TILE_SIZE;
+    const mapWidth = width * tileSize;
+    const mapHeight = height * tileSize;
     const playerId = createPlayer(this.ecs, SPAWNING_X, SPAWNING_Y);
     this.playerId = playerId;
+
     // camera
     this.cameraId = createGameCamera(
       this.ecs,
@@ -136,18 +139,12 @@ export class Room {
       }
     }
 
-    // objects
-    // const objs = WORLD.levels[this.level].objects;
-    // for (let i = 0; i < objs.length; ++i) {
-    //   const obj = objs[i];
-    //   this.objects.push(new SpecialObject(this.handler, obj[0], obj[1], obj[2]));
-    //   this.objects[i]._init();
-    //   if (obj[3]) {
-    //     this.objects[i]._init(obj[3]);
-    //   } else {
-    //     this.objects[i]._init();
-    //   }
-    // }
+    for (const obj of WORLD.levels[this.level].objects) {
+      const type = obj[2];
+      if (type === TYPE.EXIT) {
+        createPoartal(this.ecs, obj[0], obj[1]);
+      }
+    }
 
     // if (this.level === 9) {
     //     var music = handler._getMusic()

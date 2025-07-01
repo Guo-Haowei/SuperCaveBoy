@@ -3,7 +3,7 @@ import {
   Animation,
   Camera,
   Collider,
-  CollisionLayer,
+  Collider,
   Dynamic,
   Facing,
   PendingDelete,
@@ -137,11 +137,14 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
 
     let color: string;
     switch (layer) {
-      case CollisionLayer.PLAYER:
+      case Collider.PLAYER:
         color = 'green';
         break;
-      case CollisionLayer.ENEMY:
+      case Collider.ENEMY:
         color = 'red';
+        break;
+      case Collider.PORTAL:
+        color = 'purple';
         break;
       default:
         color = 'blue';
@@ -269,7 +272,7 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         .getComponent<Script>(d, Script.name)
         ?.onCollision(s, staticCollider.layer, aabb2, aabb1);
 
-      if (direction === Direction.DOWN && staticCollider.layer === CollisionLayer.OBSTACLE) {
+      if (direction === Direction.DOWN && staticCollider.layer === Collider.OBSTACLE) {
         world.addComponent(d, new Grounded());
         const vel = world.getComponent<Velocity>(d, Velocity.name);
         if (vel) {

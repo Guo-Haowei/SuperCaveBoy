@@ -1,8 +1,10 @@
 import { Room } from '../world/room';
-import * as System from '../systems';
 import { inputManager } from './input-manager';
 import { assetManager } from './assets-manager';
-import { Camera, Position } from '../components';
+import { IScene } from './scene';
+import { GameScene } from './game-scene';
+import { EditorScene } from './editor-scene';
+import { TILE_SIZE } from '../constants';
 
 export type Scene = 'MENU' | 'GAME' | 'EDITOR';
 
@@ -23,10 +25,10 @@ export class Runtime {
     this.ctx = ctx;
 
     // @TODO: remove manager
-    this.room = new Room();
+    this.room = new Room(TILE_SIZE);
     this.room.init();
 
-    this.scenes['GAME'] = new PlayScene(this);
+    this.scenes['GAME'] = new GameScene(this);
     this.scenes['EDITOR'] = new EditorScene(this);
 
     assetManager.init(imageAssets);
@@ -67,74 +69,6 @@ export class Runtime {
     this.scenes[this.current].tick(dt);
 
     inputManager.postUpdate(dt);
-  }
-}
-
-interface IScene {
-  enter?(): void;
-  exit?(): void;
-
-  tick(dt: number): void;
-}
-
-class PlayScene implements IScene {
-  private game: Runtime;
-
-  constructor(game: Runtime) {
-    this.game = game;
-  }
-
-  tick(dt: number) {
-    const { ctx, room } = this.game;
-    const { ecs } = room;
-
-    System.scriptSystem(ecs, dt);
-    System.movementSystem(ecs, dt);
-    System.physicsSystem(ecs, dt);
-    System.animationSystem(ecs, dt);
-
-    const cameraId = room.cameraId;
-    const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
-    const pos = ecs.getComponent<Position>(cameraId, Position.name);
-
-    System.renderSystem(ecs, ctx, room, { camera, pos });
-    System.deleteSystem(ecs);
-  }
-}
-
-class EditorScene implements IScene {
-  private game: Runtime;
-
-  private camera: Camera;
-  private cameraPos: Position;
-
-  constructor(game: Runtime) {
-    this.game = game;
-    const { width, height } = game.canvas;
-    this.camera = new Camera(width, height);
-    this.cameraPos = new Position(width / 2, height / 2);
-  }
-
-  updateCamera() {
-    if (inputManager.isMouseDragging()) {
-      const delta = inputManager.getDragDelta();
-      this.cameraPos.x -= delta.x;
-      this.cameraPos.y -= delta.y;
-    }
-
-    const scroll = inputManager.getScroll();
-    if (scroll !== 0) {
-      this.camera.setZoom(scroll);
-    }
-  }
-
-  tick(_dt: number) {
-    this.updateCamera();
-
-    const { ctx, room } = this.game;
-    const { ecs } = room;
-
-    System.renderSystem(ecs, ctx, room, { camera: this.camera, pos: this.cameraPos });
   }
 }
 

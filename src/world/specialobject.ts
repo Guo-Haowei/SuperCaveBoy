@@ -34,11 +34,6 @@ export class SpecialObject {
         this.bound = new Rect(6, 2, 28, 30);
         this.sprite = this.handler._getGameAssets().spr_small_sapphire;
         break;
-      case TYPE.EXIT:
-        this.trigger = this._ExitTrigger;
-        this.bound = new Rect(38, 66, 20, 30);
-        this.sprite = this.handler._getGameAssets().spr_exit;
-        break;
       case TYPE.LAVA:
         if (length) this.length = length;
         this.trigger = this._LavaTrigger;
@@ -96,14 +91,6 @@ export class SpecialObject {
     // this.destroyed = true;
     // this.handler._getPlayer().pausing = false;
     // this.boss._setState(this.boss._BossRising);
-  }
-
-  _ExitTrigger() {
-    // start alarm
-    const alarm = this.handler._getPlayer().alarm0;
-    if (alarm.activated) return;
-    alarm._init(10);
-    alarm._setScript(alarm._enterNewRoom);
   }
 
   _SapphireTrigger() {
