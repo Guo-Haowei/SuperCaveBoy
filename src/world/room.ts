@@ -1,4 +1,4 @@
-import { Rect, Vec2 } from '../common';
+import { Rect } from '../common';
 import { createSpider } from './spider';
 import { createSnake } from './snake';
 import { createBat } from './bat';
@@ -7,9 +7,9 @@ import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
 import { Collider, CollisionLayer, Position, Sprite, Static } from '../components';
 import { ECSWorld } from '../ecs';
-import { createCamera } from '../camera';
+import { createGameCamera, createEditorCamera } from '../camera';
 import { createPlayer } from './player';
-import { TILE_SIZE } from '../constants';
+import { WIDTH, HEIGHT, TILE_SIZE } from '../constants';
 
 enum TileType {
   WALL = 0,
@@ -29,17 +29,13 @@ export class Room {
   ecs: ECSWorld = new ECSWorld();
   playerId = ECSWorld.INVALID_ENTITY;
   cameraId = ECSWorld.INVALID_ENTITY;
+  editorCameraId = ECSWorld.INVALID_ENTITY;
 
   private clearRoom() {
     this.world = [];
     this.obstacles = [];
     this.objects = [];
     this.ecs = new ECSWorld();
-  }
-
-  public getCameraOffset(): Vec2 {
-    const pos = this.ecs.getComponent<Position>(this.cameraId, Position.name);
-    return { x: pos.x, y: pos.y };
   }
 
   private createTile(x: number, y: number, sheetId: string) {
@@ -94,16 +90,28 @@ export class Room {
     }
 
     // player
+    const mapWidth = this.width * TILE_SIZE;
+    const mapHeight = this.height * TILE_SIZE;
     const playerId = createPlayer(this.ecs, SPAWNING_X, SPAWNING_Y);
     this.playerId = playerId;
     // camera
-    this.cameraId = createCamera(
+    this.cameraId = createGameCamera(
       this.ecs,
       400,
       SPAWNING_Y,
+      WIDTH,
+      HEIGHT,
       playerId,
-      this.width * TILE_SIZE,
-      this.height * TILE_SIZE,
+      mapWidth,
+      mapHeight,
+    );
+
+    this.editorCameraId = createEditorCamera(
+      this.ecs,
+      0.5 * mapWidth,
+      0.5 * mapHeight,
+      WIDTH,
+      HEIGHT,
     );
 
     // entrance

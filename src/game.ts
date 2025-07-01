@@ -53,10 +53,6 @@ export class Game {
   }
 
   render(ctx: CanvasRenderingContext2D) {
-    // ctx.clearRect(0, 0, WIDTH, HEIGHT);
-    // ctx.fillStyle = '#1C0909';
-    // ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
     this.currentScene.render(ctx);
   }
 }
@@ -106,22 +102,24 @@ class PlayScene implements IScene {
   }
 
   tick(dt: number) {
+    inputManager.preUpdate(dt);
+
     this.game.room._tick();
 
     const { ecs } = this.game.room;
 
     System.scriptSystem(ecs, dt);
-    // move first, then resolve collisions
     System.movementSystem(ecs, dt);
     System.physicsSystem(ecs, dt);
 
     System.animationSystem(ecs, dt);
-    // render at last
 
-    const offset = this.game.room.getCameraOffset();
-    System.renderSystem(ecs, this.game.ctx, offset);
+    const camera = this.game.room.editorCameraId;
+    System.renderSystem(ecs, this.game.ctx, camera);
 
     System.deleteSystem(ecs);
+
+    inputManager.postUpdate(dt);
   }
 
   render(ctx) {

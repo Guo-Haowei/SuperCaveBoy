@@ -1,6 +1,7 @@
-import { ECSWorld } from './ecs';
+import { Entity, ECSWorld } from './ecs';
 import {
   Animation,
+  Camera,
   Collider,
   CollisionLayer,
   Dynamic,
@@ -17,7 +18,7 @@ import { spriteManager } from './assets';
 import { Direction, AABB, Vec2 } from './common';
 
 // @TODO: fix this
-import { WIDTH, HEIGHT, YOFFSET } from './constants';
+import { WIDTH, HEIGHT } from './constants';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
@@ -41,13 +42,21 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
-  // @TODO: camera culling
-  const cameraX = offset.x - 0.5 * WIDTH;
-  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cameraId: Entity) {
+  const cameraPos = world.getComponent<Position>(cameraId, Position.name);
+  const camera = world.getComponent<Camera>(cameraId, Camera.name);
+  const offset = camera.getOffset(cameraPos);
 
   const renderables = world.queryEntities<Sprite, Position>(Sprite.name, Position.name);
   const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
+
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  ctx.fillStyle = '#1C0909';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.save();
+  ctx.translate(-offset.x, -offset.y);
+  ctx.scale(camera.zoom, camera.zoom);
 
   for (const [id, sprite, pos] of sorted) {
     const { x, y } = pos as Position;
@@ -56,15 +65,12 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, off
     const renderable = spriteManager.getFrame(sheetId, frameIndex);
     const { image, frame } = renderable;
 
-    const dx = x - cameraX;
-    const dy = y - cameraY;
-
     ctx.save();
 
     const facing = world.getComponent<Facing>(id, Facing.name);
     const flipLeft: number = facing && facing.left ? 1 : 0;
 
-    ctx.translate(dx + flipLeft * frame.width, dy);
+    ctx.translate(x + flipLeft * frame.width, y);
     ctx.scale(flipLeft ? -1 : 1, 1);
 
     ctx.drawImage(
@@ -84,14 +90,13 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, off
 
   const DEBUG = true;
   if (DEBUG) {
-    renderSystemDebug(world, ctx, offset);
+    renderSystemDebug(world, ctx);
   }
+
+  ctx.restore();
 }
 
-function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offset: Vec2) {
-  const cameraX = offset.x - 0.5 * WIDTH;
-  const cameraY = offset.y - 0.5 * HEIGHT - YOFFSET;
-
+function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
     Position.name,
     Collider.name,
@@ -99,8 +104,8 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offse
     const { x, y } = pos;
     const { width, height, offsetX, offsetY, layer } = collider;
 
-    const dx = x + offsetX - cameraX;
-    const dy = y + offsetY - cameraY;
+    const dx = x + offsetX;
+    const dy = y + offsetY;
 
     let color: string;
     switch (layer) {

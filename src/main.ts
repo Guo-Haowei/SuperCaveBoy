@@ -1,15 +1,11 @@
 import { Game } from './game.js';
 import { spriteManager } from './assets';
-import { WIDTH, HEIGHT } from './constants.js';
 
 function main(imageAssets: Record<string, HTMLImageElement>) {
   spriteManager.init(imageAssets);
 
-  const canvas = document.createElement('canvas');
-  canvas.width = WIDTH;
-  canvas.height = HEIGHT;
+  const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
   const ctx = canvas.getContext('2d');
-  document.body.appendChild(canvas);
   const game = new Game(ctx);
 
   const loop = () => {

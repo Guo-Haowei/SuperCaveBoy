@@ -152,6 +152,33 @@ export abstract class ScriptBase {
   }
 }
 
+export class Camera {
+  width: number;
+  height: number;
+  zoom = 1;
+
+  constructor(width: number, height: number) {
+    this.width = width;
+    this.height = height;
+  }
+
+  setZoom(delta: number) {
+    const zoomFactor = 1.05;
+    let zoom = this.zoom;
+    zoom *= Math.pow(zoomFactor, -delta);
+    zoom = Math.max(0.1, zoom);
+    zoom = Math.min(10, zoom);
+    this.zoom = zoom;
+  }
+
+  getOffset(pos: Position): { x: number; y: number } {
+    return {
+      x: pos.x - 0.5 * this.width,
+      y: pos.y - 0.5 * this.height,
+    };
+  }
+}
+
 export class Script {
   private script: ScriptBase;
 

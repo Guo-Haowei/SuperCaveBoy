@@ -14,6 +14,7 @@ import { SpriteSheets } from '../assets';
 import { inputManager } from '../input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
 import { AABB } from '../common';
+import { audios } from '../audios';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
@@ -51,6 +52,7 @@ class PlayerScript extends ScriptBase {
           name: 'hurt',
           enter: () => {
             this.playAnim('hurt');
+            audios.snd_ouch.play();
             this.cooldown = PlayerScript.HURT_COOLDOWN;
           },
           update: (dt) => this.hurt(dt),
@@ -141,6 +143,8 @@ class PlayerScript extends ScriptBase {
     if (jumping) {
       return;
     }
+
+    audios.snd_step.play();
     this.fsm.transition(walking ? 'walk' : 'idle');
   }
 
@@ -162,18 +166,19 @@ class PlayerScript extends ScriptBase {
       return;
     }
     if (layer === CollisionLayer.ENEMY) {
+      const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
       if (selfBound.above(otherBound)) {
         // kill the enemy
         const script = this.world.getComponent<Script>(other, Script.name);
         script?.onDie();
+        velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
       } else {
         const center = selfBound.center();
         const otherCenter = otherBound.center();
 
-        const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
         const dx = center.x - otherCenter.x;
         velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
-        velocity.vy -= JUMP_VELOCITY * 0.05; // bounce up
+        velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
         this.fsm.transition('hurt');
       }
       return;
