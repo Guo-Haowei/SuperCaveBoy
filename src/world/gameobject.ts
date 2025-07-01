@@ -1,4 +1,4 @@
-import { Rect } from '../common';
+import { Rect } from '../engine/common';
 
 // @TODO: extract collider
 export class GameObject {

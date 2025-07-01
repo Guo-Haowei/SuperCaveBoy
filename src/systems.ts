@@ -15,7 +15,7 @@ import {
 } from './components';
 import { Room } from './world/room';
 import { assetManager } from './engine/assets-manager';
-import { Direction, AABB, Vec2 } from './common';
+import { Direction, AABB, Vec2 } from './engine/common';
 import { EditorState } from './editor-state';
 
 // ------------------------------ Animation System -----------------------------

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 import { ECSWorld, Entity } from './ecs';
 import { StateMachine } from './world/lifeform-common';
-import { AABB } from './common';
+import { AABB } from './engine/common';
 
 export class Name {
   value: string;

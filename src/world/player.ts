@@ -13,8 +13,9 @@ import {
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
-import { AABB } from '../common';
+import { AABB } from '../engine/common';
 import { roomManager } from '../engine/room-manager';
+import { CountDown } from '../engine/common';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
@@ -24,7 +25,7 @@ class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
   static readonly HURT_COOLDOWN = 0.5;
 
-  private cooldown: number;
+  private cooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
@@ -53,7 +54,7 @@ class PlayerScript extends ScriptBase {
           enter: () => {
             this.playAnim('hurt');
             assetManager.snd_ouch.play();
-            this.cooldown = PlayerScript.HURT_COOLDOWN;
+            this.cooldown.reset();
           },
           update: (dt) => this.hurt(dt),
         },
@@ -149,9 +150,7 @@ class PlayerScript extends ScriptBase {
   }
 
   private hurt(dt: number) {
-    this.cooldown -= dt;
-    this.cooldown = Math.max(this.cooldown, 0);
-    if (this.cooldown == 0) {
+    if (this.cooldown.tick(dt)) {
       this.fsm.transition('idle');
     }
   }
