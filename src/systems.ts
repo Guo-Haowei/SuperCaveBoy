@@ -10,6 +10,7 @@ import {
   Script,
   Static,
   Velocity,
+  Grounded,
 } from './components';
 import { spriteManager } from './assets';
 import { Direction, Rect, Vec2 } from './common';
@@ -190,6 +191,8 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
     Position.name,
   );
 
+  world.removeAllComponents(Grounded.name);
+
   // test static dynamic collisions
   for (const [s, _static, staticCollider, staticPos] of staticColliders) {
     for (const [d, _dynamic, dynamicCollider, dynamicPos] of dynamicColliders) {
@@ -215,6 +218,14 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
 
       world.getComponent<Script>(s, Script.name)?.onCollision(d, dynamicCollider.layer, direction);
       world.getComponent<Script>(d, Script.name)?.onCollision(s, staticCollider.layer, -direction);
+
+      if (direction === Direction.DOWN && staticCollider.layer === CollisionLayer.OBSTACLE) {
+        world.addComponent(d, new Grounded());
+        const vel = world.getComponent<Velocity>(d, Velocity.name);
+        if (vel) {
+          vel.vy = 1;
+        }
+      }
     }
   }
 

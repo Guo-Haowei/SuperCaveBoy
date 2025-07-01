@@ -18,6 +18,14 @@ export class ECSWorld {
     this.components.get(id)?.set(entity, data);
   }
 
+  removeComponent(entity: Entity, type: string): void {
+    this.components.get(type)?.delete(entity);
+  }
+
+  removeAllComponents(type: string): void {
+    this.components.delete(type);
+  }
+
   getComponent<T>(entity: Entity, type: string): T | undefined {
     return this.components.get(type)?.get(entity) as T;
   }

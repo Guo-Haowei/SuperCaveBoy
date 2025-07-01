@@ -21,15 +21,11 @@ class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
 
   private state: 'walk' | 'jump';
-  private grounded = false;
-  private lastY: number;
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
     this.state = 'walk';
 
-    const pos = this.world.getComponent<Position>(this.entity, Position.name);
-    this.lastY = pos.y;
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     vel.gravity = GRAVITY;
   }
@@ -55,7 +51,7 @@ class PlayerScript extends ScriptBase {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     this.updateHorizonalMove(velocity);
 
-    if (inputManager.isKeyPressed('KeyW') && this.grounded) {
+    if (inputManager.isKeyPressed('KeyW') && this.isGrounded()) {
       this.startJump(velocity);
     }
     // const position = this.world.getComponent<Position>(this.entity, Position.name);
@@ -67,12 +63,7 @@ class PlayerScript extends ScriptBase {
   }
 
   onUpdate(dt: number) {
-    const pos = this.world.getComponent<Position>(this.entity, Position.name);
-    if (Math.abs(pos.y - this.lastY) < 0.00000001) {
-      this.grounded = true;
-    } else {
-      this.grounded = false;
-      this.lastY = pos.y;
+    if (this.isGrounded()) {
       this.state = 'walk';
     }
 
@@ -92,9 +83,6 @@ class PlayerScript extends ScriptBase {
     if (layer === CollisionLayer.OBSTACLE) {
       if (dir === Direction.LEFT || dir === Direction.RIGHT) {
         // @TODO: grabbing
-      } else if (dir === Direction.UP) {
-        const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-        vel.vy = 0;
       }
     }
   }

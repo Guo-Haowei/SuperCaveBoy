@@ -16,7 +16,7 @@ import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './l
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
-type SpiderStateName = 'idle' | 'jumping' | 'prepare';
+type SpiderStateName = 'idle' | 'jumping';
 
 class SpiderScript extends ScriptBase {
   private target: Entity;
@@ -42,14 +42,12 @@ class SpiderScript extends ScriptBase {
           },
           update: (dt) => this.idle(dt),
         },
-        prepare: {
-          name: 'prepare',
-        },
         jumping: {
           name: 'jumping',
           enter: () => {
             this.playAnim('jump');
           },
+          update: (dt) => this.jumping(dt),
         },
       },
       'idle',
@@ -74,34 +72,23 @@ class SpiderScript extends ScriptBase {
     const absDx = Math.abs(dx);
     const face = this.world.getComponent<Facing>(this.entity, Facing.name);
     face.left = -Math.sign(dx) < 0;
-    if (this.cooldown <= 0.0001 && absDx > 40 && absDx < 500 && dy < 300) {
+    if (this.cooldown === 0 && absDx > 40 && absDx < 500 && dy < 300 && this.isGrounded()) {
       const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
       vel.vy = -JUMP_VELOCITY;
       vel.vx = absDx * -Math.sign(dx);
 
-      this.fsm.transition('prepare');
+      this.fsm.transition('jumping');
+    }
+  }
+
+  private jumping(_dt: number) {
+    if (this.isGrounded()) {
+      this.fsm.transition('idle');
     }
   }
 
   onUpdate(dt: number) {
     this.fsm.update(dt);
-  }
-
-  // @TODO: fix this
-  onCollision(_other: Entity, layer: number, dir: number): void {
-    if (this.fsm.current === 'prepare') {
-      this.fsm.transition('jumping');
-      return;
-    }
-
-    if (layer === CollisionLayer.OBSTACLE && dir === Direction.UP) {
-      const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-      vel.vy = 0;
-
-      if (this.fsm.current === 'jumping') {
-        this.fsm.transition('idle');
-      }
-    }
   }
 }
 

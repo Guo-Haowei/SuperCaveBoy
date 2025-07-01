@@ -79,6 +79,8 @@ export enum CollisionLayer {
   TRAP = 0b010000,
 }
 
+export class Grounded {}
+
 export class Static {}
 
 export class Dynamic {}
@@ -127,6 +129,10 @@ export abstract class ScriptBase {
     if (!anim || anim.current === name) return;
     anim.current = name;
     anim.elapsed = 0;
+  }
+
+  isGrounded(): boolean {
+    return this.world.hasComponent(this.entity, Grounded.name);
   }
 }
 
