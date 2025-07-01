@@ -1,7 +1,6 @@
-import { Entity, ECSWorld } from './ecs';
+import { ECSWorld } from './ecs';
 import {
   Animation,
-  Camera,
   Collider,
   CollisionLayer,
   Dynamic,
@@ -16,9 +15,6 @@ import {
 } from './components';
 import { spriteManager } from './assets';
 import { Direction, AABB, Vec2 } from './common';
-
-// @TODO: fix this
-import { WIDTH, HEIGHT } from './constants';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
@@ -42,21 +38,9 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cameraId: Entity) {
-  const cameraPos = world.getComponent<Position>(cameraId, Position.name);
-  const camera = world.getComponent<Camera>(cameraId, Camera.name);
-  const offset = camera.getOffset(cameraPos);
-
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   const renderables = world.queryEntities<Sprite, Position>(Sprite.name, Position.name);
   const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
-
-  ctx.clearRect(0, 0, WIDTH, HEIGHT);
-  ctx.fillStyle = '#1C0909';
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  ctx.save();
-  ctx.translate(-offset.x, -offset.y);
-  ctx.scale(camera.zoom, camera.zoom);
 
   for (const [id, sprite, pos] of sorted) {
     const { x, y } = pos as Position;
@@ -92,8 +76,6 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, cam
   if (DEBUG) {
     renderSystemDebug(world, ctx);
   }
-
-  ctx.restore();
 }
 
 function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
@@ -124,6 +106,12 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     ctx.lineWidth = 1;
     ctx.strokeRect(dx, dy, width, height);
   }
+}
+
+function renderSystemDrawTileGrid(ctx: CanvasRenderingContext2D, room: Room) {
+  const width = room.width;
+  const height = room.height;
+  const tileSize = room.tileSize;
 }
 
 // ------------------------------- Script System -------------------------------

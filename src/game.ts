@@ -1,6 +1,8 @@
 import { Room } from './world/room';
 import * as System from './systems';
 import { inputManager } from './input-manager';
+import { Camera, Position } from './components';
+import { WIDTH, HEIGHT, TILE_SIZE } from './constants';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -101,6 +103,29 @@ class PlayScene implements IScene {
     this.game = game;
   }
 
+  drawDebugGrid(ctx: CanvasRenderingContext2D) {
+    ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+
+    const room = this.game.room;
+    for (let x = 0; x <= room.width; ++x) {
+      const pixelX = x * TILE_SIZE;
+      ctx.beginPath();
+      ctx.moveTo(pixelX, 0);
+      ctx.lineTo(pixelX, room.height * TILE_SIZE);
+      ctx.stroke();
+    }
+
+    for (let y = 0; y <= room.height; ++y) {
+      const pixelY = y * TILE_SIZE;
+      ctx.beginPath();
+      ctx.moveTo(0, pixelY);
+      ctx.lineTo(room.width * TILE_SIZE, pixelY);
+      ctx.stroke();
+    }
+  }
+
   tick(dt: number) {
     inputManager.preUpdate(dt);
 
@@ -114,8 +139,28 @@ class PlayScene implements IScene {
 
     System.animationSystem(ecs, dt);
 
-    const camera = this.game.room.editorCameraId;
-    System.renderSystem(ecs, this.game.ctx, camera);
+    {
+      const { ctx } = this.game;
+
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      ctx.fillStyle = '#1C0909';
+      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      const cameraId = this.game.room.editorCameraId;
+      const cameraPos = ecs.getComponent<Position>(cameraId, Position.name);
+      const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
+      const offset = camera.getOffset(cameraPos);
+
+      ctx.save();
+      ctx.translate(-offset.x, -offset.y);
+      ctx.scale(camera.zoom, camera.zoom);
+
+      System.renderSystem(ecs, ctx);
+
+      this.drawDebugGrid(ctx);
+
+      ctx.restore();
+    }
 
     System.deleteSystem(ecs);
 
