@@ -28,6 +28,7 @@ body {
   margin: 0 auto;
   width: 960px;
   height: 600px;
+  border: 2px solid yellow;
 }
 
 .play-button {
