@@ -1,6 +1,7 @@
 import { ECSWorld } from './ecs';
 import {
   Animation,
+  Camera,
   Collider,
   CollisionLayer,
   Dynamic,
@@ -13,8 +14,10 @@ import {
   Velocity,
   Grounded,
 } from './components';
+import { Room } from './world/room';
 import { assetManager } from './engine/assets-manager';
 import { Direction, AABB, Vec2 } from './common';
+import { EditorState } from './editor-state';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
@@ -38,7 +41,19 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D) {
+export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, room: Room) {
+  const cameraId = room.editorCameraId;
+
+  const camera = world.getComponent<Camera>(cameraId, Camera.name);
+
+  ctx.clearRect(0, 0, camera.width, camera.height);
+
+  const cameraPos = world.getComponent<Position>(cameraId, Position.name);
+  const offset = camera.getOffset(cameraPos);
+  ctx.save();
+  ctx.translate(-offset.x, -offset.y);
+  ctx.scale(camera.zoom, camera.zoom);
+
   const renderables = world.queryEntities<Sprite, Position>(Sprite.name, Position.name);
   const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
 
@@ -72,12 +87,40 @@ export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     ctx.restore();
   }
 
-  const DEBUG = true;
-  if (DEBUG) {
+  if (EditorState.debugCollisions) {
     renderSystemDebug(world, ctx);
   }
+
+  if (EditorState.debugGrid) {
+    drawDebugGrid(ctx, room);
+  }
+
+  ctx.restore();
 }
 
+function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
+  ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+
+  const { width, height, tileSize } = room;
+
+  for (let x = 0; x <= width; ++x) {
+    const pixelX = x * tileSize;
+    ctx.beginPath();
+    ctx.moveTo(pixelX, 0);
+    ctx.lineTo(pixelX, height * tileSize);
+    ctx.stroke();
+  }
+
+  for (let y = 0; y <= height; ++y) {
+    const pixelY = y * tileSize;
+    ctx.beginPath();
+    ctx.moveTo(0, pixelY);
+    ctx.lineTo(width * tileSize, pixelY);
+    ctx.stroke();
+  }
+}
 function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
     Position.name,

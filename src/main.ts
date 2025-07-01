@@ -1,8 +1,28 @@
-import { Runtime } from './engine/runtime.js';
+import { Runtime } from './engine/runtime';
+import { EditorState } from './editor-state';
 
 const imageAssets: Record<string, HTMLImageElement> = {};
 
+function bindDebugButton(name, callback: (checked: boolean) => void) {
+  const button = document.getElementById(name) as HTMLInputElement;
+  if (button) {
+    button.addEventListener('change', () => {
+      callback(button.checked);
+    });
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(`Button with id "${name}" not found.`);
+  }
+}
+
 function main() {
+  bindDebugButton('debugGrid', (checked) => {
+    EditorState.debugGrid = checked;
+  });
+  bindDebugButton('debugCollisions', (checked) => {
+    EditorState.debugCollisions = checked;
+  });
+
   const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
   const game = new Runtime(canvas, imageAssets);
 
@@ -57,8 +77,11 @@ const urls = [
   './img/enemies/spr_boss_damaged.png',
 ];
 
-loadImages(urls).then(() => {
-  // eslint-disable-next-line no-console
-  console.log('✅ All assets loaded');
-  main(imageAssets);
-});
+window.onload = () => {
+  loadImages(urls).then(() => {
+    // eslint-disable-next-line no-console
+    console.log('✅ All assets loaded');
+
+    main();
+  });
+};

@@ -30,6 +30,7 @@ export class Room {
   playerId = ECSWorld.INVALID_ENTITY;
   cameraId = ECSWorld.INVALID_ENTITY;
   editorCameraId = ECSWorld.INVALID_ENTITY;
+  tileSize = TILE_SIZE;
 
   private clearRoom() {
     this.world = [];
