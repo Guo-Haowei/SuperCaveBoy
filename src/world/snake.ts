@@ -10,7 +10,10 @@ import {
   Velocity,
 } from '../components';
 import { SpriteSheets } from '../assets';
-import { createEnemyCommon } from './lifeform-common';
+import { createEnemyCommon, StateMachine } from './lifeform-common';
+import { audios } from '../audios';
+
+type SnakeStateName = 'idle' | 'die';
 
 class SnakeScript extends ScriptBase {
   private static readonly INITIAL_SPEED = 100;
@@ -25,9 +28,27 @@ class SnakeScript extends ScriptBase {
 
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     vel.vx = -SnakeScript.INITIAL_SPEED;
+
+    this.fsm = new StateMachine<SnakeStateName>(
+      {
+        idle: {
+          name: 'idle',
+          enter: () => this.playAnim('idle'),
+          update: () => this.idle(),
+        },
+        die: {
+          name: 'die',
+          update: () => {
+            super.markDelete();
+            audios.snd_snake.play();
+          },
+        },
+      },
+      'idle',
+    );
   }
 
-  onUpdate(_dt: number) {
+  idle() {
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     const { x } = position;
@@ -39,6 +60,10 @@ class SnakeScript extends ScriptBase {
       vel.vx = -SnakeScript.INITIAL_SPEED;
       facing.toggle();
     }
+  }
+
+  onDie(): void {
+    this.fsm.transition('die');
   }
 }
 

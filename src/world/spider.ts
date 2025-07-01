@@ -11,16 +11,15 @@ import {
 } from '../components';
 import { SpriteSheets } from '../assets';
 import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform-common';
+import { audios } from '../audios';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
-type SpiderStateName = 'idle' | 'jumping';
+type SpiderStateName = 'idle' | 'jumping' | 'die';
 
 class SpiderScript extends ScriptBase {
   private target: Entity;
   private cooldown: number;
-
-  private fsm: StateMachine<SpiderStateName>;
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
@@ -46,6 +45,13 @@ class SpiderScript extends ScriptBase {
             this.playAnim('jump');
           },
           update: (dt) => this.jumping(dt),
+        },
+        die: {
+          name: 'die',
+          update: () => {
+            super.markDelete();
+            audios.snd_spider.play();
+          },
         },
       },
       'idle',
@@ -83,10 +89,6 @@ class SpiderScript extends ScriptBase {
     if (this.isGrounded()) {
       this.fsm.transition('idle');
     }
-  }
-
-  onUpdate(dt: number) {
-    this.fsm.update(dt);
   }
 }
 

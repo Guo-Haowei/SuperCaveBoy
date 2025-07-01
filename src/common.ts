@@ -20,6 +20,32 @@ export class Rect {
   }
 }
 
+export class AABB {
+  private static readonly ERROR = 0.0001;
+
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
+
+  constructor(xMin: number, yMin: number, xMax: number, yMax: number) {
+    this.xMin = xMin;
+    this.yMin = yMin;
+    this.xMax = xMax;
+    this.yMax = yMax;
+  }
+
+  slightlyAbove(other: AABB): boolean {
+    const diff = this.yMin - other.yMax;
+    return Math.abs(diff) < AABB.ERROR;
+  }
+
+  slightlyBelow(other: AABB): boolean {
+    const diff = other.yMin - this.yMax;
+    return Math.abs(diff) < AABB.ERROR;
+  }
+}
+
 export interface Vec2 {
   x: number;
   y: number;

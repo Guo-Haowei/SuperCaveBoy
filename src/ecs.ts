@@ -26,6 +26,13 @@ export class ECSWorld {
     this.components.delete(type);
   }
 
+  removeEntity(entity: Entity): void {
+    for (const [key, map] of this.components) {
+      if (key === 'PendingDelete') continue;
+      map.delete(entity);
+    }
+  }
+
   getComponent<T>(entity: Entity, type: string): T | undefined {
     return this.components.get(type)?.get(entity) as T;
   }

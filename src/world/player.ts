@@ -10,10 +10,10 @@ import {
   Velocity,
   Facing,
 } from '../components';
-import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
 import { inputManager } from '../input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
+import { AABB } from '../common';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
@@ -21,8 +21,6 @@ type PlayerStateName = 'idle' | 'walk' | 'jump';
 
 class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
-
-  private fsm: StateMachine<PlayerStateName>;
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
@@ -135,18 +133,26 @@ class PlayerScript extends ScriptBase {
     this.fsm.transition(walking ? 'walk' : 'idle');
   }
 
-  onUpdate(dt: number) {
-    this.fsm.update(dt);
-  }
-
-  onCollision(_other: Entity, layer: number, dir: number): void {
+  onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void {
     if (layer === CollisionLayer.OBSTACLE) {
-      if (dir === Direction.LEFT || dir === Direction.RIGHT) {
-        // @TODO: grabbing
-      } else if (dir === Direction.DOWN) {
+      if (selfBound.slightlyBelow(otherBound)) {
         const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
         velocity.vy += JUMP_VELOCITY * 0.2;
+        // @TODO: grab ledge
       }
+      return;
+    }
+    if (layer === CollisionLayer.ENEMY) {
+      // console.log(selfBound);
+      // console.log(otherBound);
+      // throw new Error('Player collided with enemy');
+      if (otherBound.slightlyBelow(selfBound)) {
+        throw new Error(selfBound.toString() + ' ' + otherBound.toString());
+        // kill the enemy
+        const script = this.world.getComponent<Script>(other, Script.name);
+        script?.onDie();
+      }
+      return;
     }
   }
 }

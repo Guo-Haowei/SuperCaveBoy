@@ -17,7 +17,6 @@ type BatStateName = 'idle' | 'fly';
 class BatScript extends ScriptBase {
   private target: Entity;
   private speed: number;
-  private fsm: StateMachine<BatStateName>;
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
@@ -72,10 +71,6 @@ class BatScript extends ScriptBase {
 
     const face = this.world.getComponent<Facing>(this.entity, Facing.name);
     face.left = velocity.vx < 0;
-  }
-
-  onUpdate(dt: number) {
-    this.fsm.update(dt);
   }
 }
 

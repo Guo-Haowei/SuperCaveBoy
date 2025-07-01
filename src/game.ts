@@ -120,6 +120,8 @@ class PlayScene implements IScene {
 
     const offset = this.game.room.getCameraOffset();
     System.renderSystem(ecs, this.game.ctx, offset);
+
+    System.deleteSystem(ecs);
   }
 
   render(ctx) {

@@ -5,6 +5,7 @@ import {
   CollisionLayer,
   Dynamic,
   Facing,
+  PendingDelete,
   Position,
   Sprite,
   Script,
@@ -13,7 +14,8 @@ import {
   Grounded,
 } from './components';
 import { spriteManager } from './assets';
-import { Direction, Rect, Vec2 } from './common';
+import { Direction, AABB, Vec2 } from './common';
+
 // @TODO: fix this
 import { WIDTH, HEIGHT, YOFFSET } from './constants';
 
@@ -145,16 +147,16 @@ function canCollide(a: Collider, b: Collider): boolean {
   return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
 }
 
-function getMTV(a: Rect, b: Rect): Vec2 | null {
-  const ax1 = a.x;
-  const ay1 = a.y;
-  const ax2 = a.x + a.width;
-  const ay2 = a.y + a.height;
+function getMTV(a: AABB, b: AABB): Vec2 | null {
+  const ax1 = a.xMin;
+  const ay1 = a.yMin;
+  const ax2 = a.xMax;
+  const ay2 = a.yMax;
 
-  const bx1 = b.x;
-  const by1 = b.y;
-  const bx2 = b.x + b.width;
-  const by2 = b.y + b.height;
+  const bx1 = b.xMin;
+  const by1 = b.yMin;
+  const bx2 = b.xMax;
+  const by2 = b.yMax;
 
   if (ax2 <= bx1 || ax1 >= bx2 || ay2 <= by1 || ay1 >= by2) {
     return null;
@@ -175,10 +177,22 @@ function getMTV(a: Rect, b: Rect): Vec2 | null {
   }
 }
 
-function toRect(pos: Position, collider: Collider): Rect {
+function mtvToDirection(mtv: Vec2): Direction {
+  if (mtv.x) {
+    return mtv.x < 0 ? Direction.LEFT : Direction.RIGHT;
+  } else {
+    return mtv.y < 0 ? Direction.UP : Direction.DOWN;
+  }
+}
+
+function toAABB(pos: Position, collider: Collider): AABB {
   const { offsetX, offsetY, width, height } = collider;
-  const rect = { x: pos.x + offsetX, y: pos.y + offsetY, width, height };
-  return rect;
+  return new AABB(
+    pos.x + offsetX,
+    pos.y + offsetY,
+    pos.x + offsetX + width,
+    pos.y + offsetY + height,
+  );
 }
 
 export function physicsSystem(world: ECSWorld, _dt: number) {
@@ -202,7 +216,9 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         continue;
       }
 
-      const mtv = getMTV(toRect(staticPos, staticCollider), toRect(dynamicPos, dynamicCollider));
+      const aabb1 = toAABB(staticPos, staticCollider);
+      const aabb2 = toAABB(dynamicPos, dynamicCollider);
+      const mtv = getMTV(aabb1, aabb2);
       if (!mtv) {
         continue;
       }
@@ -211,15 +227,14 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
       dynamicPos.x -= mtv.x;
       dynamicPos.y -= mtv.y;
 
-      let direction = Direction.NONE;
-      if (mtv.x) {
-        direction = mtv.x < 0 ? Direction.LEFT : Direction.RIGHT;
-      } else {
-        direction = mtv.y < 0 ? Direction.UP : Direction.DOWN;
-      }
+      const direction = mtvToDirection(mtv);
 
-      world.getComponent<Script>(s, Script.name)?.onCollision(d, dynamicCollider.layer, direction);
-      world.getComponent<Script>(d, Script.name)?.onCollision(s, staticCollider.layer, -direction);
+      world
+        .getComponent<Script>(s, Script.name)
+        ?.onCollision(d, dynamicCollider.layer, aabb1, aabb2);
+      world
+        .getComponent<Script>(d, Script.name)
+        ?.onCollision(s, staticCollider.layer, aabb2, aabb1);
 
       if (direction === Direction.DOWN && staticCollider.layer === CollisionLayer.OBSTACLE) {
         world.addComponent(d, new Grounded());
@@ -231,5 +246,34 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
     }
   }
 
-  // test dynamic dynamic collisions
+  for (let i = 0; i < dynamicColliders.length - 1; ++i) {
+    for (let j = i + 1; j < dynamicColliders.length; ++j) {
+      const [d1, _dynamic1, collider1, pos1] = dynamicColliders[i];
+      const [d2, _dynamic2, collider2, pos2] = dynamicColliders[j];
+
+      if (!canCollide(collider1, collider2)) {
+        continue;
+      }
+
+      const aabb1 = toAABB(pos1, collider1);
+      const aabb2 = toAABB(pos2, collider2);
+      const mtv = getMTV(aabb1, aabb2);
+      if (!mtv) {
+        continue;
+      }
+
+      world.getComponent<Script>(d1, Script.name)?.onCollision(d2, collider2.layer, aabb1, aabb2);
+      world.getComponent<Script>(d2, Script.name)?.onCollision(d1, collider1.layer, aabb2, aabb1);
+    }
+  }
+
+  // @TODO: test dynamic dynamic collisions
+}
+
+export function deleteSystem(world: ECSWorld) {
+  const pendingDeletes = world.queryEntities<PendingDelete>(PendingDelete.name);
+  for (const [id] of pendingDeletes) {
+    world.removeEntity(id);
+  }
+  world.removeAllComponents(PendingDelete.name);
 }

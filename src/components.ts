@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 import { ECSWorld, Entity } from './ecs';
+import { StateMachine } from './world/lifeform-common';
+import { AABB } from './common';
 
 export class Name {
   value: string;
@@ -115,6 +117,7 @@ export class Collider {
 export abstract class ScriptBase {
   protected entity: Entity;
   protected world: ECSWorld;
+  protected fsm?: StateMachine<string>;
 
   constructor(entity: Entity, world: ECSWorld) {
     this.entity = entity;
@@ -122,9 +125,17 @@ export abstract class ScriptBase {
   }
 
   onInit?(): void;
-  onUpdate?(dt: number): void;
-  onCollision?(other: Entity, layer: number, dir: number): void;
+
+  onUpdate(dt: number): void {
+    this.fsm?.update(dt);
+  }
+
+  onCollision?(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void;
   onDie?(): void;
+
+  markDelete(): void {
+    this.world.addComponent(this.entity, new PendingDelete());
+  }
 
   playAnim(name: string) {
     const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
@@ -149,7 +160,13 @@ export class Script {
     this.script.onUpdate?.(dt);
   }
 
-  onCollision(other: Entity, layer: number, dir: number) {
-    this.script.onCollision?.(other, layer, dir);
+  onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB) {
+    this.script.onCollision?.(other, layer, selfBound, otherBound);
+  }
+
+  onDie() {
+    this.script.onDie?.();
   }
 }
+
+export class PendingDelete {}
