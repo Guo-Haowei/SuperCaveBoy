@@ -1,6 +1,5 @@
 import { ECSWorld } from './ecs';
 import { Name, Position, Camera, Script, ScriptBase } from './components';
-import { inputManager } from './engine/input-manager';
 
 // @TODO: camera controller script
 class CameraFollowScript extends ScriptBase {
@@ -46,23 +45,6 @@ class CameraFollowScript extends ScriptBase {
   }
 }
 
-class EditorCameraScript extends ScriptBase {
-  onUpdate(_dt: number) {
-    if (inputManager.isMouseDragging()) {
-      const pos = this.world.getComponent<Position>(this.entity, Position.name);
-      const delta = inputManager.getDragDelta();
-      pos.x -= delta.x;
-      pos.y -= delta.y;
-    }
-
-    const scroll = inputManager.getScroll();
-    if (scroll !== 0) {
-      const camera = this.world.getComponent<Camera>(this.entity, Camera.name);
-      camera.setZoom(scroll);
-    }
-  }
-}
-
 export function createGameCamera(
   ecs: ECSWorld,
   x: number,
@@ -80,21 +62,5 @@ export function createGameCamera(
   ecs.addComponent(id, new Camera(width, height));
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Script(script));
-  return id;
-}
-
-export function createEditorCamera(
-  ecs: ECSWorld,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-): number {
-  const id = ecs.createEntity();
-
-  ecs.addComponent(id, new Name('EditorCamera'));
-  ecs.addComponent(id, new Camera(width, height));
-  ecs.addComponent(id, new Position(x, y));
-  ecs.addComponent(id, new Script(new EditorCameraScript(id, ecs)));
   return id;
 }

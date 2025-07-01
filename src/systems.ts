@@ -41,15 +41,17 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, room: Room) {
-  const cameraId = room.editorCameraId;
-
-  const camera = world.getComponent<Camera>(cameraId, Camera.name);
+export function renderSystem(
+  world: ECSWorld,
+  ctx: CanvasRenderingContext2D,
+  room: Room,
+  cameraContext: { camera: Camera; pos: Position },
+) {
+  const { camera, pos } = cameraContext;
 
   ctx.clearRect(0, 0, camera.width, camera.height);
 
-  const cameraPos = world.getComponent<Position>(cameraId, Position.name);
-  const offset = camera.getOffset(cameraPos);
+  const offset = camera.getOffset(pos);
   ctx.save();
   ctx.translate(-offset.x, -offset.y);
   ctx.scale(camera.zoom, camera.zoom);
@@ -121,6 +123,7 @@ function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
     ctx.stroke();
   }
 }
+
 function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
     Position.name,

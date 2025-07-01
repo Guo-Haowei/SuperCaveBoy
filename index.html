@@ -46,7 +46,7 @@
     </div>
     <div class="container">
       <canvas id="gameCanvas" width="960" height="600"></canvas>
-      <button id="playBtn" class="play-button">▶ Play</button>
+      <button id="playButton" class="play-button">▶ Play</button>
     </div>
 
     <!-- @TODO: remove these includes -->
@@ -56,16 +56,6 @@
     <script type="module" src="src/main.ts"></script>
 
     <script>
-      const playBtn = document.getElementById('playBtn');
-      let isPlaying = false;
-
-      playBtn.addEventListener('click', () => {
-        isPlaying = !isPlaying;
-        playBtn.classList.toggle('active', isPlaying);
-        playBtn.textContent = isPlaying ? '■ Stop' : '▶ Play';
-        // TODO: Add game start/stop logic here
-      });
-
       const menuItems = document.querySelectorAll('.menu-item');
 
       menuItems.forEach((item) => {

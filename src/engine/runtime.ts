@@ -2,14 +2,15 @@ import { Room } from '../world/room';
 import * as System from '../systems';
 import { inputManager } from './input-manager';
 import { assetManager } from './assets-manager';
+import { Camera, Position } from '../components';
 
-export type Scene = 'MENU' | 'GAME' | 'END';
+export type Scene = 'MENU' | 'GAME' | 'EDITOR';
 
 export class Runtime {
   start = 0;
   end = 0;
 
-  private currentScene: IScene;
+  private current: string;
   private scenes = new Map<Scene, IScene>();
   private lastTick = 0;
   canvas: HTMLCanvasElement;
@@ -21,29 +22,35 @@ export class Runtime {
     this.canvas = canvas;
     this.ctx = ctx;
 
+    // @TODO: remove manager
     this.room = new Room();
     this.room.init();
 
     this.scenes['GAME'] = new PlayScene(this);
+    this.scenes['EDITOR'] = new EditorScene(this);
 
     assetManager.init(imageAssets);
     inputManager.init(canvas);
 
-    this.currentScene = this.scenes['GAME'];
+    this.current = 'EDITOR';
   }
 
-  public changeScene(newScene: IScene) {
-    this.currentScene.exit?.();
-    this.currentScene = newScene;
-    this.currentScene.enter?.();
+  setScene(newScene: string) {
+    if (this.current === newScene) return;
+    const prevScene = this.scenes[this.current];
+    const currentScene = this.scenes[newScene];
+
+    this.current = newScene;
+
+    prevScene.exit?.();
+    currentScene.enter?.();
   }
 
-  setScene(name: Scene) {
-    this.changeScene(this.scenes[name]);
+  getCurrentScene() {
+    return this.current;
   }
 
   tick() {
-    // update timer
     const timestamp = Date.now();
     let dt = 0;
     if (this.lastTick === 0) {
@@ -56,7 +63,8 @@ export class Runtime {
     inputManager.preUpdate(dt);
 
     dt = Math.min(dt / 1000, 0.1);
-    this.currentScene.tick(dt);
+
+    this.scenes[this.current].tick(dt);
 
     inputManager.postUpdate(dt);
   }
@@ -84,8 +92,49 @@ class PlayScene implements IScene {
     System.movementSystem(ecs, dt);
     System.physicsSystem(ecs, dt);
     System.animationSystem(ecs, dt);
-    System.renderSystem(ecs, ctx, room);
+
+    const cameraId = room.cameraId;
+    const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
+    const pos = ecs.getComponent<Position>(cameraId, Position.name);
+
+    System.renderSystem(ecs, ctx, room, { camera, pos });
     System.deleteSystem(ecs);
+  }
+}
+
+class EditorScene implements IScene {
+  private game: Runtime;
+
+  private camera: Camera;
+  private cameraPos: Position;
+
+  constructor(game: Runtime) {
+    this.game = game;
+    const { width, height } = game.canvas;
+    this.camera = new Camera(width, height);
+    this.cameraPos = new Position(width / 2, height / 2);
+  }
+
+  updateCamera() {
+    if (inputManager.isMouseDragging()) {
+      const delta = inputManager.getDragDelta();
+      this.cameraPos.x -= delta.x;
+      this.cameraPos.y -= delta.y;
+    }
+
+    const scroll = inputManager.getScroll();
+    if (scroll !== 0) {
+      this.camera.setZoom(scroll);
+    }
+  }
+
+  tick(_dt: number) {
+    this.updateCamera();
+
+    const { ctx, room } = this.game;
+    const { ecs } = room;
+
+    System.renderSystem(ecs, ctx, room, { camera: this.camera, pos: this.cameraPos });
   }
 }
 

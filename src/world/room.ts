@@ -7,7 +7,7 @@ import { GameObject } from './gameobject';
 import { SpriteSheets } from '../engine/assets-manager';
 import { Collider, CollisionLayer, Position, Sprite, Static } from '../components';
 import { ECSWorld } from '../ecs';
-import { createGameCamera, createEditorCamera } from '../camera';
+import { createGameCamera } from '../camera';
 import { createPlayer } from './player';
 import { WIDTH, HEIGHT, TILE_SIZE } from '../constants';
 
@@ -28,9 +28,10 @@ export class Room {
   objects: SpecialObject[] = [];
   ecs: ECSWorld = new ECSWorld();
   playerId = ECSWorld.INVALID_ENTITY;
-  cameraId = ECSWorld.INVALID_ENTITY;
-  editorCameraId = ECSWorld.INVALID_ENTITY;
+
   tileSize = TILE_SIZE;
+
+  cameraId = ECSWorld.INVALID_ENTITY;
 
   private clearRoom() {
     this.world = [];
@@ -105,14 +106,6 @@ export class Room {
       playerId,
       mapWidth,
       mapHeight,
-    );
-
-    this.editorCameraId = createEditorCamera(
-      this.ecs,
-      0.5 * mapWidth,
-      0.5 * mapHeight,
-      WIDTH,
-      HEIGHT,
     );
 
     // entrance
