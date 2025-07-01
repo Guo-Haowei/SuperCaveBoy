@@ -5,7 +5,7 @@ import { roomManager } from './room-manager';
 import { CountDown } from './common';
 
 export class LoadingScene extends IScene {
-  static readonly LOADING_TIME = 1.4;
+  static readonly LOADING_TIME = 1.2;
   private loadingTime: CountDown = new CountDown(LoadingScene.LOADING_TIME);
   private roomName: string | null = null;
 

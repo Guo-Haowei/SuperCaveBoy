@@ -9,7 +9,7 @@ import {
   Sprite,
   Velocity,
 } from '../components';
-import { createEnemyCommon, StateMachine } from './lifeform-common';
+import { createEnemyCommon, StateMachine } from './lifeform';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 
 type SnakeStateName = 'idle' | 'die';

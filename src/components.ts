@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 import { ECSWorld, Entity } from './ecs';
-import { StateMachine } from './world/lifeform-common';
+import { StateMachine } from './world/lifeform';
 import { AABB } from './engine/common';
 
 export class Name {
@@ -113,44 +113,6 @@ export class Collider {
   }
 }
 
-export abstract class ScriptBase {
-  protected entity: Entity;
-  protected world: ECSWorld;
-  protected fsm?: StateMachine<string>;
-
-  constructor(entity: Entity, world: ECSWorld) {
-    this.entity = entity;
-    this.world = world;
-  }
-
-  onInit?(): void;
-
-  onUpdate(dt: number): void {
-    this.fsm?.update(dt);
-  }
-
-  onCollision?(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void;
-
-  onDie() {
-    this.fsm?.transition('die');
-  }
-
-  markDelete(): void {
-    this.world.addComponent(this.entity, new PendingDelete());
-  }
-
-  playAnim(name: string) {
-    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
-    if (!anim || anim.current === name) return;
-    anim.current = name;
-    anim.elapsed = 0;
-  }
-
-  isGrounded(): boolean {
-    return this.world.hasComponent(this.entity, Grounded.name);
-  }
-}
-
 export class Camera {
   width: number;
   height: number;
@@ -178,6 +140,45 @@ export class Camera {
   }
 }
 
+// @TODO: make a LifeformScriptBase
+export abstract class ScriptBase {
+  protected entity: Entity;
+  protected world: ECSWorld;
+  protected fsm?: StateMachine<string>;
+
+  constructor(entity: Entity, world: ECSWorld) {
+    this.entity = entity;
+    this.world = world;
+  }
+
+  onInit?(): void;
+
+  onUpdate(dt: number): void {
+    this.fsm?.update(dt);
+  }
+
+  onCollision?(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void;
+
+  onDie() {
+    // @TODO: instead of onDie, check health
+    this.fsm?.transition('die');
+  }
+
+  markDelete(): void {
+    this.world.addComponent(this.entity, new PendingDelete());
+  }
+
+  playAnim(name: string) {
+    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
+    if (!anim || anim.current === name) return;
+    anim.current = name;
+    anim.elapsed = 0;
+  }
+
+  isGrounded(): boolean {
+    return this.world.hasComponent(this.entity, Grounded.name);
+  }
+}
 export class Instance {
   private script: ScriptBase;
 

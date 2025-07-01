@@ -12,7 +12,7 @@ import {
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
-import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
+import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform';
 import { AABB } from '../engine/common';
 import { CountDown } from '../engine/common';
 

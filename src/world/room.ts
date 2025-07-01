@@ -10,6 +10,7 @@ import { WIDTH, HEIGHT } from '../constants';
 import { createPoartal } from './portal';
 
 import { LevelData, MONSTER, TYPE } from './data';
+import { createGuardian } from './guardian';
 
 enum TileType {
   WALL = 0,
@@ -81,6 +82,8 @@ export class Room {
         createSnake(this.ecs, mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
       } else if (mon[2] === MONSTER.SPIDER) {
         createSpider(this.ecs, mon[0], mon[1], playerId);
+      } else if (mon[2] === MONSTER.BOSS) {
+        createGuardian(this.ecs, mon[0], mon[1], playerId);
       }
     }
 

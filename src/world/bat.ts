@@ -10,7 +10,7 @@ import {
   Velocity,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
-import { createEnemyCommon, StateMachine } from './lifeform-common';
+import { createEnemyCommon, StateMachine } from './lifeform';
 
 type BatStateName = 'idle' | 'fly' | 'die';
 
