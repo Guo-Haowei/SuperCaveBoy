@@ -5,7 +5,7 @@ import { createBat } from './bat';
 import { SpecialObject } from './specialobject';
 import { GameObject } from './gameobject';
 import { SpriteSheets } from '../assets';
-import { Collider, CollisionLayer, Position, Sprite } from '../components';
+import { Collider, CollisionLayer, Position, Sprite, Static } from '../components';
 import { ECSWorld } from '../ecs';
 import { createCamera } from '../camera';
 import { createPlayer } from './player';
@@ -68,9 +68,9 @@ export class Room {
       height,
       CollisionLayer.OBSTACLE,
       CollisionLayer.PLAYER | CollisionLayer.ENEMY,
-      Number.MAX_SAFE_INTEGER,
     );
 
+    this.ecs.addComponent(id, new Static());
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, collider);
   }

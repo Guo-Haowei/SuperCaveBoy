@@ -10,36 +10,50 @@ import {
   Velocity,
 } from '../components';
 import { SpriteSheets } from '../assets';
-import { createEnemyCommon } from './lifeform-common';
+import { createEnemyCommon, StateMachine } from './lifeform-common';
+
+type BatStateName = 'idle' | 'fly';
 
 class BatScript extends ScriptBase {
   private target: Entity;
   private speed: number;
-  private state: 'idle' | 'chase' = 'idle';
+  private fsm: StateMachine<BatStateName>;
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
 
     this.speed = 70;
     this.target = target;
+
+    this.fsm = new StateMachine<BatStateName>(
+      {
+        idle: {
+          name: 'idle',
+          enter: () => this.playAnim('idle'),
+          update: () => this.idle(),
+        },
+        fly: {
+          name: 'fly',
+          enter: () => this.playAnim('fly'),
+          update: () => this.fly(),
+        },
+      },
+      'idle',
+    );
   }
 
   private idle() {
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const { x, y } = position;
 
-    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
-
     const target = this.world.getComponent<Position>(this.target, Position.name);
 
     if (Math.abs(x - target.x) < 350 && y - 100 < target.y) {
-      this.state = 'chase';
-      anim.current = 'fly';
-      anim.elapsed = 0;
+      this.fsm.transition('fly');
     }
   }
 
-  private chase() {
+  private fly() {
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const { x, y } = position;
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
@@ -60,24 +74,14 @@ class BatScript extends ScriptBase {
     face.left = velocity.vx < 0;
   }
 
-  onUpdate(_dt: number) {
-    switch (this.state) {
-      case 'idle':
-        this.idle();
-        break;
-      case 'chase':
-        this.chase();
-        break;
-      default:
-        throw new Error(`Unknown state: ${this.state}`);
-    }
+  onUpdate(dt: number) {
+    this.fsm.update(dt);
   }
 }
 
 export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
   const id = createEnemyCommon(ecs, x, y, 48, 35, 10, 15);
 
-  const script = new BatScript(id, ecs, target);
   const anim = new Animation(
     {
       idle: {
@@ -99,6 +103,8 @@ export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
   ecs.addComponent(id, new Name('Bat'));
   ecs.addComponent(id, new Sprite(SpriteSheets.BAT_IDLE));
   ecs.addComponent(id, anim);
+
+  const script = new BatScript(id, ecs, target);
   ecs.addComponent(id, new Script(script));
   return id;
 }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-extraneous-class */
 import { ECSWorld, Entity } from './ecs';
 
 export class Name {
@@ -78,12 +79,15 @@ export enum CollisionLayer {
   TRAP = 0b010000,
 }
 
+export class Static {}
+
+export class Dynamic {}
+
 export class Collider {
   width: number;
   height: number;
   layer: number;
   mask: number;
-  mass: number;
   offsetX: number;
   offsetY: number;
 
@@ -92,7 +96,6 @@ export class Collider {
     height: number,
     layer: CollisionLayer,
     mask: CollisionLayer,
-    mass: number,
     offsetX = 0,
     offsetY = 0,
   ) {
@@ -100,7 +103,6 @@ export class Collider {
     this.height = height;
     this.layer = layer;
     this.mask = mask;
-    this.mass = mass;
     this.offsetX = offsetX;
     this.offsetY = offsetY;
   }
@@ -119,12 +121,27 @@ export abstract class ScriptBase {
   onUpdate?(dt: number): void;
   onCollision?(other: Entity, layer: number, dir: number): void;
   onDie?(): void;
+
+  playAnim(name: string) {
+    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
+    if (!anim || anim.current === name) return;
+    anim.current = name;
+    anim.elapsed = 0;
+  }
 }
 
 export class Script {
-  script: ScriptBase;
+  private script: ScriptBase;
 
   constructor(script: ScriptBase) {
     this.script = script;
+  }
+
+  onUpdate(dt: number) {
+    this.script.onUpdate?.(dt);
+  }
+
+  onCollision(other: Entity, layer: number, dir: number) {
+    this.script.onCollision?.(other, layer, dir);
   }
 }

@@ -3,10 +3,12 @@ import {
   Animation,
   Collider,
   CollisionLayer,
+  Dynamic,
   Facing,
   Position,
   Sprite,
   Script,
+  Static,
   Velocity,
 } from './components';
 import { spriteManager } from './assets';
@@ -117,7 +119,7 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D, offse
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
   for (const [_id, script] of world.queryEntities<Script>(Script.name)) {
-    script.script.onUpdate?.(dt);
+    script.onUpdate(dt);
   }
 }
 
@@ -179,46 +181,33 @@ function toRect(position: Position, collider: Collider): Rect {
   };
 }
 
-function resolveCollision(
-  mtv: Vec2,
-  posA: Position,
-  posB: Position,
-  colliderA: Collider,
-  colliderB: Collider,
-): void {
-  if (colliderA.mass < colliderB.mass) {
-    posA.x += mtv.x;
-    posA.y += mtv.y;
-  } else {
-    posB.x -= mtv.x;
-    posB.y -= mtv.y;
-  }
-}
-
 export function physicsSystem(world: ECSWorld, _dt: number) {
-  const entities = world.queryEntities<Collider, Position>(Collider.name, Position.name);
+  const staticColliders = world.queryEntities<Static, Collider, Position>(
+    Static.name,
+    Collider.name,
+    Position.name,
+  );
+  const dynamicColliders = world.queryEntities<Dynamic, Collider, Position>(
+    Dynamic.name,
+    Collider.name,
+    Position.name,
+  );
 
-  for (let i = 0; i < entities.length - 1; ++i) {
-    for (let j = i + 1; j < entities.length; ++j) {
-      const [a, colliderA, posA] = entities[i];
-      const [b, colliderB, posB] = entities[j];
-
-      if (!canCollide(colliderA, colliderB)) {
+  // test static dynamic collisions
+  for (const [s, _static, staticCollider, staticPos] of staticColliders) {
+    for (const [d, _dynamic, dynamicCollider, dynamicPos] of dynamicColliders) {
+      if (!canCollide(staticCollider, dynamicCollider)) {
         continue;
       }
 
-      const mtv = getMTV(toRect(posA, colliderA), toRect(posB, colliderB));
+      const mtv = getMTV(toRect(staticPos, staticCollider), toRect(dynamicPos, dynamicCollider));
       if (!mtv) {
         continue;
       }
 
-      // only resolve if one of the colliders is an obstacle
-      if (
-        colliderA.layer === CollisionLayer.OBSTACLE ||
-        colliderB.layer === CollisionLayer.OBSTACLE
-      ) {
-        resolveCollision(mtv, posA, posB, colliderA, colliderB);
-      }
+      // push the dynamic collider out of the static one
+      dynamicPos.x -= mtv.x;
+      dynamicPos.y -= mtv.y;
 
       let direction = Direction.NONE;
       if (mtv.x) {
@@ -227,10 +216,10 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         direction = mtv.y < 0 ? Direction.UP : Direction.DOWN;
       }
 
-      const scriptA = world.getComponent<Script>(a, Script.name);
-      scriptA?.script.onCollision?.(b, colliderB.layer, direction);
-      const scriptB = world.getComponent<Script>(b, Script.name);
-      scriptB?.script.onCollision?.(a, colliderA.layer, -direction);
+      world.getComponent<Script>(s, Script.name)?.onCollision(d, dynamicCollider.layer, direction);
+      world.getComponent<Script>(d, Script.name)?.onCollision(s, staticCollider.layer, -direction);
     }
   }
+
+  // test dynamic dynamic collisions
 }

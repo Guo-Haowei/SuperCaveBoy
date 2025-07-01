@@ -1,5 +1,5 @@
 import { ECSWorld } from '../ecs';
-import { Collider, CollisionLayer, Facing, Position, Velocity } from '../components';
+import { Collider, CollisionLayer, Dynamic, Facing, Position, Velocity } from '../components';
 
 export function findGravityAndJumpVelocity(
   desiredJumpHeight: number,
@@ -10,11 +10,22 @@ export function findGravityAndJumpVelocity(
   return { GRAVITY, JUMP_VELOCITY };
 }
 
-const DESIRED_JUMP_HEIGHT = 170;
-const TIME_TO_APEX = 0.3;
+export function createLifeform(
+  ecs: ECSWorld,
+  hitWidth: number,
+  hitHeight: number,
+  layer: number,
+  mask: number,
+  hitOffsetX = 0,
+  hitOffsetY = 0,
+) {
+  const id = ecs.createEntity();
+  const collider = new Collider(hitWidth, hitHeight, layer, mask, hitOffsetX, hitOffsetY);
 
-const GRAVITY = (2 * DESIRED_JUMP_HEIGHT) / TIME_TO_APEX ** 2;
-const JUMP_VELOCITY = GRAVITY * TIME_TO_APEX;
+  ecs.addComponent(id, collider);
+  ecs.addComponent(id, new Dynamic());
+  return id;
+}
 
 export function createEnemyCommon(
   ecs: ECSWorld,
@@ -25,25 +36,61 @@ export function createEnemyCommon(
   hitOffsetX = 0,
   hitOffsetY = 0,
 ) {
-  const id = ecs.createEntity();
-  const collider = new Collider(
+  const id = createLifeform(
+    ecs,
     hitWidth,
     hitHeight,
     CollisionLayer.ENEMY,
     CollisionLayer.PLAYER | CollisionLayer.OBSTACLE,
-    10, // mass
     hitOffsetX,
     hitOffsetY,
   );
 
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Velocity());
-  ecs.addComponent(id, collider);
   ecs.addComponent(id, new Facing(true));
   return id;
 }
 
-// @TODO: state machine
+// Generic State interface
+export interface State<T extends string> {
+  name: T;
+  enter?: () => void;
+  update?: (dt: number) => void;
+  exit?: () => void;
+  handleEvent?: (event: string, payload?: unknown) => void;
+}
+
+// Generic FSM
+export class StateMachine<T extends string> {
+  private states: Record<T, State<T>>;
+  private current: State<T>;
+
+  constructor(states: Record<T, State<T>>, initial: T) {
+    this.states = states;
+    this.current = states[initial];
+    this.current.enter?.();
+  }
+
+  update(dt: number) {
+    this.current.update?.(dt);
+  }
+
+  transition(to: T) {
+    if (this.current.name === to) return;
+    this.current.exit?.();
+    this.current = this.states[to];
+    this.current.enter?.();
+  }
+
+  handleEvent(event: string, payload?: unknown) {
+    this.current.handleEvent?.(event, payload);
+  }
+
+  get stateName(): T {
+    return this.current.name;
+  }
+}
 
 // export class OldMonster {
 //   x: number;

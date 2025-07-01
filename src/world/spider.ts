@@ -12,14 +12,17 @@ import {
 } from '../components';
 import { Direction } from '../common';
 import { SpriteSheets } from '../assets';
-import { createEnemyCommon, findGravityAndJumpVelocity } from './lifeform-common';
+import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform-common';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
+type SpiderStateName = 'idle' | 'jumping' | 'prepare';
+
 class SpiderScript extends ScriptBase {
   private target: Entity;
-  private state: 'idle' | 'jumping' | 'prepare' = 'idle';
   private cooldown: number;
+
+  private fsm: StateMachine<SpiderStateName>;
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
@@ -28,9 +31,35 @@ class SpiderScript extends ScriptBase {
 
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     vel.gravity = GRAVITY;
+
+    this.fsm = new StateMachine<SpiderStateName>(
+      {
+        idle: {
+          name: 'idle',
+          enter: () => {
+            this.playAnim('idle');
+            this.cooldown = 1.5;
+          },
+          update: (dt) => this.idle(dt),
+        },
+        prepare: {
+          name: 'prepare',
+        },
+        jumping: {
+          name: 'jumping',
+          enter: () => {
+            this.playAnim('jump');
+          },
+        },
+      },
+      'idle',
+    );
   }
 
   private idle(dt: number) {
+    this.cooldown -= dt;
+    this.cooldown = Math.max(this.cooldown, 0);
+
     const targetPos = this.world.getComponent<Position>(this.target, Position.name);
     const position = this.world.getComponent<Position>(this.entity, Position.name);
     const { x, y } = position;
@@ -46,38 +75,22 @@ class SpiderScript extends ScriptBase {
     const face = this.world.getComponent<Facing>(this.entity, Facing.name);
     face.left = -Math.sign(dx) < 0;
     if (this.cooldown <= 0.0001 && absDx > 40 && absDx < 500 && dy < 300) {
-      this.state = 'prepare';
-
       const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
       vel.vy = -JUMP_VELOCITY;
       vel.vx = absDx * -Math.sign(dx);
-    }
 
-    this.cooldown -= dt;
-    this.cooldown = Math.max(this.cooldown, 0);
+      this.fsm.transition('prepare');
+    }
   }
 
   onUpdate(dt: number) {
-    switch (this.state) {
-      case 'idle':
-        this.idle(dt);
-        break;
-      case 'prepare':
-        break;
-      case 'jumping':
-        // physics system will handle the jump
-        break;
-      default:
-        throw new Error(`Unknown state: ${this.state}`);
-    }
+    this.fsm.update(dt);
   }
 
+  // @TODO: fix this
   onCollision(_other: Entity, layer: number, dir: number): void {
-    if (this.state === 'prepare') {
-      const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
-      anim.current = 'jump';
-      anim.elapsed = 0;
-      this.state = 'jumping';
+    if (this.fsm.current === 'prepare') {
+      this.fsm.transition('jumping');
       return;
     }
 
@@ -85,13 +98,8 @@ class SpiderScript extends ScriptBase {
       const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
       vel.vy = 0;
 
-      if (this.state === 'jumping') {
-        this.state = 'idle';
-        this.cooldown = 1.5;
-
-        const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
-        anim.current = 'idle';
-        anim.elapsed = 0;
+      if (this.fsm.current === 'jumping') {
+        this.fsm.transition('idle');
       }
     }
   }
