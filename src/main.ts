@@ -6,38 +6,38 @@ import { spriteManager } from './assets';
 var game = new Game();
 
 function main(imageAssets: Record<string, HTMLImageElement>) {
-    spriteManager.init(imageAssets);
+  spriteManager.init(imageAssets);
 
-    game.init(imageAssets);
+  const loop = () => {
+    game.tick();
+    game.render(ctx);
 
-    const loop = () => {
-        game.tick();
-        game.render(ctx);
+    requestAnimationFrame(loop);
+  };
 
-        requestAnimationFrame(loop);
-    };
-
-    loop();
+  loop();
 }
 
 window.onload = () => {
-    const images = Array.from(document.querySelectorAll('img'));
-    const imageAssets: Record<string, HTMLImageElement> = {};
-    Promise.all(images.map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise<void>(resolve => {
-            img.onload = () => {
-                resolve();
-            };
-            img.onerror = () => resolve();
-        });
-    })).then(() => {
-        images.forEach(img => {
-            let name = img.src.split('/').pop() || '';
-            name = name.split('.').shift() || '';
-            imageAssets[name] = img;
-        });
-
-        main(imageAssets);
+  const images = Array.from(document.querySelectorAll('img'));
+  const imageAssets: Record<string, HTMLImageElement> = {};
+  Promise.all(
+    images.map((img) => {
+      if (img.complete) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        img.onload = () => {
+          resolve();
+        };
+        img.onerror = () => resolve();
+      });
+    }),
+  ).then(() => {
+    images.forEach((img) => {
+      let name = img.src.split('/').pop() || '';
+      name = name.split('.').shift() || '';
+      imageAssets[name] = img;
     });
+
+    main(imageAssets);
+  });
 };

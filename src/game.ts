@@ -1,4 +1,3 @@
-import { Player } from './world/old-player';
 import { Room } from './world/room';
 import * as System from './systems';
 import { inputManager } from './input-manager';
@@ -9,29 +8,15 @@ export class Game {
   start = 0;
   end = 0;
 
-  private player: Player;
   private currentScene: IScene;
   private scenes = new Map<Scene, IScene>();
   private lastTick = 0;
   room: Room;
 
-  handler: any; // @TODO: define Handler type
-
-  constructor() {
-    // handler
-    this.handler = new Handler(this);
-  }
-
-  public init() {
-    // create assets
-
+  public constructor() {
     // level
     this.room = new Room();
     this.room._init();
-
-    // create entities
-
-    // gui
 
     this.scenes['MENU'] = new MenuScene(this);
     this.scenes['PLAY'] = new PlayScene(this);
@@ -60,7 +45,8 @@ export class Game {
       this.lastTick = timestamp;
     }
 
-    this.currentScene.tick(dt / 1000);
+    dt = Math.min(dt / 1000, 0.1);
+    this.currentScene.tick(dt);
   }
 
   render(ctx: CanvasRenderingContext2D) {
@@ -86,7 +72,6 @@ class MenuScene implements IScene {
 
   constructor(game: Game) {
     this.game = game;
-    this.handler = game.handler;
   }
 
   tick(_dt: number) {
@@ -96,7 +81,7 @@ class MenuScene implements IScene {
     }
   }
 
-  render(ctx: CanvasRenderingContext2D) {
+  render(_ctx: CanvasRenderingContext2D) {
     // this.handler._getGameAssets().bg_menu.draw(ctx, 0, HEIGHT / 2 - 270);
     // this.drawText(ctx);
   }
@@ -115,9 +100,6 @@ class PlayScene implements IScene {
 
   constructor(game: Game) {
     this.game = game;
-    this.handler = game.handler;
-    this.room = [];
-    this.currentRoom = 0;
   }
 
   tick(dt: number) {
@@ -147,31 +129,30 @@ class EndScene implements IScene {
 
   constructor(game: Game) {
     this.game = game;
-    this.handler = game.handler;
   }
 
-  tick(dt: number) {
+  tick(_dt: number) {
     // do nothing
   }
 
-  render(ctx) {
-    for (let h = 0; h < hTile; ++h) {
-      for (let w = 0; w < wTile; ++w) {
-        this.sprite.draw(ctx, w * 64, h * 64);
-      }
-    }
-    this.drawText(ctx);
+  render(_ctx) {
+    // for (let h = 0; h < hTile; ++h) {
+    //   for (let w = 0; w < wTile; ++w) {
+    //     this.sprite.draw(ctx, w * 64, h * 64);
+    //   }
+    // }
+    // this.drawText(ctx);
   }
 
   // @TODO: utlity function to format time
-  private formatTime(milliseconds) {
-    const seconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  private formatTime(_milliseconds) {
+    // const seconds = Math.floor(milliseconds / 1000);
+    // const minutes = Math.floor(seconds / 60);
+    // const remainingSeconds = seconds % 60;
+    // return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
   }
 
-  private drawText(ctx: CanvasRenderingContext2D) {
+  private drawText(_ctx: CanvasRenderingContext2D) {
     // const diff = this.game.end - this.game.start;
     // const time = `Your Time Was: ${this.formatTime(diff)}`;
     // const content = player.health <= 0 ? 'You lost!' : 'You Won!';

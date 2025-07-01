@@ -135,9 +135,7 @@ export class StateMachine<T extends string> {
 //     this.health = 1;
 //     // this.health = 3;
 //     this.speed = 6;
-//     this.alarm0 = new Alarm(this.handler);
-//     this.alarm1 = new Alarm(this.handler);
-//     this.alarm2 = new Alarm(this.handler);
+
 //   }
 
 //   _BossIdling() {}

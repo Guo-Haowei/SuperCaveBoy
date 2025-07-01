@@ -50,7 +50,7 @@ export class SpecialObject {
       case TYPE.CAMERA:
         this.trigger = this._CameraTrigger;
         this.bound = new Rect(0, 0, 64, 500);
-        this.alarm0 = new Alarm(this.handler);
+        // this.alarm0 = new Alarm(this.handler);
         var boss = this.handler._getMonsters()[0];
         if (boss.type == MONSTER.BOSS) this.boss = boss;
         break;
