@@ -1,5 +1,5 @@
 import { ECSWorld } from '../ecs';
-import { Collider, CollisionLayer, Dynamic, Facing, Position, Velocity } from '../components';
+import { Collider, Dynamic, Facing, Position, Velocity } from '../components';
 
 export function findGravityAndJumpVelocity(
   desiredJumpHeight: number,
@@ -40,8 +40,8 @@ export function createEnemyCommon(
     ecs,
     hitWidth,
     hitHeight,
-    CollisionLayer.ENEMY,
-    CollisionLayer.PLAYER | CollisionLayer.OBSTACLE,
+    Collider.ENEMY,
+    Collider.PLAYER | Collider.OBSTACLE,
     hitOffsetX,
     hitOffsetY,
   );

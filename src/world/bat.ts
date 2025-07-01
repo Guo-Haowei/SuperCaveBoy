@@ -4,13 +4,13 @@ import {
   Facing,
   Name,
   Position,
-  Script,
+  Instance,
   ScriptBase,
   Sprite,
   Velocity,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
-import { createEnemyCommon, StateMachine } from './lifeform-common';
+import { createEnemyCommon, StateMachine } from './lifeform';
 
 type BatStateName = 'idle' | 'fly' | 'die';
 
@@ -107,6 +107,6 @@ export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
   ecs.addComponent(id, anim);
 
   const script = new BatScript(id, ecs, target);
-  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Instance(script));
   return id;
 }

@@ -4,13 +4,14 @@ import {
   Facing,
   Name,
   Position,
-  Script,
+  Instance,
   ScriptBase,
   Sprite,
   Velocity,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
-import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform-common';
+import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform';
+import { CountDown } from '../engine/common';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
@@ -18,11 +19,10 @@ type SpiderStateName = 'idle' | 'jumping' | 'die';
 
 class SpiderScript extends ScriptBase {
   private target: Entity;
-  private cooldown: number;
+  private cooldown = new CountDown(1.5);
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
-    this.cooldown = 0;
     this.target = target;
 
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
@@ -34,7 +34,7 @@ class SpiderScript extends ScriptBase {
           name: 'idle',
           enter: () => {
             this.playAnim('idle');
-            this.cooldown = 1.5;
+            this.cooldown.reset();
           },
           update: (dt) => this.idle(dt),
         },
@@ -58,8 +58,7 @@ class SpiderScript extends ScriptBase {
   }
 
   private idle(dt: number) {
-    this.cooldown -= dt;
-    this.cooldown = Math.max(this.cooldown, 0);
+    const ready = this.cooldown.tick(dt);
 
     const targetPos = this.world.getComponent<Position>(this.target, Position.name);
     const position = this.world.getComponent<Position>(this.entity, Position.name);
@@ -75,7 +74,7 @@ class SpiderScript extends ScriptBase {
     const absDx = Math.abs(dx);
     const face = this.world.getComponent<Facing>(this.entity, Facing.name);
     face.left = -Math.sign(dx) < 0;
-    if (this.cooldown === 0 && absDx > 40 && absDx < 500 && dy < 300 && this.isGrounded()) {
+    if (ready && absDx > 40 && absDx < 500 && dy < 300 && this.isGrounded()) {
       const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
       vel.vy = -JUMP_VELOCITY;
       vel.vx = absDx * -Math.sign(dx);
@@ -116,6 +115,6 @@ export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity
   ecs.addComponent(id, new Sprite(SpriteSheets.SPIDER_JUMP));
   ecs.addComponent(id, anim);
   const script = new SpiderScript(id, ecs, target);
-  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Instance(script));
   return id;
 }

@@ -2,6 +2,7 @@ export const SpriteSheets = {
   DIRY: 'dirt',
   WALL: 'wall',
   ENTRANCE: 'entrance',
+  PORTAL: 'portal',
 
   PLAYER_IDLE: 'player_idle',
   PLAYER_WALK: 'player_walk',
@@ -13,6 +14,9 @@ export const SpriteSheets = {
   BAT_FLY: 'bat_fly',
   SNAKE_MOVE: 'snake_move',
   SPIDER_JUMP: 'spider_jump',
+
+  BOSS_IDLE: 'boss_idle',
+  BOSS_DAMAGE: 'boss_damage',
 } as const;
 
 interface SpriteFrame {
@@ -61,6 +65,7 @@ class AssetManager {
     this.loadSheet(SpriteSheets.DIRY, images.spr_dirt, TILE_SIZE, TILE_SIZE);
     this.loadSheet(SpriteSheets.WALL, images.bg_dirt, TILE_SIZE, TILE_SIZE);
     this.loadSheet(SpriteSheets.ENTRANCE, images.spr_entrance, 96, 96);
+    this.loadSheet(SpriteSheets.PORTAL, images.spr_exit, 96, 96);
 
     this.loadSheet(SpriteSheets.PLAYER_IDLE, images.spr_player_idle, 64, 72);
     this.loadSheet(SpriteSheets.PLAYER_WALK, images.spr_player_walk, 64, 72);
@@ -73,23 +78,16 @@ class AssetManager {
 
     this.loadSheet(SpriteSheets.SNAKE_MOVE, images.spr_snake_slithe, TILE_SIZE, TILE_SIZE);
     this.loadSheet(SpriteSheets.SPIDER_JUMP, images.spr_spider_jump, TILE_SIZE, TILE_SIZE);
-    //     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
 
-    //     // map
-    //     this.spr_exit = new OldSprite(images.spr_exit, 0, 0, 96, 96);
+    this.loadSheet(SpriteSheets.BOSS_IDLE, images.spr_boss, 160, 188);
+    this.loadSheet(SpriteSheets.BOSS_DAMAGE, images.spr_boss_damaged, 160, 188);
+
+    //     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
     //     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
     //     this.spr_lava[0] = new OldSprite(images.spr_lava, 0, -20, 64, 84);
     //     this.spr_lava[1] = new OldSprite(images.spr_lava, 64, -20, 64, 84);
-
-    //     // gui
     //     this.spr_gui_sapphire = new OldSprite(images.spr_gui_sapphire, 0, 0, 64, 64);
     //     this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
-
-    //     // monsters
-
-    //     this.spr_boss[0] = new OldSprite(images.spr_boss, 160, 0, 160, 188);
-    //     this.spr_boss[1] = new OldSprite(images.spr_boss, 0, 0, 160, 188);
-    //     this.spr_boss_damaged = new OldSprite(images.spr_boss_damaged, 0, 0, 160, 188);
   }
 
   private loadSheet(

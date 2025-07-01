@@ -1,49 +1,61 @@
-import { Room } from '../world/room';
-import * as System from '../systems';
 import { inputManager } from './input-manager';
 import { assetManager } from './assets-manager';
+import { roomManager } from './room-manager';
+import { IScene } from './scene';
+import { GameScene } from './game-scene';
+import { EditorScene } from './editor-scene';
+import { LoadingScene } from './loading-scene';
 
-export type Scene = 'MENU' | 'GAME' | 'END';
+export type Scene = 'MENU' | 'GAME' | 'EDITOR' | 'LOADING' | 'END';
 
 export class Runtime {
-  start = 0;
-  end = 0;
-
-  private currentScene: IScene;
-  private scenes = new Map<Scene, IScene>();
-  private lastTick = 0;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-  room: Room;
+
+  private current: string;
+  private scenes = new Map<Scene, IScene>();
+  private lastTick = 0;
+
+  start = 0;
+  end = 0;
 
   public constructor(canvas: HTMLCanvasElement, imageAssets: Record<string, HTMLImageElement>) {
     const ctx = canvas.getContext('2d');
     this.canvas = canvas;
     this.ctx = ctx;
 
-    this.room = new Room();
-    this.room.init();
-
-    this.scenes['GAME'] = new PlayScene(this);
+    this.scenes['GAME'] = new GameScene(this);
+    this.scenes['EDITOR'] = new EditorScene(this);
+    this.scenes['LOADING'] = new LoadingScene(this);
+    this.current = 'EDITOR';
 
     assetManager.init(imageAssets);
     inputManager.init(canvas);
-
-    this.currentScene = this.scenes['GAME'];
+    roomManager.init();
   }
 
-  public changeScene(newScene: IScene) {
-    this.currentScene.exit?.();
-    this.currentScene = newScene;
-    this.currentScene.enter?.();
+  setScene(newScene: Scene) {
+    if (this.current === newScene) return;
+    const prevScene = this.scenes[this.current];
+    const currentScene = this.scenes[newScene];
+
+    this.current = newScene;
+
+    prevScene.exit?.();
+    currentScene.enter?.();
+    return currentScene;
   }
 
-  setScene(name: Scene) {
-    this.changeScene(this.scenes[name]);
+  requestRoom(roomName: string) {
+    const loadingScene = this.setScene('LOADING');
+    loadingScene.requestRoom(roomName);
+  }
+
+  getCurrentScene() {
+    return this.current;
   }
 
   tick() {
-    // update timer
     const timestamp = Date.now();
     let dt = 0;
     if (this.lastTick === 0) {
@@ -56,37 +68,32 @@ export class Runtime {
     inputManager.preUpdate(dt);
 
     dt = Math.min(dt / 1000, 0.1);
-    this.currentScene.tick(dt);
+
+    this.scenes[this.current].tick(dt);
 
     inputManager.postUpdate(dt);
   }
 }
 
-interface IScene {
-  enter?(): void;
-  exit?(): void;
+let gRuntime: Runtime | null = null;
 
-  tick(dt: number): void;
+export function createRuntime(
+  canvas: HTMLCanvasElement,
+  imageAssets: Record<string, HTMLImageElement>,
+): Runtime {
+  if (gRuntime) {
+    throw new Error('Runtime already created. Use getRuntime() instead.');
+  }
+  const runtime = new Runtime(canvas, imageAssets);
+  gRuntime = runtime;
+  return runtime;
 }
 
-class PlayScene implements IScene {
-  private game: Runtime;
-
-  constructor(game: Runtime) {
-    this.game = game;
+export function getRuntime(): Runtime {
+  if (!gRuntime) {
+    throw new Error('Runtime not created yet. Call createRuntime() first.');
   }
-
-  tick(dt: number) {
-    const { ctx, room } = this.game;
-    const { ecs } = room;
-
-    System.scriptSystem(ecs, dt);
-    System.movementSystem(ecs, dt);
-    System.physicsSystem(ecs, dt);
-    System.animationSystem(ecs, dt);
-    System.renderSystem(ecs, ctx, room);
-    System.deleteSystem(ecs);
-  }
+  return gRuntime;
 }
 
 // class MenuScene implements IScene {

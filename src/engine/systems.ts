@@ -1,23 +1,22 @@
-import { ECSWorld } from './ecs';
+import { ECSWorld } from '../ecs';
 import {
   Animation,
   Camera,
   Collider,
-  CollisionLayer,
   Dynamic,
   Facing,
   PendingDelete,
   Position,
   Sprite,
-  Script,
+  Instance,
   Static,
   Velocity,
   Grounded,
-} from './components';
-import { Room } from './world/room';
-import { assetManager } from './engine/assets-manager';
+} from '../components';
+import { Room } from '../world/room';
+import { assetManager } from './assets-manager';
 import { Direction, AABB, Vec2 } from './common';
-import { EditorState } from './editor-state';
+import { EditorState } from '../editor-state';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {
@@ -41,15 +40,17 @@ export function animationSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------- Render System -------------------------------
-export function renderSystem(world: ECSWorld, ctx: CanvasRenderingContext2D, room: Room) {
-  const cameraId = room.editorCameraId;
-
-  const camera = world.getComponent<Camera>(cameraId, Camera.name);
+export function renderSystem(
+  world: ECSWorld,
+  ctx: CanvasRenderingContext2D,
+  room: Room,
+  cameraContext: { camera: Camera; pos: Position },
+) {
+  const { camera, pos } = cameraContext;
 
   ctx.clearRect(0, 0, camera.width, camera.height);
 
-  const cameraPos = world.getComponent<Position>(cameraId, Position.name);
-  const offset = camera.getOffset(cameraPos);
+  const offset = camera.getOffset(pos);
   ctx.save();
   ctx.translate(-offset.x, -offset.y);
   ctx.scale(camera.zoom, camera.zoom);
@@ -121,6 +122,7 @@ function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
     ctx.stroke();
   }
 }
+
 function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
     Position.name,
@@ -134,11 +136,14 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
 
     let color: string;
     switch (layer) {
-      case CollisionLayer.PLAYER:
+      case Collider.PLAYER:
         color = 'green';
         break;
-      case CollisionLayer.ENEMY:
+      case Collider.ENEMY:
         color = 'red';
+        break;
+      case Collider.PORTAL:
+        color = 'purple';
         break;
       default:
         color = 'blue';
@@ -153,7 +158,7 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
 
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
-  for (const [_id, script] of world.queryEntities<Script>(Script.name)) {
+  for (const [_id, script] of world.queryEntities<Instance>(Instance.name)) {
     script.onUpdate(dt);
   }
 }
@@ -260,13 +265,13 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
       const direction = mtvToDirection(mtv);
 
       world
-        .getComponent<Script>(s, Script.name)
+        .getComponent<Instance>(s, Instance.name)
         ?.onCollision(d, dynamicCollider.layer, aabb1, aabb2);
       world
-        .getComponent<Script>(d, Script.name)
+        .getComponent<Instance>(d, Instance.name)
         ?.onCollision(s, staticCollider.layer, aabb2, aabb1);
 
-      if (direction === Direction.DOWN && staticCollider.layer === CollisionLayer.OBSTACLE) {
+      if (direction === Direction.DOWN && staticCollider.layer === Collider.OBSTACLE) {
         world.addComponent(d, new Grounded());
         const vel = world.getComponent<Velocity>(d, Velocity.name);
         if (vel) {
@@ -292,12 +297,14 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         continue;
       }
 
-      world.getComponent<Script>(d1, Script.name)?.onCollision(d2, collider2.layer, aabb1, aabb2);
-      world.getComponent<Script>(d2, Script.name)?.onCollision(d1, collider1.layer, aabb2, aabb1);
+      world
+        .getComponent<Instance>(d1, Instance.name)
+        ?.onCollision(d2, collider2.layer, aabb1, aabb2);
+      world
+        .getComponent<Instance>(d2, Instance.name)
+        ?.onCollision(d1, collider1.layer, aabb2, aabb1);
     }
   }
-
-  // @TODO: test dynamic dynamic collisions
 }
 
 export function deleteSystem(world: ECSWorld) {

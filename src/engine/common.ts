@@ -6,6 +6,11 @@ export enum Direction {
   RIGHT = 2,
 }
 
+export interface Vec2 {
+  x: number;
+  y: number;
+}
+
 export class Rect {
   x: number;
   y: number;
@@ -45,7 +50,29 @@ export class AABB {
   }
 }
 
-export interface Vec2 {
-  x: number;
-  y: number;
+export class CountDown {
+  public readonly duration: number;
+  private _remaining: number;
+
+  constructor(duration: number) {
+    this.duration = duration;
+    this._remaining = duration;
+  }
+
+  reset() {
+    this._remaining = this.duration;
+  }
+
+  get remaining(): number {
+    return this._remaining;
+  }
+
+  tick(dt: number): boolean {
+    this._remaining -= dt;
+    if (this._remaining <= 0) {
+      this._remaining = 0;
+      return true;
+    }
+    return false;
+  }
 }

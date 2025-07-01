@@ -1,7 +1,8 @@
-import { Runtime } from './engine/runtime';
+import { createRuntime } from './engine/runtime';
 import { EditorState } from './editor-state';
 
 const imageAssets: Record<string, HTMLImageElement> = {};
+let isPlaying = false;
 
 function bindDebugButton(name, callback: (checked: boolean) => void) {
   const button = document.getElementById(name) as HTMLInputElement;
@@ -24,7 +25,21 @@ function main() {
   });
 
   const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-  const game = new Runtime(canvas, imageAssets);
+  const game = createRuntime(canvas, imageAssets);
+
+  const playButton = document.getElementById('playButton') as HTMLButtonElement;
+  playButton.addEventListener('click', () => {
+    const currentScene = game.getCurrentScene();
+    if (currentScene === 'EDITOR') {
+      game.setScene('GAME');
+    } else {
+      game.setScene('EDITOR');
+    }
+
+    isPlaying = !isPlaying;
+    playButton.classList.toggle('active', isPlaying);
+    playButton.textContent = isPlaying ? '■ Stop' : '▶ Play';
+  });
 
   const loop = () => {
     game.tick();

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 import { ECSWorld, Entity } from './ecs';
-import { StateMachine } from './world/lifeform-common';
-import { AABB } from './common';
+import { StateMachine } from './world/lifeform';
+import { AABB } from './engine/common';
 
 export class Name {
   value: string;
@@ -75,14 +75,6 @@ export class Animation {
   }
 }
 
-export enum CollisionLayer {
-  PLAYER = 0b1,
-  ENEMY = 0b10,
-  OBSTACLE = 0b100,
-  EVENT = 0b1000,
-  TRAP = 0b010000,
-}
-
 export class Grounded {}
 
 export class Static {}
@@ -90,6 +82,13 @@ export class Static {}
 export class Dynamic {}
 
 export class Collider {
+  static readonly PLAYER = 0b1;
+  static readonly ENEMY = 0b10;
+  static readonly OBSTACLE = 0b100;
+  static readonly EVENT = 0b1000;
+  static readonly TRAP = 0b010000;
+  static readonly PORTAL = 0b100000;
+
   width: number;
   height: number;
   layer: number;
@@ -100,8 +99,8 @@ export class Collider {
   constructor(
     width: number,
     height: number,
-    layer: CollisionLayer,
-    mask: CollisionLayer,
+    layer: number,
+    mask: number,
     offsetX = 0,
     offsetY = 0,
   ) {
@@ -111,44 +110,6 @@ export class Collider {
     this.mask = mask;
     this.offsetX = offsetX;
     this.offsetY = offsetY;
-  }
-}
-
-export abstract class ScriptBase {
-  protected entity: Entity;
-  protected world: ECSWorld;
-  protected fsm?: StateMachine<string>;
-
-  constructor(entity: Entity, world: ECSWorld) {
-    this.entity = entity;
-    this.world = world;
-  }
-
-  onInit?(): void;
-
-  onUpdate(dt: number): void {
-    this.fsm?.update(dt);
-  }
-
-  onCollision?(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void;
-
-  onDie() {
-    this.fsm?.transition('die');
-  }
-
-  markDelete(): void {
-    this.world.addComponent(this.entity, new PendingDelete());
-  }
-
-  playAnim(name: string) {
-    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
-    if (!anim || anim.current === name) return;
-    anim.current = name;
-    anim.elapsed = 0;
-  }
-
-  isGrounded(): boolean {
-    return this.world.hasComponent(this.entity, Grounded.name);
   }
 }
 
@@ -179,7 +140,46 @@ export class Camera {
   }
 }
 
-export class Script {
+// @TODO: make a LifeformScriptBase
+export abstract class ScriptBase {
+  protected entity: Entity;
+  protected world: ECSWorld;
+  protected fsm?: StateMachine<string>;
+
+  constructor(entity: Entity, world: ECSWorld) {
+    this.entity = entity;
+    this.world = world;
+  }
+
+  onInit?(): void;
+
+  onUpdate(dt: number): void {
+    this.fsm?.update(dt);
+  }
+
+  onCollision?(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void;
+
+  onDie() {
+    // @TODO: instead of onDie, check health
+    this.fsm?.transition('die');
+  }
+
+  markDelete(): void {
+    this.world.addComponent(this.entity, new PendingDelete());
+  }
+
+  playAnim(name: string) {
+    const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
+    if (!anim || anim.current === name) return;
+    anim.current = name;
+    anim.elapsed = 0;
+  }
+
+  isGrounded(): boolean {
+    return this.world.hasComponent(this.entity, Grounded.name);
+  }
+}
+export class Instance {
   private script: ScriptBase;
 
   constructor(script: ScriptBase) {
