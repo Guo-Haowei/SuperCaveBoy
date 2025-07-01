@@ -1,22 +1,24 @@
 import { Room } from '../world/room';
 import { inputManager } from './input-manager';
 import { assetManager } from './assets-manager';
+import { roomManager } from './room-manager';
 import { IScene } from './scene';
 import { GameScene } from './game-scene';
 import { EditorScene } from './editor-scene';
-import { TILE_SIZE } from '../constants';
 
 export type Scene = 'MENU' | 'GAME' | 'EDITOR';
 
 export class Runtime {
-  start = 0;
-  end = 0;
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
 
   private current: string;
   private scenes = new Map<Scene, IScene>();
   private lastTick = 0;
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
+
+  start = 0;
+  end = 0;
+  // @TODO: remove this
   room: Room;
 
   public constructor(canvas: HTMLCanvasElement, imageAssets: Record<string, HTMLImageElement>) {
@@ -24,17 +26,14 @@ export class Runtime {
     this.canvas = canvas;
     this.ctx = ctx;
 
-    // @TODO: remove manager
-    this.room = new Room(TILE_SIZE);
-    this.room.init();
-
     this.scenes['GAME'] = new GameScene(this);
     this.scenes['EDITOR'] = new EditorScene(this);
+    this.current = 'EDITOR';
 
     assetManager.init(imageAssets);
     inputManager.init(canvas);
-
-    this.current = 'EDITOR';
+    roomManager.init();
+    this.room = roomManager.getCurrentRoom();
   }
 
   setScene(newScene: string) {

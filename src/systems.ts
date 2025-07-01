@@ -3,7 +3,6 @@ import {
   Animation,
   Camera,
   Collider,
-  Collider,
   Dynamic,
   Facing,
   PendingDelete,

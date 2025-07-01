@@ -9,6 +9,8 @@ import { createPlayer } from './player';
 import { WIDTH, HEIGHT } from '../constants';
 import { createPoartal } from './portal';
 
+import { LevelData, MONSTER, TYPE } from './data';
+
 enum TileType {
   WALL = 0,
   DIRT = 1,
@@ -17,29 +19,77 @@ enum TileType {
 const SPAWNING_X = 192;
 const SPAWNING_Y = 600;
 
-// @TODO: remove manager
 export class Room {
-  level = WORLD.startLevel;
-  world: number[][] = [];
   width: number;
   height: number;
-  ecs: ECSWorld = new ECSWorld();
+  ecs: ECSWorld;
   playerId = ECSWorld.INVALID_ENTITY;
 
   tileSize: number;
 
   cameraId = ECSWorld.INVALID_ENTITY;
 
-  constructor(tileSize: number) {
+  constructor(tileSize: number, levelData: LevelData) {
+    const tiles = levelData.level;
+    const width = tiles[0].length;
+    const height = tiles.length;
+
     this.tileSize = tileSize;
+    this.width = width;
+    this.height = height;
 
-    // Initialize the room with the first level
-    this.init();
-  }
-
-  private clearRoom() {
-    this.world = [];
     this.ecs = new ECSWorld();
+
+    // player
+    const playerId = createPlayer(this.ecs, SPAWNING_X, SPAWNING_Y);
+    this.playerId = playerId;
+
+    // camera
+    this.cameraId = createGameCamera(
+      this.ecs,
+      400,
+      SPAWNING_Y,
+      WIDTH,
+      HEIGHT,
+      playerId,
+      width * tileSize,
+      height * tileSize,
+    );
+
+    // tiles
+    for (let y = 0; y < height; ++y) {
+      for (let x = 0; x < width; ++x) {
+        const spriteId = tiles[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
+        this.createTile(tileSize * x, tileSize * y, spriteId);
+      }
+    }
+
+    // entrance
+    this.createEntrance(96, 608);
+
+    // colliders
+    for (const ele of levelData.obstacles) {
+      const collider = ele as [number, number, number, number];
+      this.createCollider(...collider);
+    }
+
+    for (const ele of levelData.monsters) {
+      const mon = ele as [number, number, number, number?, number?, number?];
+      if (mon[2] === MONSTER.BAT) {
+        createBat(this.ecs, mon[0], mon[1], playerId);
+      } else if (mon[2] === MONSTER.SNAKE) {
+        createSnake(this.ecs, mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
+      } else if (mon[2] === MONSTER.SPIDER) {
+        createSpider(this.ecs, mon[0], mon[1], playerId);
+      }
+    }
+
+    for (const obj of levelData.objects) {
+      const type = obj[2];
+      if (type === TYPE.EXIT) {
+        createPoartal(this.ecs, obj[0], obj[1]);
+      }
+    }
   }
 
   private createTile(x: number, y: number, sheetId: string) {
@@ -72,83 +122,5 @@ export class Room {
     this.ecs.addComponent(id, new Static());
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, collider);
-  }
-
-  init() {
-    this.clearRoom();
-
-    ++this.level;
-    const world = WORLD.levels[this.level].level;
-    this.world = world;
-    this.width = world[this.level].length;
-    this.height = world.length;
-
-    const { tileSize, width, height } = this;
-
-    // tiles
-    for (let y = 0; y < height; ++y) {
-      for (let x = 0; x < width; ++x) {
-        const spriteId = this.world[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
-        this.createTile(tileSize * x, tileSize * y, spriteId);
-      }
-    }
-
-    // player
-    const mapWidth = width * tileSize;
-    const mapHeight = height * tileSize;
-    const playerId = createPlayer(this.ecs, SPAWNING_X, SPAWNING_Y);
-    this.playerId = playerId;
-
-    // camera
-    this.cameraId = createGameCamera(
-      this.ecs,
-      400,
-      SPAWNING_Y,
-      WIDTH,
-      HEIGHT,
-      playerId,
-      mapWidth,
-      mapHeight,
-    );
-
-    // entrance
-    this.createEntrance(96, 608);
-
-    // colliders
-    const colliders = WORLD.levels[this.level].obstacles;
-    for (const ele of colliders) {
-      const collider = ele as [number, number, number, number];
-      this.createCollider(...collider);
-    }
-
-    // // WTF is this?
-    // if (this.level < 5) YOFFSET = 50;
-    // else if (this.level === 6 || this.level === 9) YOFFSET = 35;
-    // else YOFFSET = 0;
-
-    // monsters
-    const mons = WORLD.levels[this.level].monsters;
-    for (const ele of mons) {
-      const mon = ele as [number, number, number, number?, number?, number?];
-      if (mon[2] === MONSTER.BAT) {
-        createBat(this.ecs, mon[0], mon[1], playerId);
-      } else if (mon[2] === MONSTER.SNAKE) {
-        createSnake(this.ecs, mon[0], mon[1], mon[3] ?? 0, mon[4] ?? 0);
-      } else if (mon[2] === MONSTER.SPIDER) {
-        createSpider(this.ecs, mon[0], mon[1], playerId);
-      }
-    }
-
-    for (const obj of WORLD.levels[this.level].objects) {
-      const type = obj[2];
-      if (type === TYPE.EXIT) {
-        createPoartal(this.ecs, obj[0], obj[1]);
-      }
-    }
-
-    // if (this.level === 9) {
-    //     var music = handler._getMusic()
-    //     music._setCurrent(music.snd_boss);
-    // }
   }
 }

@@ -1,5 +1,5 @@
 import { ECSWorld } from '../ecs';
-import { Collider, Collider, Dynamic, Facing, Position, Velocity } from '../components';
+import { Collider, Dynamic, Facing, Position, Velocity } from '../components';
 
 export function findGravityAndJumpVelocity(
   desiredJumpHeight: number,

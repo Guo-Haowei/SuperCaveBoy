@@ -160,7 +160,7 @@ class PlayerScript extends ScriptBase {
 
     switch (layer) {
       case Collider.PORTAL:
-        console.log('portal collision');
+        throw new Error('Player should not collide with portal');
         break;
       case Collider.OBSTACLE:
         if (otherBound.above(selfBound)) {
