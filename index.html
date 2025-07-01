@@ -15,39 +15,29 @@
 
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
-    <nav class="menu-bar">
-      <ul class="menu">
-        <li class="menu-item">
-          File
-          <ul class="submenu">
-            <li class="submenu-item">Open Map</li>
-            <li class="submenu-item">Save Map</li>
-            <li class="submenu-item">Exit</li>
-          </ul>
-        </li>
-        <li class="menu-item">
-          Edit
-          <ul class="submenu">
-            <li class="submenu-item">Undo</li>
-            <li class="submenu-item">Redo</li>
-          </ul>
-        </li>
-        <li class="menu-item">
-          View
-          <ul class="submenu">
-            <li class="submenu-item">
-              <label><input type="checkbox" id="toggleGrid" /> Show Grid</label>
-            </li>
-            <li class="submenu-item">
-              <label><input type="checkbox" id="toggleSnap" /> Snap to Grid</label>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </nav>
 
-    <canvas id="gameCanvas" width="960" height="600"></canvas>
+  <body>
+    <div class="menu-bar">
+      <div class="menu-item">
+        File
+        <div class="dropdown">
+          <div class="dropdown-item">New</div>
+          <div class="dropdown-item">Open</div>
+          <div class="dropdown-item">Save</div>
+        </div>
+      </div>
+      <div class="menu-item">
+        Edit
+        <div class="dropdown">
+          <div class="dropdown-item">Undo</div>
+          <div class="dropdown-item">Redo</div>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <canvas id="gameCanvas" width="960" height="600"></canvas>
+      <button id="playBtn" class="play-button">▶ Play</button>
+    </div>
 
     <!-- images -->
     <img src="./img/bg_menu.png" style="display: none" />
@@ -78,5 +68,42 @@
 
     <!-- main -->
     <script type="module" src="src/main.ts"></script>
+
+    <script>
+      const playBtn = document.getElementById('playBtn');
+      let isPlaying = false;
+
+      playBtn.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        playBtn.classList.toggle('active', isPlaying);
+        playBtn.textContent = isPlaying ? '■ Stop' : '▶ Play';
+        // TODO: Add game start/stop logic here
+      });
+
+      const menuItems = document.querySelectorAll('.menu-item');
+
+      menuItems.forEach((item) => {
+        item.addEventListener('click', (e) => {
+          // Toggle active class on clicked item
+          const isActive = item.classList.contains('active');
+
+          // Close all dropdowns
+          menuItems.forEach((i) => i.classList.remove('active'));
+
+          // If not already active, open this one
+          if (!isActive) {
+            item.classList.add('active');
+          }
+
+          // Prevent event from bubbling up (optional)
+          e.stopPropagation();
+        });
+      });
+
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', () => {
+        menuItems.forEach((i) => i.classList.remove('active'));
+      });
+    </script>
   </body>
 </html>
