@@ -4,7 +4,7 @@ import {
   Collider,
   Name,
   Position,
-  Script,
+  Instance,
   ScriptBase,
   Sprite,
   Velocity,
@@ -14,7 +14,6 @@ import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
 import { AABB } from '../engine/common';
-import { roomManager } from '../engine/room-manager';
 import { CountDown } from '../engine/common';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
@@ -160,7 +159,6 @@ class PlayerScript extends ScriptBase {
 
     switch (layer) {
       case Collider.PORTAL:
-        roomManager.loadRoom('ROOM2');
         break;
       case Collider.OBSTACLE:
         if (otherBound.above(selfBound)) {
@@ -172,7 +170,7 @@ class PlayerScript extends ScriptBase {
       case Collider.ENEMY:
         if (selfBound.above(otherBound)) {
           // kill the enemy
-          const script = this.world.getComponent<Script>(other, Script.name);
+          const script = this.world.getComponent<Instance>(other, Instance.name);
           script?.onDie();
           velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
         } else {
@@ -240,7 +238,7 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   ecs.addComponent(id, anim);
 
   const script = new PlayerScript(id, ecs);
-  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Instance(script));
   return id;
 }
 

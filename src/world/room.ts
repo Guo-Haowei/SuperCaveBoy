@@ -30,7 +30,6 @@ export class Room {
   cameraId = ECSWorld.INVALID_ENTITY;
 
   constructor(tileSize: number, levelData: LevelData) {
-    console.log(levelData);
     const tiles = levelData.level;
     const width = tiles[0].length;
     const height = tiles.length;
@@ -88,7 +87,7 @@ export class Room {
     for (const obj of levelData.objects) {
       const type = obj[2];
       if (type === TYPE.EXIT) {
-        createPoartal(this.ecs, obj[0], obj[1]);
+        createPoartal(this.ecs, obj[0] as number, obj[1] as number, obj[3] as string);
       }
     }
   }

@@ -4,7 +4,7 @@ import {
   Facing,
   Name,
   Position,
-  Script,
+  Instance,
   ScriptBase,
   Sprite,
   Velocity,
@@ -89,6 +89,6 @@ export function createSnake(
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Sprite(SpriteSheets.SNAKE_MOVE));
   ecs.addComponent(id, anim);
-  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Instance(script));
   return id;
 }

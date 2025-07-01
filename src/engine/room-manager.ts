@@ -4,17 +4,20 @@ import { Room } from '../world/room';
 import { WORLD_DATA, LevelData } from '../world/data';
 
 class RoomManager {
-  private level: number;
+  private roooms = new Map<string, LevelData>();
 
   private currentRoom?: Room;
 
   init() {
-    this.level = WORLD_DATA.startLevel;
-    this.currentRoom = new Room(TILE_SIZE, WORLD_DATA.levels[this.level]);
+    WORLD_DATA.forEach((data) => {
+      this.roooms.set(data.name, data);
+    });
+
+    this.loadRoom('Level 1');
   }
 
-  loadRoom(name?: string) {
-    const data = WORLD_DATA.levels[++this.level];
+  loadRoom(name: string) {
+    const data = this.roooms.get(name);
     this.currentRoom = new Room(TILE_SIZE, data);
   }
 

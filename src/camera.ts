@@ -1,5 +1,5 @@
 import { ECSWorld } from './ecs';
-import { Name, Position, Camera, Script, ScriptBase } from './components';
+import { Name, Position, Camera, Instance, ScriptBase } from './components';
 
 // @TODO: camera controller script
 class CameraFollowScript extends ScriptBase {
@@ -61,6 +61,6 @@ export function createGameCamera(
   ecs.addComponent(id, new Name('Camera'));
   ecs.addComponent(id, new Camera(width, height));
   ecs.addComponent(id, new Position(x, y));
-  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Instance(script));
   return id;
 }

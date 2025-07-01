@@ -8,7 +8,7 @@ import {
   PendingDelete,
   Position,
   Sprite,
-  Script,
+  Instance,
   Static,
   Velocity,
   Grounded,
@@ -158,7 +158,7 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
 
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
-  for (const [_id, script] of world.queryEntities<Script>(Script.name)) {
+  for (const [_id, script] of world.queryEntities<Instance>(Instance.name)) {
     script.onUpdate(dt);
   }
 }
@@ -265,10 +265,10 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
       const direction = mtvToDirection(mtv);
 
       world
-        .getComponent<Script>(s, Script.name)
+        .getComponent<Instance>(s, Instance.name)
         ?.onCollision(d, dynamicCollider.layer, aabb1, aabb2);
       world
-        .getComponent<Script>(d, Script.name)
+        .getComponent<Instance>(d, Instance.name)
         ?.onCollision(s, staticCollider.layer, aabb2, aabb1);
 
       if (direction === Direction.DOWN && staticCollider.layer === Collider.OBSTACLE) {
@@ -297,12 +297,14 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         continue;
       }
 
-      world.getComponent<Script>(d1, Script.name)?.onCollision(d2, collider2.layer, aabb1, aabb2);
-      world.getComponent<Script>(d2, Script.name)?.onCollision(d1, collider1.layer, aabb2, aabb1);
+      world
+        .getComponent<Instance>(d1, Instance.name)
+        ?.onCollision(d2, collider2.layer, aabb1, aabb2);
+      world
+        .getComponent<Instance>(d2, Instance.name)
+        ?.onCollision(d1, collider1.layer, aabb2, aabb1);
     }
   }
-
-  // @TODO: test dynamic dynamic collisions
 }
 
 export function deleteSystem(world: ECSWorld) {

@@ -4,7 +4,7 @@ import {
   Facing,
   Name,
   Position,
-  Script,
+  Instance,
   ScriptBase,
   Sprite,
   Velocity,
@@ -107,6 +107,6 @@ export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
   ecs.addComponent(id, anim);
 
   const script = new BatScript(id, ecs, target);
-  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Instance(script));
   return id;
 }

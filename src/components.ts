@@ -178,7 +178,7 @@ export class Camera {
   }
 }
 
-export class Script {
+export class Instance {
   private script: ScriptBase;
 
   constructor(script: ScriptBase) {

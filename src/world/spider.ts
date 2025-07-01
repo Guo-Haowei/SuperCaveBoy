@@ -4,7 +4,7 @@ import {
   Facing,
   Name,
   Position,
-  Script,
+  Instance,
   ScriptBase,
   Sprite,
   Velocity,
@@ -115,6 +115,6 @@ export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity
   ecs.addComponent(id, new Sprite(SpriteSheets.SPIDER_JUMP));
   ecs.addComponent(id, anim);
   const script = new SpiderScript(id, ecs, target);
-  ecs.addComponent(id, new Script(script));
+  ecs.addComponent(id, new Instance(script));
   return id;
 }
