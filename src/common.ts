@@ -21,8 +21,6 @@ export class Rect {
 }
 
 export class AABB {
-  private static readonly ERROR = 0.0001;
-
   xMin: number;
   yMin: number;
   xMax: number;
@@ -35,14 +33,15 @@ export class AABB {
     this.yMax = yMax;
   }
 
-  slightlyAbove(other: AABB): boolean {
-    const diff = this.yMin - other.yMax;
-    return Math.abs(diff) < AABB.ERROR;
+  above(other: AABB): boolean {
+    return this.yMax > other.yMin && this.yMax < other.yMax;
   }
 
-  slightlyBelow(other: AABB): boolean {
-    const diff = other.yMin - this.yMax;
-    return Math.abs(diff) < AABB.ERROR;
+  center(): Vec2 {
+    return {
+      x: (this.xMin + this.xMax) / 2,
+      y: (this.yMin + this.yMax) / 2,
+    };
   }
 }
 

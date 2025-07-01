@@ -131,7 +131,10 @@ export abstract class ScriptBase {
   }
 
   onCollision?(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void;
-  onDie?(): void;
+
+  onDie() {
+    this.fsm?.transition('die');
+  }
 
   markDelete(): void {
     this.world.addComponent(this.entity, new PendingDelete());

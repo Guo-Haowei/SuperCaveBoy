@@ -11,8 +11,9 @@ import {
 } from '../components';
 import { SpriteSheets } from '../assets';
 import { createEnemyCommon, StateMachine } from './lifeform-common';
+import { audios } from '../audios';
 
-type BatStateName = 'idle' | 'fly';
+type BatStateName = 'idle' | 'fly' | 'die';
 
 class BatScript extends ScriptBase {
   private target: Entity;
@@ -35,6 +36,13 @@ class BatScript extends ScriptBase {
           name: 'fly',
           enter: () => this.playAnim('fly'),
           update: () => this.fly(),
+        },
+        die: {
+          name: 'die',
+          update: () => {
+            super.markDelete();
+            audios.snd_bat.play();
+          },
         },
       },
       'idle',

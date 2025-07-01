@@ -17,10 +17,13 @@ import { AABB } from '../common';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
-type PlayerStateName = 'idle' | 'walk' | 'jump';
+type PlayerStateName = 'idle' | 'walk' | 'jump' | 'hurt';
 
 class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
+  static readonly HURT_COOLDOWN = 0.5;
+
+  private cooldown: number;
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
@@ -43,6 +46,14 @@ class PlayerScript extends ScriptBase {
         jump: {
           name: 'jump',
           update: () => this.jump(),
+        },
+        hurt: {
+          name: 'hurt',
+          enter: () => {
+            this.playAnim('hurt');
+            this.cooldown = PlayerScript.HURT_COOLDOWN;
+          },
+          update: (dt) => this.hurt(dt),
         },
       },
       'walk',
@@ -133,9 +144,17 @@ class PlayerScript extends ScriptBase {
     this.fsm.transition(walking ? 'walk' : 'idle');
   }
 
+  private hurt(dt: number) {
+    this.cooldown -= dt;
+    this.cooldown = Math.max(this.cooldown, 0);
+    if (this.cooldown == 0) {
+      this.fsm.transition('idle');
+    }
+  }
+
   onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void {
     if (layer === CollisionLayer.OBSTACLE) {
-      if (selfBound.slightlyBelow(otherBound)) {
+      if (otherBound.above(selfBound)) {
         const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
         velocity.vy += JUMP_VELOCITY * 0.2;
         // @TODO: grab ledge
@@ -143,14 +162,19 @@ class PlayerScript extends ScriptBase {
       return;
     }
     if (layer === CollisionLayer.ENEMY) {
-      // console.log(selfBound);
-      // console.log(otherBound);
-      // throw new Error('Player collided with enemy');
-      if (otherBound.slightlyBelow(selfBound)) {
-        throw new Error(selfBound.toString() + ' ' + otherBound.toString());
+      if (selfBound.above(otherBound)) {
         // kill the enemy
         const script = this.world.getComponent<Script>(other, Script.name);
         script?.onDie();
+      } else {
+        const center = selfBound.center();
+        const otherCenter = otherBound.center();
+
+        const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+        const dx = center.x - otherCenter.x;
+        velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
+        velocity.vy -= JUMP_VELOCITY * 0.05; // bounce up
+        this.fsm.transition('hurt');
       }
       return;
     }
@@ -186,6 +210,12 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
         sheetId: SpriteSheets.PLAYER_JUMP,
         frames: 2,
         speed: 10.0,
+        loop: false,
+      },
+      hurt: {
+        sheetId: SpriteSheets.PLAYER_DAMAGE,
+        frames: 1,
+        speed: 1,
         loop: false,
       },
     },

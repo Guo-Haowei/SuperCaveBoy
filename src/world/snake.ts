@@ -61,10 +61,6 @@ class SnakeScript extends ScriptBase {
       facing.toggle();
     }
   }
-
-  onDie(): void {
-    this.fsm.transition('die');
-  }
 }
 
 export function createSnake(
