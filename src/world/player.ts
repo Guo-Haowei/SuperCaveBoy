@@ -14,6 +14,7 @@ import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform-common';
 import { AABB } from '../common';
+import { roomManager } from '../engine/room-manager';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
@@ -160,7 +161,7 @@ class PlayerScript extends ScriptBase {
 
     switch (layer) {
       case Collider.PORTAL:
-        throw new Error('Player should not collide with portal');
+        roomManager.loadRoom('ROOM2');
         break;
       case Collider.OBSTACLE:
         if (otherBound.above(selfBound)) {

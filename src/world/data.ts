@@ -19,7 +19,13 @@ export interface LevelData {
   level: number[][]; // 2D array representing the level layout
 }
 
-export const WORLD_DATA = {
+export interface WorldData {
+  startLevel: number;
+  levelNum: number;
+  levels: LevelData[];
+}
+
+export const WORLD_DATA: WorldData = {
   startLevel: 0,
   levelNum: 9,
   levels: [

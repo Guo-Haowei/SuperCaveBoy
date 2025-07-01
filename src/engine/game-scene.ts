@@ -2,6 +2,7 @@ import { IScene } from './scene';
 import { Runtime } from './runtime';
 import * as System from '../systems';
 import { Camera, Position } from '../components';
+import { roomManager } from './room-manager';
 
 export class GameScene implements IScene {
   private game: Runtime;
@@ -11,8 +12,9 @@ export class GameScene implements IScene {
   }
 
   tick(dt: number) {
-    const { ctx, room } = this.game;
+    const room = roomManager.getCurrentRoom();
     const { ecs } = room;
+    const { ctx } = this.game;
 
     System.scriptSystem(ecs, dt);
     System.movementSystem(ecs, dt);

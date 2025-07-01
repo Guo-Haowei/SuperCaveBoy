@@ -1,4 +1,3 @@
-import { Room } from '../world/room';
 import { inputManager } from './input-manager';
 import { assetManager } from './assets-manager';
 import { roomManager } from './room-manager';
@@ -18,8 +17,6 @@ export class Runtime {
 
   start = 0;
   end = 0;
-  // @TODO: remove this
-  room: Room;
 
   public constructor(canvas: HTMLCanvasElement, imageAssets: Record<string, HTMLImageElement>) {
     const ctx = canvas.getContext('2d');
@@ -33,7 +30,6 @@ export class Runtime {
     assetManager.init(imageAssets);
     inputManager.init(canvas);
     roomManager.init();
-    this.room = roomManager.getCurrentRoom();
   }
 
   setScene(newScene: string) {

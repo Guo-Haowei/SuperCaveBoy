@@ -3,6 +3,7 @@ import { Runtime } from './runtime';
 import * as System from '../systems';
 import { Camera, Position } from '../components';
 import { inputManager } from './input-manager';
+import { roomManager } from './room-manager';
 
 export class EditorScene implements IScene {
   private game: Runtime;
@@ -33,7 +34,8 @@ export class EditorScene implements IScene {
   tick(_dt: number) {
     this.updateCamera();
 
-    const { ctx, room } = this.game;
+    const room = roomManager.getCurrentRoom();
+    const { ctx } = this.game;
     const { ecs } = room;
 
     System.renderSystem(ecs, ctx, room, { camera: this.camera, pos: this.cameraPos });

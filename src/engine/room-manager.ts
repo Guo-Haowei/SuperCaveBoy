@@ -6,8 +6,6 @@ import { WORLD_DATA, LevelData } from '../world/data';
 class RoomManager {
   private level: number;
 
-  private readonly roomData: LevelData[] = [];
-
   private currentRoom?: Room;
 
   init() {
@@ -15,8 +13,8 @@ class RoomManager {
     this.currentRoom = new Room(TILE_SIZE, WORLD_DATA.levels[this.level]);
   }
 
-  loadRoom(name: string) {
-    const data = this.roomData[++this.level];
+  loadRoom(name?: string) {
+    const data = WORLD_DATA.levels[++this.level];
     this.currentRoom = new Room(TILE_SIZE, data);
   }
 

@@ -30,6 +30,7 @@ export class Room {
   cameraId = ECSWorld.INVALID_ENTITY;
 
   constructor(tileSize: number, levelData: LevelData) {
+    console.log(levelData);
     const tiles = levelData.level;
     const width = tiles[0].length;
     const height = tiles.length;
