@@ -17,7 +17,7 @@ enum TileType {
 }
 
 const SPAWNING_X = 192;
-const SPAWNING_Y = 600;
+const SPAWNING_Y = 500;
 
 export class Room {
   width: number;

@@ -1,4 +1,4 @@
-import { ECSWorld } from './ecs';
+import { ECSWorld } from '../ecs';
 import {
   Animation,
   Camera,
@@ -12,11 +12,11 @@ import {
   Static,
   Velocity,
   Grounded,
-} from './components';
-import { Room } from './world/room';
-import { assetManager } from './engine/assets-manager';
-import { Direction, AABB, Vec2 } from './engine/common';
-import { EditorState } from './editor-state';
+} from '../components';
+import { Room } from '../world/room';
+import { assetManager } from './assets-manager';
+import { Direction, AABB, Vec2 } from './common';
+import { EditorState } from '../editor-state';
 
 // ------------------------------ Animation System -----------------------------
 export function animationSystem(world: ECSWorld, dt: number) {

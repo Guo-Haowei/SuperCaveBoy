@@ -51,22 +51,26 @@ export class AABB {
 }
 
 export class CountDown {
-  private readonly duration: number;
-  private remaining: number;
+  public readonly duration: number;
+  private _remaining: number;
 
   constructor(duration: number) {
     this.duration = duration;
-    this.remaining = duration;
+    this._remaining = duration;
   }
 
   reset() {
-    this.remaining = this.duration;
+    this._remaining = this.duration;
+  }
+
+  get remaining(): number {
+    return this._remaining;
   }
 
   tick(dt: number): boolean {
-    this.remaining -= dt;
-    if (this.remaining <= 0) {
-      this.remaining = 0;
+    this._remaining -= dt;
+    if (this._remaining <= 0) {
+      this._remaining = 0;
       return true;
     }
     return false;

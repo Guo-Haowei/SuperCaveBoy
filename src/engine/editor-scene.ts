@@ -1,18 +1,16 @@
 import { IScene } from './scene';
-import { Runtime } from './runtime';
-import * as System from '../systems';
+import * as System from './systems';
 import { Camera, Position } from '../components';
 import { inputManager } from './input-manager';
 import { roomManager } from './room-manager';
+import { Runtime } from './runtime';
 
-export class EditorScene implements IScene {
-  private game: Runtime;
-
+export class EditorScene extends IScene {
   private camera: Camera;
   private cameraPos: Position;
 
   constructor(game: Runtime) {
-    this.game = game;
+    super(game);
     const { width, height } = game.canvas;
     this.camera = new Camera(width, height);
     this.cameraPos = new Position(width / 2, height / 2);

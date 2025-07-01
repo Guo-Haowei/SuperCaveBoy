@@ -1,16 +1,9 @@
 import { IScene } from './scene';
-import { Runtime } from './runtime';
-import * as System from '../systems';
+import * as System from './systems';
 import { Camera, Position } from '../components';
 import { roomManager } from './room-manager';
 
-export class GameScene implements IScene {
-  private game: Runtime;
-
-  constructor(game: Runtime) {
-    this.game = game;
-  }
-
+export class GameScene extends IScene {
   tick(dt: number) {
     const room = roomManager.getCurrentRoom();
     const { ecs } = room;

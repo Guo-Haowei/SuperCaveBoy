@@ -1,6 +1,14 @@
-export interface IScene {
+import { Runtime } from './runtime';
+
+export abstract class IScene {
+  protected game: Runtime;
+
+  constructor(game: Runtime) {
+    this.game = game;
+  }
+
   enter?(): void;
   exit?(): void;
 
-  tick(dt: number): void;
+  abstract tick(dt: number): void;
 }

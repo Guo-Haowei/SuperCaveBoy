@@ -4,8 +4,9 @@ import { roomManager } from './room-manager';
 import { IScene } from './scene';
 import { GameScene } from './game-scene';
 import { EditorScene } from './editor-scene';
+import { LoadingScene } from './loading-scene';
 
-export type Scene = 'MENU' | 'GAME' | 'EDITOR';
+export type Scene = 'MENU' | 'GAME' | 'EDITOR' | 'LOADING' | 'END';
 
 export class Runtime {
   canvas: HTMLCanvasElement;
@@ -25,6 +26,7 @@ export class Runtime {
 
     this.scenes['GAME'] = new GameScene(this);
     this.scenes['EDITOR'] = new EditorScene(this);
+    this.scenes['LOADING'] = new LoadingScene(this);
     this.current = 'EDITOR';
 
     assetManager.init(imageAssets);
@@ -32,7 +34,7 @@ export class Runtime {
     roomManager.init();
   }
 
-  setScene(newScene: string) {
+  setScene(newScene: Scene) {
     if (this.current === newScene) return;
     const prevScene = this.scenes[this.current];
     const currentScene = this.scenes[newScene];
@@ -41,6 +43,12 @@ export class Runtime {
 
     prevScene.exit?.();
     currentScene.enter?.();
+    return currentScene;
+  }
+
+  requestRoom(roomName: string) {
+    const loadingScene = this.setScene('LOADING');
+    loadingScene.requestRoom(roomName);
   }
 
   getCurrentScene() {
@@ -65,6 +73,27 @@ export class Runtime {
 
     inputManager.postUpdate(dt);
   }
+}
+
+let gRuntime: Runtime | null = null;
+
+export function createRuntime(
+  canvas: HTMLCanvasElement,
+  imageAssets: Record<string, HTMLImageElement>,
+): Runtime {
+  if (gRuntime) {
+    throw new Error('Runtime already created. Use getRuntime() instead.');
+  }
+  const runtime = new Runtime(canvas, imageAssets);
+  gRuntime = runtime;
+  return runtime;
+}
+
+export function getRuntime(): Runtime {
+  if (!gRuntime) {
+    throw new Error('Runtime not created yet. Call createRuntime() first.');
+  }
+  return gRuntime;
 }
 
 // class MenuScene implements IScene {

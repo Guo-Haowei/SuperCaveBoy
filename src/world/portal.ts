@@ -2,7 +2,7 @@ import { Collider, Dynamic, Position, Instance, ScriptBase, Sprite } from '../co
 import { SpriteSheets } from '../engine/assets-manager';
 import { Entity, ECSWorld } from '../ecs';
 import { AABB } from '../engine/common';
-import { roomManager } from '../engine/room-manager';
+import { getRuntime } from '../engine/runtime';
 
 class PortalScript extends ScriptBase {
   private dest: string;
@@ -14,7 +14,7 @@ class PortalScript extends ScriptBase {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void {
-    roomManager.loadRoom(this.dest);
+    getRuntime().requestRoom(this.dest);
   }
 }
 

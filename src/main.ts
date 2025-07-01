@@ -1,4 +1,4 @@
-import { Runtime } from './engine/runtime';
+import { createRuntime } from './engine/runtime';
 import { EditorState } from './editor-state';
 
 const imageAssets: Record<string, HTMLImageElement> = {};
@@ -25,7 +25,7 @@ function main() {
   });
 
   const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-  const game = new Runtime(canvas, imageAssets);
+  const game = createRuntime(canvas, imageAssets);
 
   const playButton = document.getElementById('playButton') as HTMLButtonElement;
   playButton.addEventListener('click', () => {
