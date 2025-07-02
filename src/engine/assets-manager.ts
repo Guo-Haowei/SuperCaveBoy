@@ -1,6 +1,7 @@
 export const SpriteSheets = {
   DIRY: 'dirt',
   WALL: 'wall',
+  LAVA: 'lava',
   ENTRANCE: 'entrance',
   PORTAL: 'portal',
 
@@ -82,10 +83,10 @@ class AssetManager {
     this.loadSheet(SpriteSheets.BOSS_IDLE, images.spr_boss, 160, 188);
     this.loadSheet(SpriteSheets.BOSS_DAMAGE, images.spr_boss_damaged, 160, 188);
 
+    this.loadSheet(SpriteSheets.LAVA, images.spr_lava, 64, 64);
+
     //     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
     //     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
-    //     this.spr_lava[0] = new OldSprite(images.spr_lava, 0, -20, 64, 84);
-    //     this.spr_lava[1] = new OldSprite(images.spr_lava, 64, -20, 64, 84);
     //     this.spr_gui_sapphire = new OldSprite(images.spr_gui_sapphire, 0, 0, 64, 64);
     //     this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
   }

@@ -42,55 +42,10 @@ export class SpecialObject {
         this.lavaAnimation = new OldAnimation(8, this.handler._getGameAssets().spr_lava);
         this.sprite = this.lavaAnimation._getFrame();
         break;
-      case TYPE.CAMERA:
-        this.trigger = this._CameraTrigger;
-        this.bound = new Rect(0, 0, 64, 500);
-        // this.alarm0 = new Alarm(this.handler);
-        var boss = this.handler._getMonsters()[0];
-        if (boss.type == MONSTER.BOSS) this.boss = boss;
-        break;
+
       default:
         throw new Error(`Unknown special object type: ${this.type}`);
     }
-  }
-
-  _CameraTrigger() {
-    // this.triggerActivated = true;
-    // const camera = this.handler._getCamera();
-    // camera._setTarget(this);
-    // this.handler._getPlayer().pausing = true;
-    // if (this.x < 900) {
-    //   this.x += (920 - this.x) / 70;
-    // } else {
-    //   this.boss._setState(this.boss._BossIdling);
-    //   this.alarm0._init(10);
-    //   this.trigger = this._tickAlarm;
-    // }
-  }
-
-  _tickAlarm() {
-    // // alarm for boss
-    // if (!this.alarm0.activated) {
-    //   if (this.x > 300) {
-    //     this.x -= this.hspeed;
-    //     this.hspeed += 0.04;
-    //   } else {
-    //     this.handler._getCamera()._setTarget(this.handler._getPlayer());
-    //     this.destroyed = true;
-    //     this.handler._getPlayer().pausing = false;
-    //     this.boss._setState(this.boss._BossRising);
-    //   }
-    // } else {
-    //   this.alarm0._tick();
-    // }
-  }
-
-  _cameraSkip() {
-    // this.triggerActivated = false;
-    // this.handler._getCamera()._setTarget(this.handler._getPlayer());
-    // this.destroyed = true;
-    // this.handler._getPlayer().pausing = false;
-    // this.boss._setState(this.boss._BossRising);
   }
 
   _SapphireTrigger() {

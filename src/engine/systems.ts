@@ -79,17 +79,19 @@ export function renderSystem(
     ctx.translate(x + flipLeft * frame.width, y);
     ctx.scale(flipLeft ? -1 : 1, 1);
 
-    ctx.drawImage(
-      image,
-      frame.sourceX,
-      frame.sourceY,
-      frame.width,
-      frame.height,
-      0,
-      0,
-      frame.width,
-      frame.height,
-    );
+    for (let i = 0; i < sprite.repeat; ++i) {
+      ctx.drawImage(
+        image,
+        frame.sourceX,
+        frame.sourceY,
+        frame.width,
+        frame.height,
+        i * frame.width,
+        0,
+        frame.width,
+        frame.height,
+      );
+    }
 
     ctx.restore();
   }
@@ -351,15 +353,9 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         instance1?.script.onCollision?.(rigid2.layer, aabb1, aabb2);
         instance2?.script.onCollision?.(rigid1.layer, aabb2, aabb1);
       } else if (is1Trigger) {
-        console.log(
-          `Trigger collision: ${world.getComponent<Name>(parent1, Name.name)?.value} with`,
-        );
-        instance1?.script.onCollision();
+        instance1?.script.onCollision(0, null, null);
       } else if (is2Trigger) {
-        console.log(
-          `Trigger collision: ${world.getComponent<Name>(parent1, Name.name)?.value} with`,
-        );
-        instance2?.script.onCollision();
+        instance2?.script.onCollision(0, null, null);
       }
     }
   }

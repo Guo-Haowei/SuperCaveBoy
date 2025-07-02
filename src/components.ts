@@ -35,11 +35,13 @@ export class Sprite {
   sheetId: string;
   frameIndex: number;
   zIndex: number;
+  repeat: number;
 
-  constructor(sheetId: string, frameIndex = 0, zIndex = 0) {
+  constructor(sheetId: string, frameIndex = 0, zIndex = 0, repeat = 1) {
     this.sheetId = sheetId;
     this.frameIndex = frameIndex;
     this.zIndex = zIndex;
+    this.repeat = repeat;
   }
 }
 

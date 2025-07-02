@@ -1,14 +1,20 @@
 import { ECSWorld, Entity } from '../ecs';
-import { Animation, Name, Instance, Sprite, ColliderArea } from '../components';
+import { Animation, ColliderArea, Name, Instance, Position, Sprite, Velocity } from '../components';
 import { SpriteSheets } from '../engine/assets-manager';
 import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
-import { AABB } from '../engine/utils';
+import { AABB, CountDown } from '../engine/utils';
 
-type GuardianStateName = 'idle' | 'alert';
+type GuardianStateName = 'idle' | 'alert' | 'targeting' | 'prepare' | 'attack';
+
+const ATTACK_HEIGHT = 250;
+const RISING_SPEED = -200; // Speed at which the guardian rises to attack height
+const CHASING_SPEED = 300; // Speed at which the guardian chases the target
+const ATTACK_SPEED = 700;
 
 class GuardianScript extends LifeformScript {
   private target: Entity;
-  private speed: number;
+
+  private prepareCounter: CountDown = new CountDown(0.5);
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
@@ -25,17 +31,73 @@ class GuardianScript extends LifeformScript {
         alert: {
           name: 'alert',
           enter: () => this.playAnim('alert'),
-          update: () => this.idle(),
+          update: () => this.alert(),
+        },
+        targeting: {
+          name: 'targeting',
+          update: () => this.targeting(),
+        },
+        prepare: {
+          name: 'prepare',
+          enter: () => this.prepareCounter.reset(),
+          update: (dt) => this.prepare(dt),
+        },
+        attack: {
+          name: 'attack',
+          update: (dt) => this.attack(dt),
         },
       },
-      'idle',
+      'alert',
     );
   }
 
   private idle() {
-    // const position = this.world.getComponent<Position>(this.entity, Position.name);
-    // const { x, y } = position;
-    // const target = this.world.getComponent<Position>(this.target, Position.name);
+    // @TODO
+  }
+
+  private alert() {
+    const position = this.world.getComponent<Position>(this.entity, Position.name);
+    const { y } = position;
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    if (y > ATTACK_HEIGHT) {
+      vel.vy = RISING_SPEED;
+    } else {
+      vel.vy = 0;
+      this.fsm.transition('targeting');
+    }
+  }
+
+  private targeting() {
+    const position = this.world.getComponent<Position>(this.entity, Position.name);
+    const { x } = position;
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+
+    const targetPos = this.world.getComponent<Position>(this.target, Position.name);
+
+    const dx = x + 100 - (targetPos.x + 32);
+    if (Math.abs(dx) > 10) {
+      const xsign = Math.sign(dx);
+      vel.vx = -xsign * CHASING_SPEED;
+    } else {
+      vel.vx = 0;
+      this.fsm.transition('prepare'); // Transition back to alert state after targeting
+    }
+  }
+
+  private prepare(dt: number) {
+    if (this.prepareCounter.tick(dt)) {
+      this.fsm.transition('attack');
+    }
+  }
+
+  private attack(dt: number) {
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    if (this.isGrounded()) {
+      vel.vy = 0;
+      this.fsm.transition('alert');
+    } else {
+      vel.vy = ATTACK_SPEED;
+    }
   }
 
   onDie() {

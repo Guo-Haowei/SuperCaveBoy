@@ -2,11 +2,11 @@ import { createSpider } from './spider';
 import { createSnake } from './snake';
 import { createBat } from './bat';
 import { SpriteSheets } from '../engine/assets-manager';
-import { Collider, Position, Rigid, Sprite } from '../components';
+import { Animation, Collider, Hitbox, Position, Rigid, Sprite } from '../components';
 import { ECSWorld } from '../ecs';
 import { createGameCamera } from '../camera';
 import { createPlayer } from './player';
-import { WIDTH, HEIGHT } from '../constants';
+import { WIDTH, HEIGHT, TILE_SIZE } from '../constants';
 import { createPoartal } from './portal';
 import { createGuardian } from './guardian';
 import { createTrigger } from './cutscene-trigger';
@@ -94,6 +94,8 @@ export class Room {
         createPoartal(this.ecs, obj[0] as number, obj[1] as number, obj[3] as string);
       } else if (type === TYPE.CAMERA) {
         createTrigger(this.ecs, obj[0] as number, obj[1] as number);
+      } else if (type === TYPE.LAVA) {
+        this.createLava(obj[0] as number, obj[1] as number, obj[3] as number);
       }
     }
   }
@@ -102,6 +104,34 @@ export class Room {
     const id = this.ecs.createEntity();
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, new Sprite(sheetId, 0, 10));
+  }
+
+  private createLava(x: number, y: number, repeat: number) {
+    const id = this.ecs.createEntity();
+    const offset = 16;
+    this.ecs.addComponent(id, new Position(x, y - offset));
+    this.ecs.addComponent(id, new Sprite(SpriteSheets.LAVA, 0, -1, repeat));
+
+    const anim = new Animation(
+      {
+        lava: {
+          sheetId: SpriteSheets.LAVA,
+          frames: 2,
+          speed: 0.5,
+          loop: true,
+        },
+      },
+      'lava',
+    );
+
+    const collider = this.ecs.createEntity();
+    this.ecs.addComponent(
+      collider,
+      new Collider(id, { width: TILE_SIZE * repeat, height: 64 - offset, offsetY: offset }),
+    );
+    this.ecs.addComponent(collider, new Hitbox());
+
+    this.ecs.addComponent(id, anim);
   }
 
   private createEntrance(x: number, y: number) {
