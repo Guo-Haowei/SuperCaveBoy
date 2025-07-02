@@ -11,21 +11,21 @@ export enum MONSTER {
   BOSS,
 }
 
-export interface LevelData {
+export interface RoomData {
   name: string;
   obstacles: number[][];
   objects: (number | string)[][];
   monsters: (number | MONSTER)[][];
-  level: number[][];
+  grid: number[][];
 }
 
-export const WORLD_DATA: LevelData[] = [
+export const ROOM_DATA: RoomData[] = [
   {
     name: 'Level 1',
     obstacles: [[0, 11, 28, 3]],
     objects: [[1120, 608, TYPE.EXIT, 'Level 2']],
     monsters: [],
-    level: [
+    grid: [
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -54,7 +54,7 @@ export const WORLD_DATA: LevelData[] = [
       [780, 716, TYPE.SAPPHIRE],
     ],
     monsters: [],
-    level: [
+    grid: [
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -83,7 +83,7 @@ export const WORLD_DATA: LevelData[] = [
       [780, 716, TYPE.SAPPHIRE],
     ],
     monsters: [[704, 704, MONSTER.SNAKE, 320, 1216]],
-    level: [
+    grid: [
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -110,7 +110,7 @@ export const WORLD_DATA: LevelData[] = [
     ],
     objects: [[1120, 416, TYPE.EXIT, 'Level 5']],
     monsters: [],
-    level: [
+    grid: [
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -141,7 +141,7 @@ export const WORLD_DATA: LevelData[] = [
       [714, 716, TYPE.SAPPHIRE],
     ],
     monsters: [[704, 512, MONSTER.BAT]],
-    level: [
+    grid: [
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -188,7 +188,7 @@ export const WORLD_DATA: LevelData[] = [
       [1000, 512, MONSTER.SNAKE, 892, 1408],
       [1952, 448, MONSTER.BAT],
     ],
-    level: [
+    grid: [
       [
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1,
@@ -270,7 +270,7 @@ export const WORLD_DATA: LevelData[] = [
       [1824, 320, MONSTER.BAT],
       [2142, 384, MONSTER.BAT],
     ],
-    level: [
+    grid: [
       [
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1,
@@ -354,8 +354,6 @@ export const WORLD_DATA: LevelData[] = [
     ],
     objects: [
       [2208, 672, TYPE.EXIT, 'Level 9'],
-      [320, 780, TYPE.LAVA, 2],
-      [1728, 780, TYPE.LAVA, 3],
       [908, 524, TYPE.SAPPHIRE],
       [716, 524, TYPE.SAPPHIRE],
       [1452, 780, TYPE.SAPPHIRE],
@@ -365,7 +363,7 @@ export const WORLD_DATA: LevelData[] = [
       [734, 512, MONSTER.SNAKE, 640, 1024],
       [1664, 576, MONSTER.SPIDER],
     ],
-    level: [
+    grid: [
       [
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1,
@@ -453,8 +451,6 @@ export const WORLD_DATA: LevelData[] = [
     ],
     objects: [
       [2240, 672, TYPE.EXIT, 'Level 10'],
-      [320, 780, TYPE.LAVA, 3],
-      [704, 780, TYPE.LAVA, 19],
       [588, 716, TYPE.SAPPHIRE],
       [844, 524, TYPE.SAPPHIRE],
       [1100, 524, TYPE.SAPPHIRE],
@@ -469,7 +465,7 @@ export const WORLD_DATA: LevelData[] = [
       [926, 512, MONSTER.SNAKE, 768, 1152],
       [640, 320, MONSTER.BAT],
     ],
-    level: [
+    grid: [
       [
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
         1, 1, 1, 1, 1, 1, 1, 1,
@@ -539,7 +535,7 @@ export const WORLD_DATA: LevelData[] = [
     ],
     objects: [[360, 420, TYPE.CAMERA]],
     monsters: [[860, 516, MONSTER.BOSS]],
-    level: [
+    grid: [
       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],

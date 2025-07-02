@@ -2,7 +2,7 @@ import { createSpider } from './spider';
 import { createSnake } from './snake';
 import { createBat } from './bat';
 import { SpriteSheets } from '../engine/assets-manager';
-import { Animation, Collider, Hitbox, Position, Rigid, Sprite } from '../components';
+import { Animation, Camera, Collider, Hitbox, Position, Rigid, Sprite } from '../components';
 import { ECSWorld } from '../ecs';
 import { createGameCamera } from '../camera';
 import { createPlayer } from './player';
@@ -11,9 +11,9 @@ import { createPoartal } from './portal';
 import { createGuardian } from './guardian';
 import { createTrigger } from './cutscene-trigger';
 
-import { LevelData, MONSTER, TYPE } from './data';
+import { RoomData, MONSTER, TYPE } from './data';
 
-enum TileType {
+export enum TileType {
   WALL = 0,
   DIRT = 1,
   LAVA = 2,
@@ -23,17 +23,18 @@ const SPAWNING_X = 192;
 const SPAWNING_Y = 500;
 
 export class Room {
-  width: number;
-  height: number;
+  readonly width: number;
+  readonly height: number;
+  readonly tileSize: number;
+
+  private tiles: number[][];
+
   ecs: ECSWorld;
-  playerId = ECSWorld.INVALID_ENTITY;
+  private playerId = ECSWorld.INVALID_ENTITY;
+  private cameraId = ECSWorld.INVALID_ENTITY;
 
-  tileSize: number;
-
-  cameraId = ECSWorld.INVALID_ENTITY;
-
-  constructor(tileSize: number, levelData: LevelData) {
-    const tiles = levelData.level;
+  constructor(tileSize: number, levelData: RoomData) {
+    const tiles = levelData.grid;
     const width = tiles[0].length;
     const height = tiles.length;
 
@@ -102,9 +103,21 @@ export class Room {
     }
   }
 
-  private computeTile(levelData: LevelData) {
+  getCameraAndPos(): { camera: Camera; pos: Position } {
+    const camera = this.ecs.getComponent<Camera>(this.cameraId, Camera.name);
+    if (!camera) {
+      throw new Error('Camera not found');
+    }
+    const pos = this.ecs.getComponent<Position>(this.cameraId, Position.name);
+    if (!pos) {
+      throw new Error('Camera position not found');
+    }
+    return { camera, pos };
+  }
+
+  private computeTile(levelData: RoomData) {
     const { tileSize } = this;
-    const grid = levelData.level;
+    const grid = levelData.grid;
     // const visited = grid.map((row) => row.map(() => false));
     const gridWidth = grid[0].length;
     const gridHeight = grid.length;

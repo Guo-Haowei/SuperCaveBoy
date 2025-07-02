@@ -1,15 +1,15 @@
 import { TILE_SIZE } from '../constants';
 import { Room } from '../world/room';
 
-import { WORLD_DATA, LevelData } from '../world/data';
+import { ROOM_DATA, RoomData } from '../world/data';
 
 class RoomManager {
-  private roooms = new Map<string, LevelData>();
+  private roooms = new Map<string, RoomData>();
 
   private currentRoom?: Room;
 
   init() {
-    WORLD_DATA.forEach((data) => {
+    ROOM_DATA.forEach((data) => {
       this.roooms.set(data.name, data);
     });
 

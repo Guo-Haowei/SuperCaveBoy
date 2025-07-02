@@ -1,6 +1,5 @@
 import { IScene } from './scene';
 import * as System from './systems';
-import { Camera, Position } from '../components';
 import { roomManager } from './room-manager';
 
 export class GameScene extends IScene {
@@ -17,9 +16,7 @@ export class GameScene extends IScene {
     System.damageSystem(world, dt);
     System.animationSystem(world, dt);
 
-    const cameraId = room.cameraId;
-    const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
-    const pos = ecs.getComponent<Position>(cameraId, Position.name);
+    const { camera, pos } = room.getCameraAndPos();
 
     System.renderSystem(world, ctx, room, { camera, pos });
     System.deleteSystem(world);

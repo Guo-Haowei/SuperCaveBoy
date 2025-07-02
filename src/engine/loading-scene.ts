@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 import { IScene } from './scene';
 import * as System from './systems';
-import { Camera, Position } from '../components';
 import { roomManager } from './room-manager';
 import { CountDown } from './utils';
 
@@ -23,9 +22,7 @@ export class LoadingScene extends IScene {
     const { ecs } = room;
     const { ctx } = this.game;
 
-    const cameraId = room.cameraId;
-    const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
-    const pos = ecs.getComponent<Position>(cameraId, Position.name);
+    const { camera, pos } = room.getCameraAndPos();
 
     const world = { ecs };
     System.renderSystem(world, ctx, room, { camera, pos });

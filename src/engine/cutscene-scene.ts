@@ -5,25 +5,25 @@ import { roomManager } from './room-manager';
 
 export class CutsceneScene extends IScene {
   private pos: Position | null = null;
+  private camera: Camera | null = null;
   private intialX = 0;
   private targetX = 800;
   private speed = 200;
 
   tick(dt: number) {
     const room = roomManager.getCurrentRoom();
-    const cameraId = room.cameraId;
 
     if (this.pos === null) {
-      const pos = room.ecs.getComponent<Position>(cameraId, Position.name);
+      const { camera, pos } = room.getCameraAndPos();
       this.pos = new Position(pos.x, pos.y);
       this.intialX = pos.x;
+      this.camera = camera;
     }
 
     const { ecs } = room;
     const { ctx } = this.game;
 
-    const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
-    const { pos } = this;
+    const { pos, camera } = this;
 
     const world = { ecs };
     System.renderSystem(world, ctx, room, { camera, pos });
