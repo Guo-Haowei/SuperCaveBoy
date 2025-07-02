@@ -102,7 +102,19 @@ export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity
     offsetX: 12,
     offsetY: 12,
   };
-  const id = createEnemyCommon(ecs, x, y, area, area, area);
+  const hurtArea: ColliderArea = {
+    width: 30,
+    height: 12,
+    offsetX: 17,
+    offsetY: 12,
+  };
+  const hitArea: ColliderArea = {
+    width: 40,
+    height: 32,
+    offsetX: 12,
+    offsetY: 32,
+  };
+  const id = createEnemyCommon(ecs, x, y, area, hurtArea, hitArea);
 
   const anim = new Animation(
     {
