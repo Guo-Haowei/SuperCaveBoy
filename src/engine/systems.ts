@@ -129,6 +129,7 @@ function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
 }
 
 function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
+  ctx.globalAlpha = 0.5;
   for (const [id, collider] of world.queryEntities<Collider>(Collider.name)) {
     const pos = world.getComponent<Position>(collider.parent, Position.name);
     const { x, y } = pos;
@@ -139,22 +140,22 @@ function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     const isHurtbox = world.hasComponent(id, Hurtbox.name);
     const isTrigger = world.hasComponent(id, Trigger.name);
 
+    if (Number(isHitbox) + Number(isHurtbox) + Number(isTrigger) > 1) {
+      throw new Error(`Entity ${id} has multiple collision types: `);
+    }
+
     const dx = x + offsetX;
     const dy = y + offsetY;
 
-    let color = 'organge';
+    let color = 'purple';
     if (rigid) {
-      if (rigid.layer === Rigid.ENEMY) color = 'red';
-      if (rigid.layer === Rigid.OBSTACLE) color = 'blue';
-    }
-    if (isHitbox) {
+      color = 'blue';
+    } else if (isHitbox) {
       color = 'green';
-    }
-    if (isHurtbox) {
+    } else if (isHurtbox) {
       color = 'yellow';
-    }
-    if (isTrigger) {
-      color = 'purple';
+    } else if (isTrigger) {
+      color = 'orange';
     }
 
     ctx.strokeStyle = color;

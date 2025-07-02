@@ -1,5 +1,5 @@
 import { ECSWorld, Entity } from '../ecs';
-import { Animation, Name, Instance, ScriptBase, Sprite } from '../components';
+import { Animation, Name, Instance, ScriptBase, Sprite, ColliderArea } from '../components';
 import { SpriteSheets } from '../engine/assets-manager';
 import { createEnemyCommon, StateMachine } from './lifeform';
 
@@ -43,7 +43,13 @@ class GuardianScript extends ScriptBase {
 }
 
 export function createGuardian(ecs: ECSWorld, x: number, y: number, target: Entity) {
-  const id = createEnemyCommon(ecs, x, y, 130, 193, 15, -5);
+  const area: ColliderArea = {
+    width: 130,
+    height: 193,
+    offsetX: 15,
+    offsetY: -5,
+  };
+  const id = createEnemyCommon(ecs, x, y, area, area, area);
 
   const anim = new Animation(
     {

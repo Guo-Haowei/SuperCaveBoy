@@ -75,7 +75,15 @@ export function createSnake(
     height: 42,
     offsetY: 22,
   };
-  const id = createEnemyCommon(ecs, x, y, area, area);
+
+  const hurtArea: ColliderArea = {
+    width: 22,
+    height: 22,
+    offsetX: 22,
+    offsetY: 10,
+  };
+
+  const id = createEnemyCommon(ecs, x, y, area, hurtArea, area);
 
   const anim = new Animation(
     {

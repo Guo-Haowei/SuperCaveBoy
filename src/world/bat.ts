@@ -89,7 +89,7 @@ export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
     offsetX: 10,
     offsetY: 15,
   };
-  const id = createEnemyCommon(ecs, x, y, area, area);
+  const id = createEnemyCommon(ecs, x, y, area, area, area);
 
   const anim = new Animation(
     {

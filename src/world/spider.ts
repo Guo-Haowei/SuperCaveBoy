@@ -98,7 +98,7 @@ export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity
     offsetX: 12,
     offsetY: 12,
   };
-  const id = createEnemyCommon(ecs, x, y, area, area);
+  const id = createEnemyCommon(ecs, x, y, area, area, area);
 
   const anim = new Animation(
     {

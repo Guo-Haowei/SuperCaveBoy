@@ -110,9 +110,6 @@ export class Rigid {
   static readonly PLAYER = 0b1;
   static readonly ENEMY = 0b10;
   static readonly OBSTACLE = 0b100;
-  static readonly EVENT = 0b1000;
-  static readonly TRAP = 0b010000;
-  static readonly PORTAL = 0b100000;
 
   layer: number;
   mask: number;

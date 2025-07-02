@@ -51,12 +51,15 @@ export function createHitbox(ecs: ECSWorld, parent: number, area: ColliderArea, 
 export function createLifeform(
   ecs: ECSWorld,
   team: TeamNumber,
-  rigidArea: ColliderArea,
-  hurtboxArea: ColliderArea,
+  layer: number,
+  rigid: ColliderArea,
+  hurtbox: ColliderArea,
+  hitbox: ColliderArea,
 ) {
   const parent = ecs.createEntity();
-  createRigid(ecs, parent, rigidArea, 0, Rigid.OBSTACLE);
-  createHurtbox(ecs, parent, hurtboxArea);
+  createRigid(ecs, parent, rigid, layer, Rigid.OBSTACLE);
+  createHurtbox(ecs, parent, hurtbox);
+  createHitbox(ecs, parent, hitbox);
 
   ecs.addComponent(parent, new Team(team));
   return parent;
@@ -68,8 +71,9 @@ export function createEnemyCommon(
   y: number,
   rigid: ColliderArea,
   hurtbox: ColliderArea,
+  hitbox: ColliderArea,
 ) {
-  const id = createLifeform(ecs, TeamNumber.ENEMY, rigid, hurtbox);
+  const id = createLifeform(ecs, TeamNumber.ENEMY, Rigid.ENEMY, rigid, hurtbox, hitbox);
 
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Velocity());

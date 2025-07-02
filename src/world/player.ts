@@ -11,6 +11,7 @@ import {
   Sprite,
   Velocity,
   Facing,
+  Rigid,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
@@ -191,13 +192,28 @@ class PlayerScript extends ScriptBase {
 }
 
 export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
-  const area: ColliderArea = {
+  const rigidArea: ColliderArea = {
     width: 32,
     height: 62,
     offsetX: 16,
     offsetY: 10,
   };
-  const id = createLifeform(ecs, TeamNumber.PLAYER, area, area);
+
+  const hurtArea: ColliderArea = {
+    width: 32,
+    height: 42,
+    offsetX: 16,
+    offsetY: 10,
+  };
+
+  const hitArea: ColliderArea = {
+    width: 32,
+    height: 12,
+    offsetX: 16,
+    offsetY: 60,
+  };
+
+  const id = createLifeform(ecs, TeamNumber.PLAYER, Rigid.PLAYER, rigidArea, hurtArea, hitArea);
 
   const anim = new Animation(
     {
@@ -242,57 +258,6 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   return id;
 }
 
-// import { assetManager } from '../assetManager';
-// import { inputManager } from '../input-manager';
-
-// export class Player {
-//   constructor(x, y, speed, handler) {
-//     this.x = x;
-//     this.y = y;
-//     this.speed = speed;
-
-//     this.handler = handler;
-//     this.face = DIRECTION.RIGHT;
-
-//     this.jump_animation;
-//     this.walk_animation;
-
-//     this.currentState;
-//     this.currentFrame;
-
-//     this.grabbing = false;
-//     this.hurt = false;
-
-//     this.alpha = 1;
-
-//     this.pausing = false;
-
-//     this.alarm0 = new Alarm(this.handler);
-
-//     this.alarm1 = new Alarm(this.handler);
-//     this.walk_animation = new OldAnimation(2, handler._getGameAssets().spr_player_walk);
-//     this.jump_animation = handler._getGameAssets().spr_player_jump;
-//     this.currentFrame = this.jump_animation[1];
-//     this.currentState = this._JumpingState;
-//   }
-
-//   _move() {
-//     if (this.hspeed === 1) this.face = 1;
-//     else if (this.hspeed === -1) this.face = 0;
-//     if (this.x <= 60) {
-//       this.x = 60;
-//       this.state = ENTITY_STATES.IDLING;
-//     } else if (this.x >= WWIDTH - 125) {
-//       this.x = WWIDTH - 125;
-//       this.state = ENTITY_STATES.IDLING;
-//     }
-//     // check collision with walls
-//     if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)) {
-//       this.x += this.hspeed * this.speed;
-//     }
-//     this.grabbing = false;
-//   }
-
 //   _damageTrigger(x) {
 //     this.grabbing = false;
 //     this.alarm1._init(20);
@@ -307,59 +272,10 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
 //     assetManager.snd_ouch.play();
 //   }
 
-//   _DamagedState() {
-//     // damaged state
-//     this.hurt = true;
-//     this._move();
-//     this.currentFrame = this.handler._getGameAssets().spr_player_damage;
-//   }
-
 //   _GrabState = function () {
 //     // grab state
 //     this.currentFrame = this.handler._getGameAssets().spr_player_grab;
 //   };
-
-//   _IdlingState = function () {
-//     // idling state
-//     this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-//     if (this.hspeed !== 0) this.currentState = this._MovingState;
-//   };
-
-//   _MovingState = function () {
-//     // moving state
-//     if (this.hspeed === 0) {
-//       this.currentState == this._IdlingState;
-//       this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-//       return;
-//     }
-//     this._move();
-//     this.currentFrame = this.walk_animation._getFrame();
-//     this.walk_animation._tick();
-//   };
-
-//   _JumpingState = function () {
-//     // jumping state
-//     this.currentFrame = this.jump_animation[this.vspeed < 0 ? 0 : 1];
-//     if (this.hspeed !== 0) this._move();
-//   };
-
-//   _revive = function () {
-//     this.alarm0.activated = false;
-//     this.alarm1.activated = false;
-//     this.hspeed = 0;
-//     this.vspeed = 0;
-//     this.face = DIRECTION.RIGHT;
-//     this.takingJump = false;
-//     this.grabbing = false;
-//     this.health = 3;
-//     this.sapphire = 0;
-//     this._setPos(SpawningX, SpawningY);
-//     this._setState(this._JumpingState);
-//     // reset camara pos
-//     // Camera()._setoffset(480, SpawningY);
-//     this.handler._getLevel()._init(true);
-//   };
-
 //   _tick() {
 //     this.hurt = false;
 //     if (this.pausing) {
