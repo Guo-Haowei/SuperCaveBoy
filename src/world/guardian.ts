@@ -4,17 +4,18 @@ import { SpriteSheets } from '../engine/assets-manager';
 import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
 import { AABB, CountDown } from '../engine/utils';
 
-type GuardianStateName = 'idle' | 'alert' | 'targeting' | 'prepare' | 'attack';
+type GuardianStateName = 'idle' | 'alert' | 'targeting' | 'prepare' | 'attack' | 'cooldown';
 
 const ATTACK_HEIGHT = 250;
 const RISING_SPEED = -200; // Speed at which the guardian rises to attack height
 const CHASING_SPEED = 300; // Speed at which the guardian chases the target
-const ATTACK_SPEED = 700;
+const ATTACK_SPEED = 600;
 
 class GuardianScript extends LifeformScript {
   private target: Entity;
 
   private prepareCounter: CountDown = new CountDown(0.5);
+  private attackCounter: CountDown = new CountDown(0.8);
 
   constructor(entity: Entity, world: ECSWorld, target: Entity) {
     super(entity, world);
@@ -40,11 +41,28 @@ class GuardianScript extends LifeformScript {
         prepare: {
           name: 'prepare',
           enter: () => this.prepareCounter.reset(),
-          update: (dt) => this.prepare(dt),
+          update: (dt) => {
+            if (this.prepareCounter.tick(dt)) {
+              this.fsm.transition('attack');
+            }
+          },
         },
         attack: {
           name: 'attack',
+          enter: () => {
+            const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+            vel.vy = ATTACK_SPEED; // Set the vertical speed for the attack
+          },
           update: (dt) => this.attack(dt),
+        },
+        cooldown: {
+          name: 'cooldown',
+          enter: () => this.attackCounter.reset(),
+          update: (dt) => {
+            if (this.attackCounter.tick(dt)) {
+              this.fsm.transition('alert');
+            }
+          },
         },
       },
       'alert',
@@ -74,7 +92,7 @@ class GuardianScript extends LifeformScript {
 
     const targetPos = this.world.getComponent<Position>(this.target, Position.name);
 
-    const dx = x + 100 - (targetPos.x + 32);
+    const dx = x + 80 - (targetPos.x + 32);
     if (Math.abs(dx) > 10) {
       const xsign = Math.sign(dx);
       vel.vx = -xsign * CHASING_SPEED;
@@ -84,19 +102,13 @@ class GuardianScript extends LifeformScript {
     }
   }
 
-  private prepare(dt: number) {
-    if (this.prepareCounter.tick(dt)) {
-      this.fsm.transition('attack');
-    }
-  }
-
   private attack(dt: number) {
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     if (this.isGrounded()) {
       vel.vy = 0;
-      this.fsm.transition('alert');
+      this.fsm.transition('cooldown');
     } else {
-      vel.vy = ATTACK_SPEED;
+      vel.vy += dt * 500;
     }
   }
 
