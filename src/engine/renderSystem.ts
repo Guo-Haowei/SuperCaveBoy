@@ -86,9 +86,8 @@ class RenderSystem {
       ctx.restore();
     }
 
-    this.drawDebugShape();
-
     if (EditorState.debugCollisions) {
+      this.drawDebugShape();
       this.drawDebugCollider(ecs);
     }
 

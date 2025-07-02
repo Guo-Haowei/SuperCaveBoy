@@ -13,8 +13,16 @@ import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { roomManager } from '../engine/room-manager';
 import { renderSystem } from '../engine/renderSystem';
+import { GridType } from './room';
 
 type SnakeStateName = 'idle' | 'die';
+
+function positionToGrid(x: number, y: number, gridSize: number): { gridX: number; gridY: number } {
+  return {
+    gridX: Math.floor(x / gridSize),
+    gridY: Math.floor(y / gridSize),
+  };
+}
 
 class SnakeScript extends LifeformScript {
   private static readonly INITIAL_SPEED = 100;
@@ -53,10 +61,12 @@ class SnakeScript extends LifeformScript {
     const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
 
     // left
-    const offset = -gridSize + 10;
+    const offset = 10;
     {
-      const { gridX, gridY } = room.getGridUnder(position.x - offset, position.y);
-      if (room.isGridLedge(gridX, gridY, -1)) {
+      const { gridX, gridY } = positionToGrid(position.x - offset, position.y, gridSize);
+      const upperGrid = room.getGridAt(gridX, gridY);
+      const lowerGrid = room.getGridAt(gridX, gridY + 1);
+      if (upperGrid === GridType.SOLID || lowerGrid !== GridType.SOLID) {
         vel.vx = SnakeScript.INITIAL_SPEED;
         facing.left = false;
       }
@@ -67,11 +77,20 @@ class SnakeScript extends LifeformScript {
         width: 64,
         height: 64,
       });
+      renderSystem.addDebugRect({
+        x: gridX * gridSize,
+        y: (gridY + 1) * gridSize,
+        width: 64,
+        height: 64,
+      });
     }
 
+    // right
     {
-      const { gridX, gridY } = room.getGridUnder(position.x + gridSize + offset, position.y);
-      if (room.isGridLedge(gridX, gridY, 1)) {
+      const { gridX, gridY } = positionToGrid(position.x + gridSize + offset, position.y, gridSize);
+      const upperGrid = room.getGridAt(gridX, gridY);
+      const lowerGrid = room.getGridAt(gridX, gridY + 1);
+      if (upperGrid === GridType.SOLID || lowerGrid !== GridType.SOLID) {
         vel.vx = -SnakeScript.INITIAL_SPEED;
         facing.left = true;
       }
@@ -79,6 +98,12 @@ class SnakeScript extends LifeformScript {
       renderSystem.addDebugRect({
         x: gridX * gridSize,
         y: gridY * gridSize,
+        width: 64,
+        height: 64,
+      });
+      renderSystem.addDebugRect({
+        x: gridX * gridSize,
+        y: (gridY + 1) * gridSize,
         width: 64,
         height: 64,
       });
