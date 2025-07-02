@@ -1,17 +1,20 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { ECSWorld } from '../ecs';
 import {
   Animation,
   Camera,
   Collider,
-  Dynamic,
+  Instance,
   Facing,
+  Hitbox,
+  Hurtbox,
+  Grounded,
+  Name,
   PendingDelete,
   Position,
   Sprite,
-  Instance,
-  Static,
   Velocity,
-  Grounded,
+  Rigid,
 } from '../components';
 import { Room } from '../world/room';
 import { assetManager } from './assets-manager';
@@ -124,33 +127,27 @@ function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
 }
 
 function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
-  for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
-    Position.name,
-    Collider.name,
-  )) {
+  for (const [id, collider] of world.queryEntities<Collider>(Collider.name)) {
+    const pos = world.getComponent<Position>(collider.parent, Position.name);
     const { x, y } = pos;
-    const { width, height, offsetX, offsetY, layer } = collider;
+    const { width, height, offsetX, offsetY } = collider;
+
+    const rigid = world.getComponent<Rigid>(id, Rigid.name);
+    const isHitbox = world.hasComponent(id, Hitbox.name);
+    const isHurtbox = world.hasComponent(id, Hurtbox.name);
 
     const dx = x + offsetX;
     const dy = y + offsetY;
 
-    let color: string;
-    switch (layer) {
-      case Collider.PLAYER:
-        color = 'green';
-        break;
-      case Collider.ENEMY:
-        color = 'red';
-        break;
-      case Collider.PORTAL:
-        color = 'purple';
-        break;
-      case Collider.EVENT:
-        color = 'orange';
-        break;
-      default:
-        color = 'blue';
-        break;
+    let color = 'blue';
+    if (rigid) {
+      if (rigid.layer === Rigid.ENEMY) color = 'red';
+    }
+    if (isHitbox) {
+      color = 'green';
+    }
+    if (isHurtbox) {
+      color = 'yellow';
     }
 
     ctx.strokeStyle = color;
@@ -181,9 +178,6 @@ export function movementSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------ Physics System -------------------------------
-function canCollide(a: Collider, b: Collider): boolean {
-  return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
-}
 
 function getMTV(a: AABB, b: AABB): Vec2 | null {
   const ax1 = a.xMin;
@@ -233,79 +227,89 @@ function toAABB(pos: Position, collider: Collider): AABB {
   );
 }
 
-export function physicsSystem(world: ECSWorld, _dt: number) {
-  const staticColliders = world.queryEntities<Static, Collider, Position>(
-    Static.name,
-    Collider.name,
-    Position.name,
-  );
-  const dynamicColliders = world.queryEntities<Dynamic, Collider, Position>(
-    Dynamic.name,
-    Collider.name,
-    Position.name,
-  );
+function canCollide(a?: Rigid, b?: Rigid): boolean {
+  if (!a || !b) {
+    return false;
+  }
+  return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
+}
 
+export function physicsSystem(world: ECSWorld, _dt: number) {
+  const colliders = world.queryEntities<Collider>(Collider.name);
   world.removeAllComponents(Grounded.name);
 
-  // test static dynamic collisions
-  for (const [s, _static, staticCollider, staticPos] of staticColliders) {
-    for (const [d, _dynamic, dynamicCollider, dynamicPos] of dynamicColliders) {
-      if (!canCollide(staticCollider, dynamicCollider)) {
+  for (let i = 0; i < colliders.length - 1; ++i) {
+    for (let j = i + 1; j < colliders.length; ++j) {
+      const [id1, collider1] = colliders[i];
+      const [id2, collider2] = colliders[j];
+      const parent1 = collider1.parent;
+      const parent2 = collider2.parent;
+      const rigid1 = world.getComponent<Rigid>(id1, Rigid.name);
+      const rigid2 = world.getComponent<Rigid>(id2, Rigid.name);
+      const hitbox1 = world.getComponent<Hitbox>(id1, Hitbox.name);
+      const hitbox2 = world.getComponent<Hitbox>(id2, Hitbox.name);
+      const hurtbox1 = world.getComponent<Hurtbox>(id1, Hurtbox.name);
+      const hurtbox2 = world.getComponent<Hurtbox>(id2, Hurtbox.name);
+
+      const isRigidPair = canCollide(rigid1, rigid2);
+      const isHitboxPair = (hitbox1 && hurtbox2) || (hitbox2 && hurtbox1);
+
+      // @TODO: make sure sum to 1
+      const check = Number(isRigidPair) + Number(isHitboxPair);
+      if (check === 0) {
         continue;
       }
 
-      const aabb1 = toAABB(staticPos, staticCollider);
-      const aabb2 = toAABB(dynamicPos, dynamicCollider);
-      const mtv = getMTV(aabb1, aabb2);
-      if (!mtv) {
-        continue;
-      }
+      if (check > 1) throw new Error('Invalid collider pair');
 
-      // push the dynamic collider out of the static one
-      dynamicPos.x -= mtv.x;
-      dynamicPos.y -= mtv.y;
-
-      const direction = mtvToDirection(mtv);
-
-      world
-        .getComponent<Instance>(s, Instance.name)
-        ?.onCollision(d, dynamicCollider.layer, aabb1, aabb2);
-      world
-        .getComponent<Instance>(d, Instance.name)
-        ?.onCollision(s, staticCollider.layer, aabb2, aabb1);
-
-      if (direction === Direction.DOWN && staticCollider.layer === Collider.OBSTACLE) {
-        world.addComponent(d, new Grounded());
-        const vel = world.getComponent<Velocity>(d, Velocity.name);
-        if (vel) {
-          vel.vy = 1;
-        }
-      }
-    }
-  }
-
-  for (let i = 0; i < dynamicColliders.length - 1; ++i) {
-    for (let j = i + 1; j < dynamicColliders.length; ++j) {
-      const [d1, _dynamic1, collider1, pos1] = dynamicColliders[i];
-      const [d2, _dynamic2, collider2, pos2] = dynamicColliders[j];
-
-      if (!canCollide(collider1, collider2)) {
-        continue;
-      }
-
+      const pos1 = world.getComponent<Position>(parent1, Position.name)!;
+      const pos2 = world.getComponent<Position>(parent2, Position.name)!;
       const aabb1 = toAABB(pos1, collider1);
       const aabb2 = toAABB(pos2, collider2);
+
       const mtv = getMTV(aabb1, aabb2);
       if (!mtv) {
         continue;
       }
 
-      world
-        .getComponent<Instance>(d1, Instance.name)
-        ?.onCollision(d2, collider2.layer, aabb1, aabb2);
-      world
-        .getComponent<Instance>(d2, Instance.name)
-        ?.onCollision(d1, collider1.layer, aabb2, aabb1);
+      if (isRigidPair) {
+        const direction = mtvToDirection(mtv);
+
+        const isFirstObstacle = rigid1.layer === Rigid.OBSTACLE;
+        const isSecondObstacle = rigid2.layer === Rigid.OBSTACLE;
+
+        if (isFirstObstacle) {
+          pos2.x -= mtv.x;
+          pos2.y -= mtv.y;
+        } else if (isSecondObstacle) {
+          pos1.x += mtv.x;
+          pos1.y += mtv.y;
+        } else {
+          throw new Error(
+            'Invalid collision pair: ' +
+              `${world.getComponent<Name>(parent1, Name.name)?.value}` +
+              ' with ' +
+              `${world.getComponent<Name>(parent2, Name.name)?.value}`,
+          );
+        }
+
+        const parent = isFirstObstacle ? parent2 : parent1;
+
+        if (
+          (isFirstObstacle && direction === Direction.DOWN) ||
+          (isSecondObstacle && direction === Direction.UP)
+        ) {
+          world.addComponent(parent, new Grounded());
+          const vel = world.getComponent<Velocity>(parent, Velocity.name);
+          if (vel) {
+            vel.vy = 1;
+          }
+        }
+      }
+
+      // @TODO: trigger script if any
+      // world .getComponent<Instance>(parent1, Instance.name)
+      // world .getComponent<Instance>(d, Instance.name)
     }
   }
 }

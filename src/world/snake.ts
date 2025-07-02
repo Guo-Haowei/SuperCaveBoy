@@ -4,6 +4,7 @@ import {
   Facing,
   Name,
   Position,
+  ColliderArea,
   Instance,
   ScriptBase,
   Sprite,
@@ -69,7 +70,12 @@ export function createSnake(
   leftBound: number,
   rightBound: number,
 ) {
-  const id = createEnemyCommon(ecs, x, y, 62, 42, 0, 22);
+  const area: ColliderArea = {
+    width: 62,
+    height: 42,
+    offsetY: 22,
+  };
+  const id = createEnemyCommon(ecs, x, y, area, area);
 
   const anim = new Animation(
     {

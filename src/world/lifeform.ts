@@ -1,5 +1,16 @@
 import { ECSWorld } from '../ecs';
-import { Collider, Dynamic, Facing, Position, Velocity } from '../components';
+import {
+  Collider,
+  ColliderArea,
+  Hitbox,
+  Hurtbox,
+  Rigid,
+  Facing,
+  Position,
+  Velocity,
+  Team,
+} from '../components';
+import { TeamNumber } from './defines';
 
 export function findGravityAndJumpVelocity(
   desiredJumpHeight: number,
@@ -10,41 +21,55 @@ export function findGravityAndJumpVelocity(
   return { GRAVITY, JUMP_VELOCITY };
 }
 
-export function createLifeform(
+export function createRigid(
   ecs: ECSWorld,
-  hitWidth: number,
-  hitHeight: number,
+  parent: number,
+  area: ColliderArea,
   layer: number,
   mask: number,
-  hitOffsetX,
-  hitOffsetY,
 ) {
   const id = ecs.createEntity();
-  const collider = new Collider(hitWidth, hitHeight, layer, mask, hitOffsetX, hitOffsetY);
-
-  ecs.addComponent(id, collider);
-  ecs.addComponent(id, new Dynamic());
+  ecs.addComponent(id, new Collider(parent, area));
+  ecs.addComponent(id, new Rigid(layer, mask));
   return id;
+}
+
+export function createHurtbox(ecs: ECSWorld, parent: number, area: ColliderArea) {
+  const id = ecs.createEntity();
+  ecs.addComponent(id, new Collider(parent, area));
+  ecs.addComponent(id, new Hurtbox());
+  return id;
+}
+
+export function createHitbox(ecs: ECSWorld, parent: number, area: ColliderArea, damage = 1) {
+  const id = ecs.createEntity();
+  ecs.addComponent(id, new Collider(parent, area));
+  ecs.addComponent(id, new Hitbox(damage));
+  return id;
+}
+
+export function createLifeform(
+  ecs: ECSWorld,
+  team: TeamNumber,
+  rigidArea: ColliderArea,
+  hurtboxArea: ColliderArea,
+) {
+  const parent = ecs.createEntity();
+  createRigid(ecs, parent, rigidArea, 0, Rigid.OBSTACLE);
+  createHurtbox(ecs, parent, hurtboxArea);
+
+  ecs.addComponent(parent, new Team(team));
+  return parent;
 }
 
 export function createEnemyCommon(
   ecs: ECSWorld,
   x: number,
   y: number,
-  hitWidth: number,
-  hitHeight: number,
-  hitOffsetX,
-  hitOffsetY,
+  rigid: ColliderArea,
+  hurtbox: ColliderArea,
 ) {
-  const id = createLifeform(
-    ecs,
-    hitWidth,
-    hitHeight,
-    Collider.ENEMY,
-    Collider.PLAYER | Collider.OBSTACLE,
-    hitOffsetX,
-    hitOffsetY,
-  );
+  const id = createLifeform(ecs, TeamNumber.ENEMY, rigid, hurtbox);
 
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Velocity());
@@ -93,53 +118,6 @@ export class StateMachine<T extends string> {
 }
 
 // export class OldMonster {
-//   x: number;
-//   y: number;
-//   destroyed = false;
-//   alpha = 1;
-//   sprite: OldSprite;
-//   leftBound?: number;
-//   rightBound?: number;
-//   face: number;
-//   hspeed = 0;
-//   vspeed = 0;
-//   health = 1;
-
-//   constructor(
-//     handler,
-//     x: number,
-//     y: number,
-//   ) {
-//     this.x = x;
-//     this.y = y;
-
-//     this.handler = handler;
-
-//     this.face = face || DIRECTION.LEFT;
-
-//     this.move_animation;
-
-//     this._move;
-
-//     this.takingDamage = true;
-
-//     this.bound;
-//     this.music;
-//     this.alarm0;
-//     this.alarm1;
-//     this.alarm2;
-
-//     this.bound = new Rect(15, -5, 130, 193);
-//     this.move_animation = new OldAnimation(10, this.handler._getGameAssets().spr_boss);
-//     this.sprite = this.handler._getGameAssets().spr_boss[1];
-//     this.health = 1;
-//     // this.health = 3;
-//     this.speed = 6;
-
-//   }
-
-//   _BossIdling() {}
-
 //   _BossTransition() {
 //     if (this.alarm1.activated) this.alarm1._tick();
 //     this.sprite = this.handler._getGameAssets().spr_boss[1];
@@ -192,78 +170,3 @@ export class StateMachine<T extends string> {
 //       this.hspeed = 0;
 //     }
 //   }
-
-//   _BossFalling() {}
-
-//   _setState(state) {
-//     this._move = state;
-//   }
-
-//   _land() {
-//     this._move = this._BossTransition;
-//     this.alarm1._init(30);
-//   }
-
-//   _tick() {
-//     if (this.health <= 0) {
-//       this.destroyed = true;
-//     }
-//     if (this._move) {
-//       this.move_animation._tick();
-//       this.sprite = this.move_animation._getFrame();
-//       if (this.health <= 0 && this.alarm2.activated) {
-//         this.destroyed = false;
-//       }
-//     }
-//     if (this._move) this._move();
-//     const that = this;
-//     if (player.alpha != 1) return;
-//     // be destroyed
-//     if (
-//       downCollision(player, this, function () {
-//         player.vspeed = -15;
-//         --that.health;
-//         if (that.music) that.music.play();
-//       })
-//     ) {
-//     } else {
-//       let bound1x = this.bound.x + this.x,
-//         bound1y = this.bound.y + this.y,
-//         bound2x = player.bound.x + player.x,
-//         bound2y = player.bound.y + player.y,
-//         xdiff,
-//         ydiff;
-//       if (bound1x > bound2x) {
-//         xdiff = bound1x + this.bound.width - bound2x;
-//       } else {
-//         xdiff = bound2x + player.bound.width - bound1x;
-//       }
-//       if (bound1y > bound2y) {
-//         ydiff = bound1y + this.bound.height - bound2y;
-//       } else {
-//         ydiff = bound2y + player.bound.height - bound1y;
-//       }
-//       if (
-//         xdiff + 2 < this.bound.width + player.bound.width &&
-//         ydiff + 2 < this.bound.height + player.bound.height
-//       )
-//         player._damageTrigger(that.x);
-//     }
-
-//     // check collision
-//     // vertical
-//     if (
-//       !(this.vspeed < 0 && checkAllCollision(this, this.handler._getObstacles(), upCollision))
-//     ) {
-//       } else if (this._move === this._BossFalling) {
-//         this.y += this.vspeed;
-//         this.vspeed += GRAVITY;
-//       }
-//     }
-//     // horizontal
-//     if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)) {
-//       this.x += this.hspeed * this.speed;
-//     }
-//   }
-
-// }

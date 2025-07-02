@@ -1,6 +1,7 @@
 import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
+  ColliderArea,
   Facing,
   Name,
   Position,
@@ -91,7 +92,13 @@ class SpiderScript extends ScriptBase {
 }
 
 export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity) {
-  const id = createEnemyCommon(ecs, x, y, 40, 52, 12, 12);
+  const area: ColliderArea = {
+    width: 40,
+    height: 52,
+    offsetX: 12,
+    offsetY: 12,
+  };
+  const id = createEnemyCommon(ecs, x, y, area, area);
 
   const anim = new Animation(
     {

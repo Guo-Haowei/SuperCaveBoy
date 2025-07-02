@@ -1,5 +1,5 @@
 import { ECSWorld, Entity } from '../ecs';
-import { Collider, Position, Instance, ScriptBase, Dynamic } from '../components';
+import { Collider, Position, Instance, ScriptBase } from '../components';
 import { AABB } from '../engine/common';
 import { getRuntime } from '../engine/runtime';
 
@@ -18,8 +18,8 @@ export function createTrigger(world: ECSWorld, x: number, y: number): Entity {
   const entity = world.createEntity();
 
   world.addComponent(entity, new Position(x, y));
-  world.addComponent(entity, new Collider(64, 800, Collider.EVENT, Collider.PLAYER, 30, 30));
-  world.addComponent(entity, new Dynamic());
+  // world.addComponent(entity, new Collider(64, 800, Collider.EVENT, Collider.PLAYER, 30, 30));
+  // world.addComponent(entity, new Dynamic());
   const script = new CussceneTriggerScript(entity, world);
   world.addComponent(entity, new Instance(script));
   return entity;

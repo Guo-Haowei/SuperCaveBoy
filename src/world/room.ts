@@ -2,7 +2,7 @@ import { createSpider } from './spider';
 import { createSnake } from './snake';
 import { createBat } from './bat';
 import { SpriteSheets } from '../engine/assets-manager';
-import { Collider, Position, Sprite, Static } from '../components';
+import { Collider, Position, Rigid, Sprite } from '../components';
 import { ECSWorld } from '../ecs';
 import { createGameCamera } from '../camera';
 import { createPlayer } from './player';
@@ -118,14 +118,10 @@ export class Room {
     height = height * tileSize;
 
     const id = this.ecs.createEntity();
-    const collider = new Collider(
-      width,
-      height,
-      Collider.OBSTACLE,
-      Collider.PLAYER | Collider.ENEMY,
-    );
+    const collider = this.ecs.createEntity();
+    this.ecs.addComponent(collider, new Collider(id, { width, height }));
+    this.ecs.addComponent(collider, new Rigid(Rigid.OBSTACLE, 0));
 
-    this.ecs.addComponent(id, new Static());
     this.ecs.addComponent(id, new Position(x, y));
     this.ecs.addComponent(id, collider);
   }

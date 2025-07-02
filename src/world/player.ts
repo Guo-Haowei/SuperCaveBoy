@@ -2,6 +2,7 @@ import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
   Collider,
+  ColliderArea,
   Name,
   Position,
   Instance,
@@ -15,6 +16,7 @@ import { inputManager } from '../engine/input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform';
 import { AABB } from '../engine/common';
 import { CountDown } from '../engine/common';
+import { TeamNumber } from './defines';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
@@ -158,29 +160,29 @@ class PlayerScript extends ScriptBase {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
 
     switch (layer) {
-      case Collider.OBSTACLE:
-        if (otherBound.above(selfBound)) {
-          const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-          velocity.vy += JUMP_VELOCITY * 0.2;
-          // @TODO: grab ledge
-        }
-        break;
-      case Collider.ENEMY:
-        // kill the enemy if above
-        if (selfBound.above(otherBound)) {
-          const script = this.world.getComponent<Instance>(other, Instance.name);
-          script?.onDie();
-          velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
-        } else {
-          const center = selfBound.center();
-          const otherCenter = otherBound.center();
+      // case Collider.OBSTACLE:
+      //   if (otherBound.above(selfBound)) {
+      //     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+      //     velocity.vy += JUMP_VELOCITY * 0.2;
+      //     // @TODO: grab ledge
+      //   }
+      //   break;
+      // case Collider.ENEMY:
+      //   // kill the enemy if above
+      //   if (selfBound.above(otherBound)) {
+      //     const script = this.world.getComponent<Instance>(other, Instance.name);
+      //     script?.onDie();
+      //     velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
+      //   } else {
+      //     const center = selfBound.center();
+      //     const otherCenter = otherBound.center();
 
-          const dx = center.x - otherCenter.x;
-          velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
-          velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
-          this.fsm.transition('hurt');
-        }
-        break;
+      //     const dx = center.x - otherCenter.x;
+      //     velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
+      //     velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
+      //     this.fsm.transition('hurt');
+      //   }
+      //   break;
       default:
         break;
     }
@@ -188,15 +190,13 @@ class PlayerScript extends ScriptBase {
 }
 
 export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
-  const id = createLifeform(
-    ecs,
-    32,
-    62,
-    Collider.PLAYER,
-    Collider.ENEMY | Collider.OBSTACLE | Collider.EVENT | Collider.TRAP,
-    16,
-    10,
-  );
+  const area: ColliderArea = {
+    width: 32,
+    height: 62,
+    offsetX: 16,
+    offsetY: 10,
+  };
+  const id = createLifeform(ecs, TeamNumber.PLAYER, area, area);
 
   const anim = new Animation(
     {

@@ -1,4 +1,4 @@
-import { Collider, Dynamic, Position, Instance, ScriptBase, Sprite } from '../components';
+import { Collider, Position, Instance, ScriptBase, Sprite } from '../components';
 import { SpriteSheets } from '../engine/assets-manager';
 import { Entity, ECSWorld } from '../ecs';
 import { AABB } from '../engine/common';
@@ -23,8 +23,7 @@ export function createPoartal(world: ECSWorld, x: number, y: number, dest: strin
 
   world.addComponent(entity, new Position(x, y));
   world.addComponent(entity, new Sprite(SpriteSheets.PORTAL, 0, 5));
-  world.addComponent(entity, new Collider(28, 66, Collider.PORTAL, Collider.PLAYER, 30, 30));
-  world.addComponent(entity, new Dynamic());
+  // world.addComponent(entity, new Collider(28, 66, Collider.PORTAL, Collider.PLAYER, 30, 30));
   const script = new PortalScript(entity, world, dest);
   world.addComponent(entity, new Instance(script));
   return entity;

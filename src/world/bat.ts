@@ -8,6 +8,7 @@ import {
   ScriptBase,
   Sprite,
   Velocity,
+  ColliderArea,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { createEnemyCommon, StateMachine } from './lifeform';
@@ -82,7 +83,13 @@ class BatScript extends ScriptBase {
 }
 
 export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
-  const id = createEnemyCommon(ecs, x, y, 48, 35, 10, 15);
+  const area: ColliderArea = {
+    width: 48,
+    height: 35,
+    offsetX: 10,
+    offsetY: 15,
+  };
+  const id = createEnemyCommon(ecs, x, y, area, area);
 
   const anim = new Animation(
     {

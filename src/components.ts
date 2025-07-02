@@ -44,18 +44,6 @@ export class Sprite {
   }
 }
 
-export class Facing {
-  left: boolean;
-
-  constructor(value: boolean) {
-    this.left = value;
-  }
-
-  toggle() {
-    this.left = !this.left;
-  }
-}
-
 interface AnimationClip {
   sheetId: string;
   frames: number;
@@ -72,44 +60,6 @@ export class Animation {
     this.animations = animations;
     this.current = current;
     this.elapsed = elapsed;
-  }
-}
-
-export class Grounded {}
-
-export class Static {}
-
-export class Dynamic {}
-
-export class Collider {
-  static readonly PLAYER = 0b1;
-  static readonly ENEMY = 0b10;
-  static readonly OBSTACLE = 0b100;
-  static readonly EVENT = 0b1000;
-  static readonly TRAP = 0b010000;
-  static readonly PORTAL = 0b100000;
-
-  width: number;
-  height: number;
-  layer: number;
-  mask: number;
-  offsetX: number;
-  offsetY: number;
-
-  constructor(
-    width: number,
-    height: number,
-    layer: number,
-    mask: number,
-    offsetX = 0,
-    offsetY = 0,
-  ) {
-    this.width = width;
-    this.height = height;
-    this.layer = layer;
-    this.mask = mask;
-    this.offsetX = offsetX;
-    this.offsetY = offsetY;
   }
 }
 
@@ -137,6 +87,95 @@ export class Camera {
       x: pos.x - 0.5 * this.width,
       y: pos.y - 0.5 * this.height,
     };
+  }
+}
+
+export class Facing {
+  left: boolean;
+
+  constructor(value: boolean) {
+    this.left = value;
+  }
+
+  toggle() {
+    this.left = !this.left;
+  }
+}
+
+export class Player {}
+
+export class Grounded {}
+
+export class Rigid {
+  static readonly PLAYER = 0b1;
+  static readonly ENEMY = 0b10;
+  static readonly OBSTACLE = 0b100;
+  static readonly EVENT = 0b1000;
+  static readonly TRAP = 0b010000;
+  static readonly PORTAL = 0b100000;
+
+  layer: number;
+  mask: number;
+  constructor(layer: number, mask: number) {
+    this.layer = layer;
+    this.mask = mask;
+  }
+}
+
+export class Trigger {
+  private triggered = false;
+  private onTrigger: (entity: Entity) => void;
+
+  constructor(onTrigger: (entity: Entity) => void) {
+    this.onTrigger = onTrigger;
+  }
+
+  trigger(entity: Entity): void {
+    if (!this.triggered) {
+      this.triggered = true;
+      this.onTrigger(entity);
+    }
+  }
+}
+
+export class Team {
+  value: number;
+  constructor(value: number) {
+    this.value = value;
+  }
+}
+
+export class Hitbox {
+  damage: number;
+
+  constructor(damage = 1) {
+    this.damage = damage;
+  }
+}
+
+export class Hurtbox {}
+
+export interface ColliderArea {
+  width: number;
+  height: number;
+  offsetX?: number;
+  offsetY?: number;
+}
+
+export class Collider {
+  parent: Entity;
+  width: number;
+  height: number;
+  offsetX: number;
+  offsetY: number;
+
+  constructor(parent: Entity, area: ColliderArea) {
+    const { width, height, offsetX = 0, offsetY = 0 } = area;
+    this.parent = parent;
+    this.width = width;
+    this.height = height;
+    this.offsetX = offsetX;
+    this.offsetY = offsetY;
   }
 }
 
@@ -179,6 +218,7 @@ export abstract class ScriptBase {
     return this.world.hasComponent(this.entity, Grounded.name);
   }
 }
+
 export class Instance {
   private script: ScriptBase;
 
