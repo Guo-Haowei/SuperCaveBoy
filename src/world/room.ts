@@ -9,7 +9,7 @@ import { createPlayer } from './player';
 import { WIDTH, HEIGHT } from '../constants';
 import { createPoartal } from './portal';
 import { createGuardian } from './guardian';
-import { createTrigger } from './trigger';
+import { createTrigger } from './cutscene-trigger';
 
 import { LevelData, MONSTER, TYPE } from './data';
 

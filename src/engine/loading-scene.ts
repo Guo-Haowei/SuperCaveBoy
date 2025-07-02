@@ -41,13 +41,15 @@ export class LoadingScene extends IScene {
     ctx.restore(); // Restore previous state
 
     if (this.roomName && alpha > 0.99) {
+      // eslint-disable-next-line no-console
+      console.log(`Entering room: ${this.roomName}`);
       roomManager.loadRoom(this.roomName);
       this.roomName = null;
     }
 
     const ready = loadingTime.tick(dt);
     if (ready) {
-      this.game.setScene('GAME');
+      this.game.requestScene('GAME');
       this.loadingTime.reset();
     }
   }

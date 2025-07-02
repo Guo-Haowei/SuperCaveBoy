@@ -39,7 +39,9 @@ export class AABB {
   }
 
   above(other: AABB): boolean {
-    return this.yMax > other.yMin && this.yMax < other.yMax;
+    const diffy = this.yMax - other.yMin;
+    const diffx = Math.abs((this.xMin + this.xMax) / 2 - (other.xMin + other.xMax) / 2);
+    return diffy < 90 && diffx < 50;
   }
 
   center(): Vec2 {

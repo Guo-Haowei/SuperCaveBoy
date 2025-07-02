@@ -5,8 +5,14 @@ import { IScene } from './scene';
 import { GameScene } from './game-scene';
 import { EditorScene } from './editor-scene';
 import { LoadingScene } from './loading-scene';
+import { CutsceneScene } from './cutscene-scene';
 
-export type Scene = 'MENU' | 'GAME' | 'EDITOR' | 'LOADING' | 'END';
+export type Scene = 'MENU' | 'GAME' | 'EDITOR' | 'LOADING' | 'CUTSCENE';
+
+interface ChangeSceneRequest {
+  name: string;
+  payload?: unknown;
+}
 
 export class Runtime {
   canvas: HTMLCanvasElement;
@@ -15,9 +21,7 @@ export class Runtime {
   private current: string;
   private scenes = new Map<Scene, IScene>();
   private lastTick = 0;
-
-  start = 0;
-  end = 0;
+  private request: ChangeSceneRequest | null = null;
 
   public constructor(canvas: HTMLCanvasElement, imageAssets: Record<string, HTMLImageElement>) {
     const ctx = canvas.getContext('2d');
@@ -27,6 +31,8 @@ export class Runtime {
     this.scenes['GAME'] = new GameScene(this);
     this.scenes['EDITOR'] = new EditorScene(this);
     this.scenes['LOADING'] = new LoadingScene(this);
+    this.scenes['CUTSCENE'] = new CutsceneScene(this);
+
     this.current = 'EDITOR';
 
     assetManager.init(imageAssets);
@@ -34,28 +40,44 @@ export class Runtime {
     roomManager.init();
   }
 
-  setScene(newScene: Scene) {
-    if (this.current === newScene) return;
-    const prevScene = this.scenes[this.current];
-    const currentScene = this.scenes[newScene];
-
-    this.current = newScene;
-
-    prevScene.exit?.();
-    currentScene.enter?.();
-    return currentScene;
+  requestScene(name: Scene) {
+    this.request = { name };
   }
 
   requestRoom(roomName: string) {
-    const loadingScene = this.setScene('LOADING');
-    loadingScene.requestRoom(roomName);
+    this.request = { name: 'LOADING', payload: roomName };
   }
 
   getCurrentScene() {
     return this.current;
   }
 
+  updateScene() {
+    if (this.request) {
+      const { name, payload } = this.request;
+      if (name !== this.current) {
+        const prevName = this.current;
+        const prevScene = this.scenes[prevName];
+        const currentScene = this.scenes[name];
+        this.current = name;
+        prevScene.exit?.();
+        currentScene.enter?.();
+        if (name === 'LOADING') {
+          const roomName = payload as string;
+          (this.scenes[this.current] as LoadingScene).requestRoom(roomName);
+        }
+        this.request = null;
+
+        // eslint-disable-next-line no-console
+        console.log(`Switched from scene [${prevName}] to [${name}]`);
+      }
+    }
+    return this.scenes[this.current];
+  }
+
   tick() {
+    const scene = this.updateScene();
+
     const timestamp = Date.now();
     let dt = 0;
     if (this.lastTick === 0) {
@@ -69,7 +91,7 @@ export class Runtime {
 
     dt = Math.min(dt / 1000, 0.1);
 
-    this.scenes[this.current].tick(dt);
+    scene.tick(dt);
 
     inputManager.postUpdate(dt);
   }

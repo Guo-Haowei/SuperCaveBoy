@@ -24,7 +24,7 @@ class PlayerScript extends ScriptBase {
   static readonly MOVE_SPEED = 400;
   static readonly HURT_COOLDOWN = 0.5;
 
-  private cooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
+  private damageCooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
@@ -53,7 +53,7 @@ class PlayerScript extends ScriptBase {
           enter: () => {
             this.playAnim('hurt');
             assetManager.snd_ouch.play();
-            this.cooldown.reset();
+            this.damageCooldown.reset();
           },
           update: (dt) => this.hurt(dt),
         },
@@ -149,7 +149,7 @@ class PlayerScript extends ScriptBase {
   }
 
   private hurt(dt: number) {
-    if (this.cooldown.tick(dt)) {
+    if (this.damageCooldown.tick(dt)) {
       this.fsm.transition('idle');
     }
   }
@@ -166,8 +166,8 @@ class PlayerScript extends ScriptBase {
         }
         break;
       case Collider.ENEMY:
+        // kill the enemy if above
         if (selfBound.above(otherBound)) {
-          // kill the enemy
           const script = this.world.getComponent<Instance>(other, Instance.name);
           script?.onDie();
           velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up

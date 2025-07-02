@@ -31,9 +31,9 @@ function main() {
   playButton.addEventListener('click', () => {
     const currentScene = game.getCurrentScene();
     if (currentScene === 'EDITOR') {
-      game.setScene('GAME');
+      game.requestScene('GAME');
     } else {
-      game.setScene('EDITOR');
+      game.requestScene('EDITOR');
     }
 
     isPlaying = !isPlaying;
