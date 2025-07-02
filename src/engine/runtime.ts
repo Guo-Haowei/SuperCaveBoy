@@ -1,6 +1,7 @@
 import { inputManager } from './input-manager';
 import { assetManager } from './assets-manager';
 import { roomManager } from './room-manager';
+import { renderSystem } from './renderSystem';
 import { IScene } from './scene';
 import { GameScene } from './game-scene';
 import { EditorScene } from './editor-scene';
@@ -35,6 +36,7 @@ export class Runtime {
 
     this.current = 'EDITOR';
 
+    renderSystem.init(this.canvas, this.ctx);
     assetManager.init(imageAssets);
     inputManager.init(canvas);
     roomManager.init();

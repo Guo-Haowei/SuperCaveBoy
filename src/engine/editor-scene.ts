@@ -1,9 +1,9 @@
 import { IScene } from './scene';
-import * as System from './systems';
 import { Camera, Position } from '../components';
 import { inputManager } from './input-manager';
 import { roomManager } from './room-manager';
 import { Runtime } from './runtime';
+import { renderSystem } from './renderSystem';
 
 export class EditorScene extends IScene {
   private camera: Camera;
@@ -33,10 +33,8 @@ export class EditorScene extends IScene {
     this.updateCamera();
 
     const room = roomManager.getCurrentRoom();
-    const { ctx } = this.game;
     const { ecs } = room;
 
-    const world = { ecs };
-    System.renderSystem(world, ctx, room, { camera: this.camera, pos: this.cameraPos });
+    renderSystem.render(ecs, room, { camera: this.camera, pos: this.cameraPos });
   }
 }

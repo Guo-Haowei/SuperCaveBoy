@@ -82,7 +82,7 @@ export const ROOM_DATA: RoomData[] = [
       [1504, 544, TYPE.EXIT, 'Level 4'],
       [780, 716, TYPE.SAPPHIRE],
     ],
-    monsters: [[704, 704, MONSTER.SNAKE, 320, 1216]],
+    monsters: [[704, 704, MONSTER.SNAKE]],
     grid: [
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
@@ -185,7 +185,7 @@ export const ROOM_DATA: RoomData[] = [
       [1512, 396, TYPE.SAPPHIRE],
     ],
     monsters: [
-      [1000, 512, MONSTER.SNAKE, 892, 1408],
+      [1000, 512, MONSTER.SNAKE],
       [1952, 448, MONSTER.BAT],
     ],
     grid: [
@@ -264,8 +264,8 @@ export const ROOM_DATA: RoomData[] = [
       [1932, 780, TYPE.SAPPHIRE],
     ],
     monsters: [
-      [734, 704, MONSTER.SNAKE, 384, 1152],
-      [800, 704, MONSTER.SNAKE, 384, 1152, 1],
+      [734, 704, MONSTER.SNAKE],
+      [800, 704, MONSTER.SNAKE],
       [1504, 448, MONSTER.BAT],
       [1824, 320, MONSTER.BAT],
       [2142, 384, MONSTER.BAT],
@@ -360,7 +360,7 @@ export const ROOM_DATA: RoomData[] = [
       [1964, 524, TYPE.SAPPHIRE],
     ],
     monsters: [
-      [734, 512, MONSTER.SNAKE, 640, 1024],
+      [734, 512, MONSTER.SNAKE],
       [1664, 576, MONSTER.SPIDER],
     ],
     grid: [
@@ -460,9 +460,9 @@ export const ROOM_DATA: RoomData[] = [
     monsters: [
       [2358, 640, MONSTER.SPIDER],
       [1984, 320, MONSTER.BAT],
-      [1500, 512, MONSTER.SNAKE, 1472, 1600],
+      [1500, 512, MONSTER.SNAKE],
       [1920, 512, MONSTER.SPIDER],
-      [926, 512, MONSTER.SNAKE, 768, 1152],
+      [926, 512, MONSTER.SNAKE],
       [640, 320, MONSTER.BAT],
     ],
     grid: [

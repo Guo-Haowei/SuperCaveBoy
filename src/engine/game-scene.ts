@@ -1,12 +1,12 @@
 import { IScene } from './scene';
 import * as System from './systems';
 import { roomManager } from './room-manager';
+import { renderSystem } from './renderSystem';
 
 export class GameScene extends IScene {
   tick(dt: number) {
     const room = roomManager.getCurrentRoom();
     const { ecs } = room;
-    const { ctx } = this.game;
 
     const world = { ecs };
     System.scriptSystem(world, dt);
@@ -18,7 +18,7 @@ export class GameScene extends IScene {
 
     const { camera, pos } = room.getCameraAndPos();
 
-    System.renderSystem(world, ctx, room, { camera, pos });
+    renderSystem.render(ecs, room, { camera, pos });
     System.deleteSystem(world);
   }
 }

@@ -11,19 +11,15 @@ import {
 } from '../components';
 import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
+import { roomManager } from '../engine/room-manager';
+import { renderSystem } from '../engine/renderSystem';
 
 type SnakeStateName = 'idle' | 'die';
 
 class SnakeScript extends LifeformScript {
   private static readonly INITIAL_SPEED = 100;
-
-  private leftBound: number;
-  private rightBound: number;
-
-  constructor(entity: Entity, world: ECSWorld, leftBound: number, rightBound: number) {
+  constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
-    this.leftBound = leftBound;
-    this.rightBound = rightBound;
 
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     vel.vx = -SnakeScript.INITIAL_SPEED;
@@ -49,26 +45,48 @@ class SnakeScript extends LifeformScript {
 
   idle() {
     const position = this.world.getComponent<Position>(this.entity, Position.name);
+
+    const room = roomManager.getCurrentRoom();
+    const { gridSize } = room;
+
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    const { x } = position;
     const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
-    if (x <= this.leftBound) {
-      vel.vx = SnakeScript.INITIAL_SPEED;
-      facing.toggle();
-    } else if (x >= this.rightBound) {
-      vel.vx = -SnakeScript.INITIAL_SPEED;
-      facing.toggle();
+
+    // left
+    const offset = -gridSize + 10;
+    {
+      const { gridX, gridY } = room.getGridUnder(position.x - offset, position.y);
+      if (room.isGridLedge(gridX, gridY, -1)) {
+        vel.vx = SnakeScript.INITIAL_SPEED;
+        facing.left = false;
+      }
+
+      renderSystem.addDebugRect({
+        x: gridX * gridSize,
+        y: gridY * gridSize,
+        width: 64,
+        height: 64,
+      });
+    }
+
+    {
+      const { gridX, gridY } = room.getGridUnder(position.x + gridSize + offset, position.y);
+      if (room.isGridLedge(gridX, gridY, 1)) {
+        vel.vx = -SnakeScript.INITIAL_SPEED;
+        facing.left = true;
+      }
+
+      renderSystem.addDebugRect({
+        x: gridX * gridSize,
+        y: gridY * gridSize,
+        width: 64,
+        height: 64,
+      });
     }
   }
 }
 
-export function createSnake(
-  ecs: ECSWorld,
-  x: number,
-  y: number,
-  leftBound: number,
-  rightBound: number,
-) {
+export function createSnake(ecs: ECSWorld, x: number, y: number) {
   const area: ColliderArea = {
     width: 62,
     height: 32,
@@ -96,7 +114,7 @@ export function createSnake(
     'idle',
   );
 
-  const script = new SnakeScript(id, ecs, leftBound, rightBound);
+  const script = new SnakeScript(id, ecs);
 
   ecs.addComponent(id, new Name('Snake'));
   ecs.addComponent(id, new Position(x, y));

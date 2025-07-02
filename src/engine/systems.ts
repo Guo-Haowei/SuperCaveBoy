@@ -1,10 +1,8 @@
 import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
-  Camera,
   Collider,
   Instance,
-  Facing,
   Health,
   Hitbox,
   Hurtbox,
@@ -19,10 +17,8 @@ import {
   Trigger,
   Velocity,
 } from '../components';
-import { Room } from '../world/room';
-import { assetManager } from './assets-manager';
 import { Direction, AABB, Vec2 } from './utils';
-import { EditorState } from '../editor-state';
+import { toAABB } from './utils';
 
 export interface SystemContext {
   ecs: ECSWorld;
@@ -49,136 +45,6 @@ export function animationSystem(world: SystemContext, dt: number) {
     } else {
       sprite.frameIndex = Math.min(index, clip.frames - 1);
     }
-  }
-}
-
-// ------------------------------- Render System -------------------------------
-export function renderSystem(
-  world: SystemContext,
-  ctx: CanvasRenderingContext2D,
-  room: Room,
-  cameraContext: { camera: Camera; pos: Position },
-) {
-  const { ecs } = world;
-  const { camera, pos } = cameraContext;
-
-  ctx.clearRect(0, 0, camera.width, camera.height);
-
-  ctx.fillStyle = `rgba(255, 255, 255, 1)`;
-  ctx.fillRect(0, 0, camera.width, camera.height);
-
-  const offset = camera.getOffset(pos);
-  ctx.save();
-  ctx.translate(-offset.x, -offset.y);
-  ctx.scale(camera.zoom, camera.zoom);
-
-  const renderables = ecs.queryEntities<Sprite, Position>(Sprite.name, Position.name);
-  const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
-
-  for (const [id, sprite, pos] of sorted) {
-    const { x, y } = pos as Position;
-    const { sheetId, frameIndex } = sprite as Sprite;
-
-    const renderable = assetManager.getFrame(sheetId, frameIndex);
-    const { image, frame } = renderable;
-
-    ctx.save();
-
-    const facing = ecs.getComponent<Facing>(id, Facing.name);
-    const flipLeft: number = facing && facing.left ? 1 : 0;
-
-    ctx.translate(x + flipLeft * frame.width, y);
-    ctx.scale(flipLeft ? -1 : 1, 1);
-
-    for (let i = 0; i < sprite.repeat; ++i) {
-      ctx.drawImage(
-        image,
-        frame.sourceX,
-        frame.sourceY,
-        frame.width,
-        frame.height,
-        i * frame.width,
-        0,
-        frame.width,
-        frame.height,
-      );
-    }
-
-    ctx.restore();
-  }
-
-  if (EditorState.debugCollisions) {
-    drawDebugCollider(world, ctx);
-  }
-
-  if (EditorState.debugGrid) {
-    drawDebugGrid(ctx, room);
-  }
-
-  ctx.restore();
-}
-
-function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
-  ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)';
-  ctx.lineWidth = 1;
-  ctx.lineCap = 'round';
-
-  const { width, height, tileSize } = room;
-
-  for (let x = 0; x <= width; ++x) {
-    const pixelX = x * tileSize;
-    ctx.beginPath();
-    ctx.moveTo(pixelX, 0);
-    ctx.lineTo(pixelX, height * tileSize);
-    ctx.stroke();
-  }
-
-  for (let y = 0; y <= height; ++y) {
-    const pixelY = y * tileSize;
-    ctx.beginPath();
-    ctx.moveTo(0, pixelY);
-    ctx.lineTo(width * tileSize, pixelY);
-    ctx.stroke();
-  }
-}
-
-function drawDebugCollider(world: SystemContext, ctx: CanvasRenderingContext2D) {
-  const { ecs } = world;
-  ctx.globalAlpha = 0.5;
-  for (const [id, collider] of ecs.queryEntities<Collider>(Collider.name)) {
-    const pos = ecs.getComponent<Position>(collider.parent, Position.name);
-    if (!pos) {
-      continue;
-    }
-    const { x, y } = pos;
-    const { width, height, offsetX, offsetY } = collider;
-
-    const rigid = ecs.getComponent<Rigid>(id, Rigid.name);
-    const isHitbox = ecs.hasComponent(id, Hitbox.name);
-    const isHurtbox = ecs.hasComponent(id, Hurtbox.name);
-    const isTrigger = ecs.hasComponent(id, Trigger.name);
-
-    if (Number(isHitbox) + Number(isHurtbox) + Number(isTrigger) > 1) {
-      throw new Error(`Entity ${id} has multiple collision types: `);
-    }
-
-    const dx = x + offsetX;
-    const dy = y + offsetY;
-
-    let color = 'purple';
-    if (rigid) {
-      color = 'blue';
-    } else if (isHitbox) {
-      color = 'green';
-    } else if (isHurtbox) {
-      color = 'red';
-    } else if (isTrigger) {
-      color = 'orange';
-    }
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(dx, dy, width, height);
   }
 }
 
@@ -241,16 +107,6 @@ function mtvToDirection(mtv: Vec2): Direction {
   } else {
     return mtv.y < 0 ? Direction.UP : Direction.DOWN;
   }
-}
-
-function toAABB(pos: Position, collider: Collider): AABB {
-  const { offsetX, offsetY, width, height } = collider;
-  return new AABB(
-    pos.x + offsetX,
-    pos.y + offsetY,
-    pos.x + offsetX + width,
-    pos.y + offsetY + height,
-  );
 }
 
 function isRigidPair(a?: Rigid, b?: Rigid): boolean {

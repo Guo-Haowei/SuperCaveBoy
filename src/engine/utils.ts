@@ -52,6 +52,19 @@ export class AABB {
   }
 }
 
+export function toAABB(
+  pos: { x: number; y: number },
+  collider: { width: number; height: number; offsetX?: number; offsetY: number },
+): AABB {
+  const { offsetX, offsetY, width, height } = collider;
+  return new AABB(
+    pos.x + offsetX,
+    pos.y + offsetY,
+    pos.x + offsetX + width,
+    pos.y + offsetY + height,
+  );
+}
+
 export class CountDown {
   public readonly duration: number;
   private _remaining: number;

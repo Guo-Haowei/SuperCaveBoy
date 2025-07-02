@@ -1,7 +1,7 @@
 import { IScene } from './scene';
-import * as System from './systems';
 import { Camera, Position } from '../components';
 import { roomManager } from './room-manager';
+import { renderSystem } from './renderSystem';
 
 export class CutsceneScene extends IScene {
   private pos: Position | null = null;
@@ -21,12 +21,10 @@ export class CutsceneScene extends IScene {
     }
 
     const { ecs } = room;
-    const { ctx } = this.game;
 
     const { pos, camera } = this;
 
-    const world = { ecs };
-    System.renderSystem(world, ctx, room, { camera, pos });
+    renderSystem.render(ecs, room, { camera, pos });
 
     pos.x += dt * this.speed;
     if (pos.x >= this.targetX) {

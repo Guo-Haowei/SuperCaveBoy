@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 import { IScene } from './scene';
-import * as System from './systems';
 import { roomManager } from './room-manager';
 import { CountDown } from './utils';
+import { renderSystem } from './renderSystem';
 
 export class LoadingScene extends IScene {
   static readonly LOADING_TIME = 1.2;
@@ -24,8 +24,7 @@ export class LoadingScene extends IScene {
 
     const { camera, pos } = room.getCameraAndPos();
 
-    const world = { ecs };
-    System.renderSystem(world, ctx, room, { camera, pos });
+    renderSystem.render(ecs, room, { camera, pos });
 
     const { loadingTime } = this;
 
