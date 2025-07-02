@@ -1,5 +1,5 @@
 export enum TeamNumber {
-  PLAYER = 0,
-  ENEMY = 1,
-  NEUTRAL = 2,
+  PLAYER = 0b1,
+  ENEMY = 0b10,
+  NEUTRAL = 0b100,
 }

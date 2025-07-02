@@ -1,4 +1,4 @@
-import { Rect } from '../engine/common';
+import { Rect } from '../engine/utils';
 import { assetManager } from '../assetManager';
 
 export class SpecialObject {

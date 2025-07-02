@@ -2,7 +2,7 @@ import { IScene } from './scene';
 import * as System from './systems';
 import { Camera, Position } from '../components';
 import { roomManager } from './room-manager';
-import { CountDown } from './common';
+import { CountDown } from './utils';
 
 export class LoadingScene extends IScene {
   static readonly LOADING_TIME = 1.2;

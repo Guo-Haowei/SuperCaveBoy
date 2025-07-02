@@ -12,7 +12,7 @@ import {
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform';
-import { CountDown } from '../engine/common';
+import { CountDown } from '../engine/utils';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 

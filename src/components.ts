@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 import { ECSWorld, Entity } from './ecs';
 import { StateMachine } from './world/lifeform';
-import { AABB } from './engine/common';
+import { AABB } from './engine/utils';
 
 export class Name {
   value: string;
@@ -124,17 +124,14 @@ export class Rigid {
 
 export class Trigger {
   private triggered = false;
-  private onTrigger: (entity: Entity) => void;
+  private _filter: number;
 
-  constructor(onTrigger: (entity: Entity) => void) {
-    this.onTrigger = onTrigger;
+  constructor(filter: number) {
+    this._filter = filter;
   }
 
-  trigger(entity: Entity): void {
-    if (!this.triggered) {
-      this.triggered = true;
-      this.onTrigger(entity);
-    }
+  get filter(): number {
+    return this._filter;
   }
 }
 
@@ -196,7 +193,7 @@ export abstract class ScriptBase {
     this.fsm?.update(dt);
   }
 
-  onCollision?(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void;
+  onCollision?(other: Entity, selfBound: AABB, otherBound: AABB): void;
 
   onDie() {
     // @TODO: instead of onDie, check health
@@ -230,8 +227,8 @@ export class Instance {
     this.script.onUpdate?.(dt);
   }
 
-  onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB) {
-    this.script.onCollision?.(other, layer, selfBound, otherBound);
+  onCollision(other: Entity, selfBound: AABB, otherBound: AABB) {
+    this.script.onCollision?.(other, selfBound, otherBound);
   }
 
   onDie() {

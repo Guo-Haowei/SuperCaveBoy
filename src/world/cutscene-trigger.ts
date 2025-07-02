@@ -1,13 +1,13 @@
 import { ECSWorld, Entity } from '../ecs';
 import { Collider, Position, Instance, ScriptBase } from '../components';
-import { AABB } from '../engine/common';
+import { AABB } from '../engine/utils';
 import { getRuntime } from '../engine/runtime';
 
 class CussceneTriggerScript extends ScriptBase {
   private disabled = false;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void {
+  onCollision(other: Entity, selfBound: AABB, otherBound: AABB): void {
     if (this.disabled) return;
     getRuntime().requestScene('CUTSCENE');
     this.disabled = true;

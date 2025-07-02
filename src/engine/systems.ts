@@ -11,14 +11,16 @@ import {
   Grounded,
   Name,
   PendingDelete,
+  Rigid,
   Position,
   Sprite,
+  Team,
+  Trigger,
   Velocity,
-  Rigid,
 } from '../components';
 import { Room } from '../world/room';
 import { assetManager } from './assets-manager';
-import { Direction, AABB, Vec2 } from './common';
+import { Direction, AABB, Vec2 } from './utils';
 import { EditorState } from '../editor-state';
 
 // ------------------------------ Animation System -----------------------------
@@ -92,7 +94,7 @@ export function renderSystem(
   }
 
   if (EditorState.debugCollisions) {
-    renderSystemDebug(world, ctx);
+    drawDebugCollider(world, ctx);
   }
 
   if (EditorState.debugGrid) {
@@ -103,8 +105,8 @@ export function renderSystem(
 }
 
 function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
-  ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)';
+  ctx.lineWidth = 1;
   ctx.lineCap = 'round';
 
   const { width, height, tileSize } = room;
@@ -126,7 +128,7 @@ function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
   }
 }
 
-function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
+function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   for (const [id, collider] of world.queryEntities<Collider>(Collider.name)) {
     const pos = world.getComponent<Position>(collider.parent, Position.name);
     const { x, y } = pos;
@@ -135,13 +137,15 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     const rigid = world.getComponent<Rigid>(id, Rigid.name);
     const isHitbox = world.hasComponent(id, Hitbox.name);
     const isHurtbox = world.hasComponent(id, Hurtbox.name);
+    const isTrigger = world.hasComponent(id, Trigger.name);
 
     const dx = x + offsetX;
     const dy = y + offsetY;
 
-    let color = 'blue';
+    let color = 'organge';
     if (rigid) {
       if (rigid.layer === Rigid.ENEMY) color = 'red';
+      if (rigid.layer === Rigid.OBSTACLE) color = 'blue';
     }
     if (isHitbox) {
       color = 'green';
@@ -149,9 +153,12 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     if (isHurtbox) {
       color = 'yellow';
     }
+    if (isTrigger) {
+      color = 'purple';
+    }
 
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.strokeRect(dx, dy, width, height);
   }
 }
@@ -227,11 +234,35 @@ function toAABB(pos: Position, collider: Collider): AABB {
   );
 }
 
-function canCollide(a?: Rigid, b?: Rigid): boolean {
+function isRigidPair(a?: Rigid, b?: Rigid): boolean {
   if (!a || !b) {
     return false;
   }
   return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
+}
+
+function isTriggerPair(
+  world: ECSWorld,
+  id1: number,
+  id2: number,
+  trigger1?: Trigger,
+  trigger2?: Trigger,
+): boolean {
+  if (!trigger1 && !trigger2) {
+    return false;
+  }
+  const team1 = world.getComponent<Team>(id1, Team.name);
+  const team2 = world.getComponent<Team>(id2, Team.name);
+
+  if (trigger1 && trigger1.filter & (team2 ? team2.value : 0)) {
+    return true;
+  }
+
+  if (trigger2 && trigger2.filter & (team1 ? team1.value : 0)) {
+    return true;
+  }
+
+  return false;
 }
 
 export function physicsSystem(world: ECSWorld, _dt: number) {
@@ -250,12 +281,15 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
       const hitbox2 = world.getComponent<Hitbox>(id2, Hitbox.name);
       const hurtbox1 = world.getComponent<Hurtbox>(id1, Hurtbox.name);
       const hurtbox2 = world.getComponent<Hurtbox>(id2, Hurtbox.name);
+      const trigger1 = world.getComponent<Trigger>(id1, Trigger.name);
+      const trigger2 = world.getComponent<Trigger>(id2, Trigger.name);
 
-      const isRigidPair = canCollide(rigid1, rigid2);
-      const isHitboxPair = (hitbox1 && hurtbox2) || (hitbox2 && hurtbox1);
+      const isRigid = isRigidPair(rigid1, rigid2);
+      const isHitbox = (hitbox1 && hurtbox2) || (hitbox2 && hurtbox1);
+      const isTrigger = isTriggerPair(world, id1, id2, trigger1, trigger2);
 
       // @TODO: make sure sum to 1
-      const check = Number(isRigidPair) + Number(isHitboxPair);
+      const check = Number(isRigid) + Number(isHitbox) + Number(isTrigger);
       if (check === 0) {
         continue;
       }
@@ -272,7 +306,7 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         continue;
       }
 
-      if (isRigidPair) {
+      if (isRigid) {
         const direction = mtvToDirection(mtv);
 
         const isFirstObstacle = rigid1.layer === Rigid.OBSTACLE;
@@ -307,9 +341,8 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         }
       }
 
-      // @TODO: trigger script if any
-      // world .getComponent<Instance>(parent1, Instance.name)
-      // world .getComponent<Instance>(d, Instance.name)
+      world.getComponent<Instance>(parent1, Instance.name)?.onCollision(parent2, aabb1, aabb2);
+      world.getComponent<Instance>(parent2, Instance.name)?.onCollision(parent1, aabb2, aabb1);
     }
   }
 }

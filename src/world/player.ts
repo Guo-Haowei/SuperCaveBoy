@@ -6,6 +6,7 @@ import {
   Name,
   Position,
   Instance,
+  Player,
   ScriptBase,
   Sprite,
   Velocity,
@@ -14,8 +15,8 @@ import {
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
 import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform';
-import { AABB } from '../engine/common';
-import { CountDown } from '../engine/common';
+import { AABB } from '../engine/utils';
+import { CountDown } from '../engine/utils';
 import { TeamNumber } from './defines';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
@@ -156,36 +157,36 @@ class PlayerScript extends ScriptBase {
     }
   }
 
-  onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void {
+  onCollision(other: Entity, selfBound: AABB, otherBound: AABB): void {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
 
-    switch (layer) {
-      // case Collider.OBSTACLE:
-      //   if (otherBound.above(selfBound)) {
-      //     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-      //     velocity.vy += JUMP_VELOCITY * 0.2;
-      //     // @TODO: grab ledge
-      //   }
-      //   break;
-      // case Collider.ENEMY:
-      //   // kill the enemy if above
-      //   if (selfBound.above(otherBound)) {
-      //     const script = this.world.getComponent<Instance>(other, Instance.name);
-      //     script?.onDie();
-      //     velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
-      //   } else {
-      //     const center = selfBound.center();
-      //     const otherCenter = otherBound.center();
+    // switch (layer) {
+    // case Collider.OBSTACLE:
+    //   if (otherBound.above(selfBound)) {
+    //     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    //     velocity.vy += JUMP_VELOCITY * 0.2;
+    //     // @TODO: grab ledge
+    //   }
+    //   break;
+    // case Collider.ENEMY:
+    //   // kill the enemy if above
+    //   if (selfBound.above(otherBound)) {
+    //     const script = this.world.getComponent<Instance>(other, Instance.name);
+    //     script?.onDie();
+    //     velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
+    //   } else {
+    //     const center = selfBound.center();
+    //     const otherCenter = otherBound.center();
 
-      //     const dx = center.x - otherCenter.x;
-      //     velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
-      //     velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
-      //     this.fsm.transition('hurt');
-      //   }
-      //   break;
-      default:
-        break;
-    }
+    //     const dx = center.x - otherCenter.x;
+    //     velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
+    //     velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
+    //     this.fsm.transition('hurt');
+    //   }
+    //   break;
+    //   default:
+    //     break;
+    // }
   }
 }
 
@@ -234,13 +235,13 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   ecs.addComponent(id, new Facing(false));
   ecs.addComponent(id, new Sprite(SpriteSheets.PLAYER_IDLE));
   ecs.addComponent(id, anim);
+  ecs.addComponent(id, new Player());
 
   const script = new PlayerScript(id, ecs);
   ecs.addComponent(id, new Instance(script));
   return id;
 }
 
-// import { Rect } from '../common';
 // import { assetManager } from '../assetManager';
 // import { inputManager } from '../input-manager';
 
