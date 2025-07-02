@@ -9,16 +9,19 @@ export class GameScene extends IScene {
     const { ecs } = room;
     const { ctx } = this.game;
 
-    System.scriptSystem(ecs, dt);
-    System.movementSystem(ecs, dt);
-    System.physicsSystem(ecs, dt);
-    System.animationSystem(ecs, dt);
+    const world = { ecs };
+    System.scriptSystem(world, dt);
+    System.movementSystem(world, dt);
+    System.physicsSystem(world, dt);
+
+    System.damageSystem(world, dt);
+    System.animationSystem(world, dt);
 
     const cameraId = room.cameraId;
     const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
     const pos = ecs.getComponent<Position>(cameraId, Position.name);
 
-    System.renderSystem(ecs, ctx, room, { camera, pos });
-    System.deleteSystem(ecs);
+    System.renderSystem(world, ctx, room, { camera, pos });
+    System.deleteSystem(world);
   }
 }

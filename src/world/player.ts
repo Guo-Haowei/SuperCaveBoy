@@ -2,15 +2,16 @@ import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
   ColliderArea,
-  Name,
-  Position,
+  Health,
+  Facing,
   Instance,
   Player,
+  Position,
+  Name,
+  Rigid,
   Sprite,
   Team,
   Velocity,
-  Facing,
-  Rigid,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
@@ -29,8 +30,9 @@ const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 type PlayerStateName = 'idle' | 'walk' | 'jump' | 'hurt';
 
 class PlayerScript extends LifeformScript {
+  static readonly HURT_COOLDOWN = 0.8;
   static readonly MOVE_SPEED = 400;
-  static readonly HURT_COOLDOWN = 0.5;
+  static readonly MAX_HEALTH = 10000;
 
   private damageCooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
 
@@ -162,21 +164,18 @@ class PlayerScript extends LifeformScript {
     }
   }
 
-  onHurt(selfBound: AABB, otherBound: AABB) {
+  onHurt(_attacker: number) {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    const center = selfBound.center();
-    const otherCenter = otherBound.center();
 
-    const dx = center.x - otherCenter.x;
-    velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
+    velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(velocity.vx) || 1); // bounce back
     velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
     this.fsm.transition('hurt');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onHit(selfBound: AABB, otherBound: AABB) {
+  onHit(_victim: number): void {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
+    assetManager.snd_step.play();
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -252,25 +251,12 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   ecs.addComponent(id, anim);
   ecs.addComponent(id, new Player());
   ecs.addComponent(id, new Team(TeamNumber.PLAYER));
+  ecs.addComponent(id, new Health(PlayerScript.MAX_HEALTH, PlayerScript.HURT_COOLDOWN));
 
   const script = new PlayerScript(id, ecs);
   ecs.addComponent(id, new Instance(script));
   return id;
 }
-
-//   _damageTrigger(x) {
-//     this.grabbing = false;
-//     this.alarm1._init(20);
-//     this.alarm1._setScript(this.alarm1._quitDamangePlayer);
-//     this._setState(this._DamagedState);
-//     this.vspeed = -15;
-//     if (this.x > x) {
-//       this.hspeed = 1;
-//     } else {
-//       this.hspeed = -1;
-//     }
-//     assetManager.snd_ouch.play();
-//   }
 
 //   _GrabState = function () {
 //     // grab state

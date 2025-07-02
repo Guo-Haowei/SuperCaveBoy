@@ -36,6 +36,7 @@ export class EditorScene extends IScene {
     const { ctx } = this.game;
     const { ecs } = room;
 
-    System.renderSystem(ecs, ctx, room, { camera: this.camera, pos: this.cameraPos });
+    const world = { ecs };
+    System.renderSystem(world, ctx, room, { camera: this.camera, pos: this.cameraPos });
   }
 }

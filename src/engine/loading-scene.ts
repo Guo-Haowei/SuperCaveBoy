@@ -26,7 +26,8 @@ export class LoadingScene extends IScene {
     const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
     const pos = ecs.getComponent<Position>(cameraId, Position.name);
 
-    System.renderSystem(ecs, ctx, room, { camera, pos });
+    const world = { ecs };
+    System.renderSystem(world, ctx, room, { camera, pos });
 
     const { loadingTime } = this;
 

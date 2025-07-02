@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ECSWorld } from '../ecs';
+import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
   Camera,
   Collider,
   Instance,
   Facing,
+  Health,
   Hitbox,
   Hurtbox,
   Grounded,
@@ -24,9 +24,16 @@ import { assetManager } from './assets-manager';
 import { Direction, AABB, Vec2 } from './utils';
 import { EditorState } from '../editor-state';
 
+export interface SystemContext {
+  ecs: ECSWorld;
+  damageCollision?: [Entity, Entity, Hitbox][];
+}
+
 // ------------------------------ Animation System -----------------------------
-export function animationSystem(world: ECSWorld, dt: number) {
-  for (const [_id, anim, sprite] of world.queryEntities<Animation, Sprite>(
+export function animationSystem(world: SystemContext, dt: number) {
+  const { ecs } = world;
+
+  for (const [_id, anim, sprite] of ecs.queryEntities<Animation, Sprite>(
     Animation.name,
     Sprite.name,
   )) {
@@ -47,11 +54,12 @@ export function animationSystem(world: ECSWorld, dt: number) {
 
 // ------------------------------- Render System -------------------------------
 export function renderSystem(
-  world: ECSWorld,
+  world: SystemContext,
   ctx: CanvasRenderingContext2D,
   room: Room,
   cameraContext: { camera: Camera; pos: Position },
 ) {
+  const { ecs } = world;
   const { camera, pos } = cameraContext;
 
   ctx.clearRect(0, 0, camera.width, camera.height);
@@ -61,7 +69,7 @@ export function renderSystem(
   ctx.translate(-offset.x, -offset.y);
   ctx.scale(camera.zoom, camera.zoom);
 
-  const renderables = world.queryEntities<Sprite, Position>(Sprite.name, Position.name);
+  const renderables = ecs.queryEntities<Sprite, Position>(Sprite.name, Position.name);
   const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
 
   for (const [id, sprite, pos] of sorted) {
@@ -73,7 +81,7 @@ export function renderSystem(
 
     ctx.save();
 
-    const facing = world.getComponent<Facing>(id, Facing.name);
+    const facing = ecs.getComponent<Facing>(id, Facing.name);
     const flipLeft: number = facing && facing.left ? 1 : 0;
 
     ctx.translate(x + flipLeft * frame.width, y);
@@ -131,20 +139,21 @@ function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
   }
 }
 
-function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
+function drawDebugCollider(world: SystemContext, ctx: CanvasRenderingContext2D) {
+  const { ecs } = world;
   ctx.globalAlpha = 0.5;
-  for (const [id, collider] of world.queryEntities<Collider>(Collider.name)) {
-    const pos = world.getComponent<Position>(collider.parent, Position.name);
+  for (const [id, collider] of ecs.queryEntities<Collider>(Collider.name)) {
+    const pos = ecs.getComponent<Position>(collider.parent, Position.name);
     if (!pos) {
       continue;
     }
     const { x, y } = pos;
     const { width, height, offsetX, offsetY } = collider;
 
-    const rigid = world.getComponent<Rigid>(id, Rigid.name);
-    const isHitbox = world.hasComponent(id, Hitbox.name);
-    const isHurtbox = world.hasComponent(id, Hurtbox.name);
-    const isTrigger = world.hasComponent(id, Trigger.name);
+    const rigid = ecs.getComponent<Rigid>(id, Rigid.name);
+    const isHitbox = ecs.hasComponent(id, Hitbox.name);
+    const isHurtbox = ecs.hasComponent(id, Hurtbox.name);
+    const isTrigger = ecs.hasComponent(id, Trigger.name);
 
     if (Number(isHitbox) + Number(isHurtbox) + Number(isTrigger) > 1) {
       throw new Error(`Entity ${id} has multiple collision types: `);
@@ -171,15 +180,15 @@ function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
 }
 
 // ------------------------------- Script System -------------------------------
-export function scriptSystem(world: ECSWorld, dt: number) {
-  for (const [_id, instance] of world.queryEntities<Instance>(Instance.name)) {
+export function scriptSystem(world: SystemContext, dt: number) {
+  for (const [_id, instance] of world.ecs.queryEntities<Instance>(Instance.name)) {
     instance.script.onUpdate?.(dt);
   }
 }
 
 // ------------------------------ Movement System ------------------------------
-export function movementSystem(world: ECSWorld, dt: number) {
-  for (const [_id, vel, pos] of world.queryEntities<Velocity, Position>(
+export function movementSystem(world: SystemContext, dt: number) {
+  for (const [_id, vel, pos] of world.ecs.queryEntities<Velocity, Position>(
     Velocity.name,
     Position.name,
   )) {
@@ -248,9 +257,14 @@ function isRigidPair(a?: Rigid, b?: Rigid): boolean {
   return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
 }
 
-export function physicsSystem(world: ECSWorld, _dt: number) {
-  const colliders = world.queryEntities<Collider>(Collider.name);
-  world.removeAllComponents(Grounded.name);
+export function physicsSystem(world: SystemContext, _dt: number) {
+  if (!world.damageCollision) {
+    world.damageCollision = [];
+  }
+
+  const { ecs, damageCollision } = world;
+  const colliders = ecs.queryEntities<Collider>(Collider.name);
+  ecs.removeAllComponents(Grounded.name);
 
   for (let i = 0; i < colliders.length - 1; ++i) {
     for (let j = i + 1; j < colliders.length; ++j) {
@@ -258,31 +272,31 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
       const [id2, collider2] = colliders[j];
       const parent1 = collider1.parent;
       const parent2 = collider2.parent;
-      const rigid1 = world.getComponent<Rigid>(id1, Rigid.name);
-      const rigid2 = world.getComponent<Rigid>(id2, Rigid.name);
-      const hitbox1 = world.getComponent<Hitbox>(id1, Hitbox.name);
-      const hitbox2 = world.getComponent<Hitbox>(id2, Hitbox.name);
-      const hurtbox1 = world.getComponent<Hurtbox>(id1, Hurtbox.name);
-      const hurtbox2 = world.getComponent<Hurtbox>(id2, Hurtbox.name);
-      const trigger1 = world.getComponent<Trigger>(id1, Trigger.name);
-      const trigger2 = world.getComponent<Trigger>(id2, Trigger.name);
+      const rigid1 = ecs.getComponent<Rigid>(id1, Rigid.name);
+      const rigid2 = ecs.getComponent<Rigid>(id2, Rigid.name);
+      const hitbox1 = ecs.getComponent<Hitbox>(id1, Hitbox.name);
+      const hitbox2 = ecs.getComponent<Hitbox>(id2, Hitbox.name);
+      const hurtbox1 = ecs.getComponent<Hurtbox>(id1, Hurtbox.name);
+      const hurtbox2 = ecs.getComponent<Hurtbox>(id2, Hurtbox.name);
+      const trigger1 = ecs.getComponent<Trigger>(id1, Trigger.name);
+      const trigger2 = ecs.getComponent<Trigger>(id2, Trigger.name);
 
-      const player1 = world.hasComponent(parent1, Player.name);
-      const player2 = world.hasComponent(parent2, Player.name);
-      const team1 = world.getComponent<Team>(parent1, Team.name);
-      const team2 = world.getComponent<Team>(parent2, Team.name);
+      const player1 = ecs.hasComponent(parent1, Player.name);
+      const player2 = ecs.hasComponent(parent2, Player.name);
+      const team1 = ecs.getComponent<Team>(parent1, Team.name);
+      const team2 = ecs.getComponent<Team>(parent2, Team.name);
 
       const isRigid = isRigidPair(rigid1, rigid2);
-      const is1Hurt = hurtbox1 && hitbox2 && team1?.value !== team2?.value;
-      const is2Hurt = hurtbox2 && hitbox1 && team1?.value !== team2?.value;
+      const twoHitOne = hurtbox1 && hitbox2 && team1?.value !== team2?.value;
+      const oneHitTwo = hurtbox2 && hitbox1 && team1?.value !== team2?.value;
       const is1Trigger = trigger1 && player2;
       const is2Trigger = trigger2 && player1;
 
       // @TODO: make sure sum to 1
       const check =
         Number(isRigid) +
-        Number(is1Hurt) +
-        Number(is2Hurt) +
+        Number(twoHitOne) +
+        Number(oneHitTwo) +
         Number(is1Trigger) +
         Number(is2Trigger);
       if (check === 0) {
@@ -291,8 +305,8 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
 
       if (check > 1) throw new Error('Invalid collider pair');
 
-      const pos1 = world.getComponent<Position>(parent1, Position.name)!;
-      const pos2 = world.getComponent<Position>(parent2, Position.name)!;
+      const pos1 = ecs.getComponent<Position>(parent1, Position.name);
+      const pos2 = ecs.getComponent<Position>(parent2, Position.name);
       if (!pos1 || !pos2) {
         // it's possible that the parent entity has been deleted
         continue;
@@ -302,6 +316,14 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
 
       const mtv = getMTV(aabb1, aabb2);
       if (!mtv) {
+        continue;
+      }
+
+      if (twoHitOne) {
+        damageCollision.push([parent2, parent1, hitbox2]);
+        continue;
+      } else if (oneHitTwo) {
+        damageCollision.push([parent1, parent2, hitbox1]);
         continue;
       }
 
@@ -320,9 +342,9 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         } else {
           throw new Error(
             'Invalid collision pair: ' +
-              `${world.getComponent<Name>(parent1, Name.name)?.value}` +
+              `${ecs.getComponent<Name>(parent1, Name.name)?.value}` +
               ' with ' +
-              `${world.getComponent<Name>(parent2, Name.name)?.value}`,
+              `${ecs.getComponent<Name>(parent2, Name.name)?.value}`,
           );
         }
 
@@ -332,24 +354,18 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
           (isFirstObstacle && direction === Direction.DOWN) ||
           (isSecondObstacle && direction === Direction.UP)
         ) {
-          world.addComponent(parent, new Grounded());
-          const vel = world.getComponent<Velocity>(parent, Velocity.name);
+          ecs.addComponent(parent, new Grounded());
+          const vel = ecs.getComponent<Velocity>(parent, Velocity.name);
           if (vel) {
             vel.vy = 1;
           }
         }
       }
 
-      const instance1 = world.getComponent<Instance>(parent1, Instance.name);
-      const instance2 = world.getComponent<Instance>(parent2, Instance.name);
+      const instance1 = ecs.getComponent<Instance>(parent1, Instance.name);
+      const instance2 = ecs.getComponent<Instance>(parent2, Instance.name);
 
-      if (is1Hurt) {
-        instance1?.script.onHurt?.(aabb1, aabb2);
-        instance2?.script.onHit?.(aabb2, aabb1);
-      } else if (is2Hurt) {
-        instance2?.script.onHurt?.(aabb2, aabb1);
-        instance1?.script.onHit?.(aabb1, aabb2);
-      } else if (isRigid) {
+      if (isRigid) {
         instance1?.script.onCollision?.(rigid2.layer, aabb1, aabb2);
         instance2?.script.onCollision?.(rigid1.layer, aabb2, aabb1);
       } else if (is1Trigger) {
@@ -361,10 +377,39 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
   }
 }
 
-export function deleteSystem(world: ECSWorld) {
-  const pendingDeletes = world.queryEntities<PendingDelete>(PendingDelete.name);
-  for (const [id] of pendingDeletes) {
-    world.removeEntity(id);
+export function damageSystem(world: SystemContext, dt: number) {
+  const { ecs, damageCollision } = world;
+
+  for (const [attacker, victim, hitbox] of damageCollision) {
+    const health = ecs.getComponent<Health>(victim, Health.name);
+    if (!hitbox || !health) {
+      continue;
+    }
+
+    if (health.invulnerableTimeLeft <= 0) {
+      health.health -= hitbox.damage;
+      health.invulnerableTimeLeft = health.invulnerableTime;
+    } else {
+      health.invulnerableTimeLeft -= dt;
+    }
+
+    const instanceVictim = ecs.getComponent<Instance>(victim, Instance.name);
+    const instanceAttacker = ecs.getComponent<Instance>(attacker, Instance.name);
+
+    instanceVictim?.script.onHurt?.(attacker);
+    instanceAttacker?.script.onHit?.(victim);
+    // @TODO: if dead, onDie
+    if (health.isDead()) {
+      instanceVictim?.script.onDie?.();
+    }
   }
-  world.removeAllComponents(PendingDelete.name);
+}
+
+export function deleteSystem(world: SystemContext) {
+  const { ecs } = world;
+  const pendingDeletes = ecs.queryEntities<PendingDelete>(PendingDelete.name);
+  for (const [id] of pendingDeletes) {
+    ecs.removeEntity(id);
+  }
+  ecs.removeAllComponents(PendingDelete.name);
 }

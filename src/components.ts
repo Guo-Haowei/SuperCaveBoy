@@ -129,16 +129,6 @@ export class Team {
   }
 }
 
-export class Hitbox {
-  damage: number;
-
-  constructor(damage = 1) {
-    this.damage = damage;
-  }
-}
-
-export class Hurtbox {}
-
 export interface ColliderArea {
   width: number;
   height: number;
@@ -163,7 +153,6 @@ export class Collider {
   }
 }
 
-// @TODO: make a LifeformScriptBase
 export abstract class ScriptBase {
   protected entity: Entity;
   protected world: ECSWorld;
@@ -175,11 +164,13 @@ export abstract class ScriptBase {
 
   abstract onUpdate(dt: number): void;
 
-  onHurt?(selfBound: AABB, otherBound: AABB): void;
+  onHurt?(attacker: number): void;
 
-  onHit?(selfBound: AABB, otherBound: AABB): void;
+  onHit?(victim: number): void;
 
-  abstract onCollision(layer: number, selfBound: AABB, otherBound: AABB): void;
+  onDie?(): void;
+
+  onCollision?(layer: number, selfBound: AABB, otherBound: AABB): void;
 }
 
 export class Instance {
@@ -191,3 +182,31 @@ export class Instance {
 }
 
 export class PendingDelete {}
+
+export class Hitbox {
+  damage: number;
+
+  constructor(damage = 1) {
+    this.damage = damage;
+  }
+}
+
+export class Hurtbox {}
+
+export class Health {
+  health: number;
+  maxHealth: number;
+  invulnerableTimeLeft: number;
+  readonly invulnerableTime: number;
+
+  constructor(maxHealth: number, invulnerableTime: number) {
+    this.health = maxHealth;
+    this.maxHealth = maxHealth;
+    this.invulnerableTime = invulnerableTime;
+    this.invulnerableTimeLeft = 0;
+  }
+
+  isDead(): boolean {
+    return this.health <= 0;
+  }
+}

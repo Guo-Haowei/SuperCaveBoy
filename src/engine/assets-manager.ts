@@ -17,7 +17,7 @@ export const SpriteSheets = {
   SPIDER_JUMP: 'spider_jump',
 
   BOSS_IDLE: 'boss_idle',
-  BOSS_DAMAGE: 'boss_damage',
+  BOSS_HURT: 'boss_damage',
 } as const;
 
 interface SpriteFrame {
@@ -81,7 +81,7 @@ class AssetManager {
     this.loadSheet(SpriteSheets.SPIDER_JUMP, images.spr_spider_jump, TILE_SIZE, TILE_SIZE);
 
     this.loadSheet(SpriteSheets.BOSS_IDLE, images.spr_boss, 160, 188);
-    this.loadSheet(SpriteSheets.BOSS_DAMAGE, images.spr_boss_damaged, 160, 188);
+    this.loadSheet(SpriteSheets.BOSS_HURT, images.spr_boss_damaged, 160, 188);
 
     this.loadSheet(SpriteSheets.LAVA, images.spr_lava, 64, 64);
 

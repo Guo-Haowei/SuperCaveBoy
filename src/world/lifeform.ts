@@ -13,6 +13,7 @@ import {
   ScriptBase,
   Velocity,
   Team,
+  Health,
 } from '../components';
 import { TeamNumber } from './defines';
 import { AABB } from '../engine/utils';
@@ -77,12 +78,14 @@ export function createEnemyCommon(
   rigid: ColliderArea,
   hurtbox: ColliderArea,
   hitbox: ColliderArea,
+  health: Health = new Health(1, 0.5),
 ) {
   const id = createLifeform(ecs, TeamNumber.ENEMY, Rigid.ENEMY, rigid, hurtbox, hitbox);
 
   ecs.addComponent(id, new Position(x, y));
   ecs.addComponent(id, new Velocity());
   ecs.addComponent(id, new Facing(true));
+  ecs.addComponent(id, health);
   return id;
 }
 
@@ -133,12 +136,8 @@ export class LifeformScript extends ScriptBase {
     this.fsm.update(dt);
   }
 
-  onHurt?(_selfBound: AABB, _otherBound: AABB) {
+  onDie(): void {
     this.fsm.transition('die');
-  }
-
-  onCollision(_layer: number, _selfBound: AABB, _otherBound: AABB) {
-    // do nothing by default
   }
 
   markDelete(): void {

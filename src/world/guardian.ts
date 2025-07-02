@@ -1,8 +1,17 @@
 import { ECSWorld, Entity } from '../ecs';
-import { Animation, ColliderArea, Name, Instance, Position, Sprite, Velocity } from '../components';
+import {
+  Animation,
+  ColliderArea,
+  Name,
+  Instance,
+  Position,
+  Sprite,
+  Velocity,
+  Health,
+} from '../components';
 import { SpriteSheets } from '../engine/assets-manager';
 import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
-import { AABB, CountDown } from '../engine/utils';
+import { CountDown } from '../engine/utils';
 
 type GuardianStateName = 'idle' | 'alert' | 'targeting' | 'prepare' | 'attack' | 'cooldown';
 
@@ -26,7 +35,7 @@ class GuardianScript extends LifeformScript {
       {
         idle: {
           name: 'idle',
-          enter: () => this.playAnim('idle'),
+          // enter: () => this.playAnim('idle'),
           update: () => this.idle(),
         },
         alert: {
@@ -36,6 +45,7 @@ class GuardianScript extends LifeformScript {
         },
         targeting: {
           name: 'targeting',
+          enter: () => this.playAnim('alert'),
           update: () => this.targeting(),
         },
         prepare: {
@@ -50,6 +60,7 @@ class GuardianScript extends LifeformScript {
         attack: {
           name: 'attack',
           enter: () => {
+            this.playAnim('alert');
             const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
             vel.vy = ATTACK_SPEED; // Set the vertical speed for the attack
           },
@@ -113,11 +124,11 @@ class GuardianScript extends LifeformScript {
   }
 
   onDie() {
-    // do nothing for now
+    throw new Error('Guardian cannot die in this implementation.');
   }
 
-  onHurt(_selfBound: AABB, _otherBound: AABB): void {
-    // do nothing for now
+  onHurt(_attacker: number): void {
+    this.playAnim('hurt');
   }
 }
 
@@ -128,7 +139,7 @@ export function createGuardian(ecs: ECSWorld, x: number, y: number, target: Enti
     offsetX: 15,
     offsetY: -5,
   };
-  const id = createEnemyCommon(ecs, x, y, area, area, area);
+  const id = createEnemyCommon(ecs, x, y, area, area, area, new Health(3, 1.7));
 
   const anim = new Animation(
     {
@@ -143,6 +154,12 @@ export function createGuardian(ecs: ECSWorld, x: number, y: number, target: Enti
         frames: 2,
         speed: 1,
         loop: true,
+      },
+      hurt: {
+        sheetId: SpriteSheets.BOSS_HURT,
+        frames: 1,
+        speed: 1,
+        loop: false,
       },
     },
     'idle',

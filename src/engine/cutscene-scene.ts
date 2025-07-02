@@ -24,7 +24,9 @@ export class CutsceneScene extends IScene {
 
     const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
     const { pos } = this;
-    System.renderSystem(ecs, ctx, room, { camera, pos });
+
+    const world = { ecs };
+    System.renderSystem(world, ctx, room, { camera, pos });
 
     pos.x += dt * this.speed;
     if (pos.x >= this.targetX) {
