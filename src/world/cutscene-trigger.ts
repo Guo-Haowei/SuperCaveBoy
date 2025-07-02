@@ -1,26 +1,31 @@
 import { ECSWorld, Entity } from '../ecs';
-import { Collider, Position, Instance, ScriptBase } from '../components';
-import { AABB } from '../engine/utils';
+import { Position, Instance, Collider, Trigger } from '../components';
 import { getRuntime } from '../engine/runtime';
+import { TriggerScript } from './lifeform';
 
-class CussceneTriggerScript extends ScriptBase {
-  private disabled = false;
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onCollision(layer: number, selfBound: AABB, otherBound: AABB): void {
-    if (this.disabled) return;
+class CussceneTriggerScript extends TriggerScript {
+  fire(): void {
     getRuntime().requestScene('CUTSCENE');
-    this.disabled = true;
   }
 }
 
 export function createTrigger(world: ECSWorld, x: number, y: number): Entity {
-  const entity = world.createEntity();
+  const id = world.createEntity();
 
-  world.addComponent(entity, new Position(x, y));
-  // world.addComponent(entity, new Collider(64, 800, Collider.EVENT, Collider.PLAYER, 30, 30));
-  // world.addComponent(entity, new Dynamic());
-  const script = new CussceneTriggerScript(entity, world);
-  world.addComponent(entity, new Instance(script));
-  return entity;
+  const collider = world.createEntity();
+
+  const area = {
+    width: 64,
+    height: 800,
+    offsetX: 30,
+    offsetY: 30,
+  };
+
+  world.addComponent(collider, new Collider(id, area));
+  world.addComponent(collider, new Trigger());
+
+  world.addComponent(id, new Position(x, y));
+  const script = new CussceneTriggerScript(id, world);
+  world.addComponent(id, new Instance(script));
+  return id;
 }

@@ -1,11 +1,10 @@
-import { Collider, Position, Instance, ScriptBase, Sprite, Trigger } from '../components';
+import { Collider, Position, Instance, Sprite, Trigger } from '../components';
 import { SpriteSheets } from '../engine/assets-manager';
 import { Entity, ECSWorld } from '../ecs';
-import { AABB } from '../engine/utils';
 import { getRuntime } from '../engine/runtime';
-import { TeamNumber } from './defines';
+import { TriggerScript } from './lifeform';
 
-class PortalScript extends ScriptBase {
+class PortalScript extends TriggerScript {
   private dest: string;
 
   constructor(entity: Entity, world: ECSWorld, dest: string) {
@@ -13,8 +12,7 @@ class PortalScript extends ScriptBase {
     this.dest = dest;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onCollision(layer: number, selfBound: AABB, otherBound: AABB): void {
+  fire(): void {
     getRuntime().requestRoom(this.dest);
   }
 }

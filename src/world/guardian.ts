@@ -1,11 +1,12 @@
 import { ECSWorld, Entity } from '../ecs';
-import { Animation, Name, Instance, ScriptBase, Sprite, ColliderArea } from '../components';
+import { Animation, Name, Instance, Sprite, ColliderArea } from '../components';
 import { SpriteSheets } from '../engine/assets-manager';
-import { createEnemyCommon, StateMachine } from './lifeform';
+import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
+import { AABB } from '../engine/utils';
 
 type GuardianStateName = 'idle' | 'alert';
 
-class GuardianScript extends ScriptBase {
+class GuardianScript extends LifeformScript {
   private target: Entity;
   private speed: number;
 
@@ -38,6 +39,10 @@ class GuardianScript extends ScriptBase {
   }
 
   onDie() {
+    // do nothing for now
+  }
+
+  onHurt(_selfBound: AABB, _otherBound: AABB): void {
     // do nothing for now
   }
 }

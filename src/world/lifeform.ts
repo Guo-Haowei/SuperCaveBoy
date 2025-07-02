@@ -156,3 +156,19 @@ export class LifeformScript extends ScriptBase {
     return this.world.hasComponent(this.entity, Grounded.name);
   }
 }
+
+export abstract class TriggerScript extends ScriptBase {
+  private triggered = false;
+
+  onUpdate(_dt: number) {
+    // intentionally left empty
+  }
+
+  onCollision(_layer: number, _selfBound: AABB, _otherBound: AABB) {
+    if (this.triggered) return;
+    this.triggered = true;
+    this.fire();
+  }
+
+  abstract fire(): void;
+}
