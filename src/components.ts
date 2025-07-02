@@ -190,12 +190,9 @@ export abstract class ScriptBase {
     this.fsm?.update(dt);
   }
 
-  onCollision?(other: Entity, selfBound: AABB, otherBound: AABB): void;
+  onHurt?(selfBound: AABB, otherBound: AABB): void;
 
-  onDie() {
-    // @TODO: instead of onDie, check health
-    this.fsm?.transition('die');
-  }
+  onCollision?(other: Entity, selfBound: AABB, otherBound: AABB): void;
 
   markDelete(): void {
     this.world.addComponent(this.entity, new PendingDelete());
@@ -214,22 +211,10 @@ export abstract class ScriptBase {
 }
 
 export class Instance {
-  private script: ScriptBase;
+  script: ScriptBase;
 
   constructor(script: ScriptBase) {
     this.script = script;
-  }
-
-  onUpdate(dt: number) {
-    this.script.onUpdate?.(dt);
-  }
-
-  onCollision(other: Entity, selfBound: AABB, otherBound: AABB) {
-    this.script.onCollision?.(other, selfBound, otherBound);
-  }
-
-  onDie() {
-    this.script.onDie?.();
   }
 }
 

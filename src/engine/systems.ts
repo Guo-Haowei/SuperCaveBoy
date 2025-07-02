@@ -166,8 +166,8 @@ function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
 
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
-  for (const [_id, script] of world.queryEntities<Instance>(Instance.name)) {
-    script.onUpdate(dt);
+  for (const [_id, instance] of world.queryEntities<Instance>(Instance.name)) {
+    instance.script.onUpdate(dt);
   }
 }
 
@@ -286,11 +286,12 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
       const trigger2 = world.getComponent<Trigger>(id2, Trigger.name);
 
       const isRigid = isRigidPair(rigid1, rigid2);
-      const isHitbox = (hitbox1 && hurtbox2) || (hitbox2 && hurtbox1);
+      const is1Hurt = hurtbox1 && hitbox2;
+      const is2Hurt = hurtbox2 && hitbox1;
       const isTrigger = isTriggerPair(world, id1, id2, trigger1, trigger2);
 
       // @TODO: make sure sum to 1
-      const check = Number(isRigid) + Number(isHitbox) + Number(isTrigger);
+      const check = Number(isRigid) + Number(is1Hurt) + Number(is2Hurt) + Number(isTrigger);
       if (check === 0) {
         continue;
       }
@@ -342,8 +343,17 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
         }
       }
 
-      world.getComponent<Instance>(parent1, Instance.name)?.onCollision(parent2, aabb1, aabb2);
-      world.getComponent<Instance>(parent2, Instance.name)?.onCollision(parent1, aabb2, aabb1);
+      const instance1 = world.getComponent<Instance>(parent1, Instance.name);
+      const instance2 = world.getComponent<Instance>(parent2, Instance.name);
+
+      if (is1Hurt) {
+        instance1?.script.onHurt?.(aabb1, aabb2);
+      } else if (is2Hurt) {
+        instance1?.script.onHurt?.(aabb2, aabb1);
+      }
+
+      instance1?.script?.onCollision?.(parent2, aabb1, aabb2);
+      instance2?.script?.onCollision?.(parent1, aabb2, aabb1);
     }
   }
 }

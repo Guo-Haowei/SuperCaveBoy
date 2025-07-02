@@ -72,8 +72,8 @@ export function createSnake(
 ) {
   const area: ColliderArea = {
     width: 62,
-    height: 42,
-    offsetY: 22,
+    height: 32,
+    offsetY: 32,
   };
 
   const hurtArea: ColliderArea = {

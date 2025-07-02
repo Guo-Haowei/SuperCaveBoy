@@ -158,9 +158,18 @@ class PlayerScript extends ScriptBase {
     }
   }
 
-  onCollision(other: Entity, selfBound: AABB, otherBound: AABB): void {
+  onHurt(selfBound: AABB, otherBound: AABB) {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    const center = selfBound.center();
+    const otherCenter = otherBound.center();
 
+    const dx = center.x - otherCenter.x;
+    velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
+    velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
+    this.fsm.transition('hurt');
+  }
+
+  onCollision(other: Entity, selfBound: AABB, otherBound: AABB): void {
     // switch (layer) {
     // case Collider.OBSTACLE:
     //   if (otherBound.above(selfBound)) {
@@ -176,13 +185,6 @@ class PlayerScript extends ScriptBase {
     //     script?.onDie();
     //     velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
     //   } else {
-    //     const center = selfBound.center();
-    //     const otherCenter = otherBound.center();
-
-    //     const dx = center.x - otherCenter.x;
-    //     velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
-    //     velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
-    //     this.fsm.transition('hurt');
     //   }
     //   break;
     //   default:
