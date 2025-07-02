@@ -23,6 +23,7 @@ import { toAABB } from './utils';
 export interface SystemContext {
   ecs: ECSWorld;
   damageCollision?: [Entity, Entity, Hitbox][];
+  rigidCollision?: [Entity, Entity, Vec2][];
 }
 
 // ------------------------------ Animation System -----------------------------
@@ -116,12 +117,11 @@ function isRigidPair(a?: Rigid, b?: Rigid): boolean {
   return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
 }
 
-export function physicsSystem(world: SystemContext, _dt: number) {
-  if (!world.damageCollision) {
-    world.damageCollision = [];
-  }
+export function collisionSystem(world: SystemContext, _dt: number) {
+  world.damageCollision = [];
+  world.rigidCollision = [];
 
-  const { ecs, damageCollision } = world;
+  const { ecs, damageCollision, rigidCollision } = world;
   const colliders = ecs.queryEntities<Collider>(Collider.name);
   ecs.removeAllComponents(Grounded.name);
 
@@ -187,52 +187,54 @@ export function physicsSystem(world: SystemContext, _dt: number) {
       }
 
       if (isRigid) {
-        const direction = mtvToDirection(mtv);
-
         const isFirstObstacle = rigid1.layer === Rigid.OBSTACLE;
-        const isSecondObstacle = rigid2.layer === Rigid.OBSTACLE;
-
         if (isFirstObstacle) {
-          pos2.x -= mtv.x;
-          pos2.y -= mtv.y;
-        } else if (isSecondObstacle) {
-          pos1.x += mtv.x;
-          pos1.y += mtv.y;
+          rigidCollision.push([parent1, parent2, mtv]);
         } else {
-          throw new Error(
-            'Invalid collision pair: ' +
-              `${ecs.getComponent<Name>(parent1, Name.name)?.value}` +
-              ' with ' +
-              `${ecs.getComponent<Name>(parent2, Name.name)?.value}`,
-          );
+          rigidCollision.push([parent2, parent1, { x: -mtv.x, y: -mtv.y }]);
         }
-
-        const parent = isFirstObstacle ? parent2 : parent1;
-
-        if (
-          (isFirstObstacle && direction === Direction.DOWN) ||
-          (isSecondObstacle && direction === Direction.UP)
-        ) {
-          ecs.addComponent(parent, new Grounded());
-          const vel = ecs.getComponent<Velocity>(parent, Velocity.name);
-          if (vel) {
-            vel.vy = 1;
-          }
-        }
+        continue;
       }
 
       const instance1 = ecs.getComponent<Instance>(parent1, Instance.name);
       const instance2 = ecs.getComponent<Instance>(parent2, Instance.name);
 
-      if (isRigid) {
-        instance1?.script.onCollision?.(rigid2.layer, aabb1, aabb2);
-        instance2?.script.onCollision?.(rigid1.layer, aabb2, aabb1);
-      } else if (is1Trigger) {
+      if (is1Trigger) {
         instance1?.script.onCollision(0, null, null);
       } else if (is2Trigger) {
         instance2?.script.onCollision(0, null, null);
       }
     }
+  }
+}
+
+export function rigidCollisionSystem(world: SystemContext, _dt: number) {
+  const { ecs, rigidCollision } = world;
+
+  for (const [obstacle, obj, mtv] of rigidCollision) {
+    const posA = ecs.getComponent<Position>(obstacle, Position.name);
+    const posB = ecs.getComponent<Position>(obj, Position.name);
+    if (!posA || !posB) {
+      continue;
+    }
+
+    posB.x -= mtv.x;
+    posB.y -= mtv.y;
+
+    const direction = mtvToDirection(mtv);
+    if (direction === Direction.DOWN) {
+      ecs.addComponent(obj, new Grounded());
+      const vel = ecs.getComponent<Velocity>(obj, Velocity.name);
+      if (vel) {
+        vel.vy = 1;
+      }
+    }
+
+    const instanceA = ecs.getComponent<Instance>(obstacle, Instance.name);
+    const instanceB = ecs.getComponent<Instance>(obj, Instance.name);
+
+    instanceA?.script.onCollision?.(0, null, null);
+    instanceB?.script.onCollision?.(0, null, null);
   }
 }
 

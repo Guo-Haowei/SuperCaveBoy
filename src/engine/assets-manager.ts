@@ -8,7 +8,7 @@ export const SpriteSheets = {
   PLAYER_IDLE: 'player_idle',
   PLAYER_WALK: 'player_walk',
   PLAYER_JUMP: 'player_jump',
-  PLAYER_GRAB: 'player_grab',
+  PLAYER_HANG: 'player_grab',
   PLAYER_DAMAGE: 'player_damage',
 
   BAT_IDLE: 'bat_idle',
@@ -70,7 +70,7 @@ class AssetManager {
     this.loadSheet(SpriteSheets.PLAYER_IDLE, images.spr_player_idle, 64, 72);
     this.loadSheet(SpriteSheets.PLAYER_WALK, images.spr_player_walk, 64, 72);
     this.loadSheet(SpriteSheets.PLAYER_JUMP, images.spr_player_jump, 64, 72);
-    this.loadSheet(SpriteSheets.PLAYER_GRAB, images.spr_player_grab, 64, 72);
+    this.loadSheet(SpriteSheets.PLAYER_HANG, images.spr_player_grab, 64, 72);
     this.loadSheet(SpriteSheets.PLAYER_DAMAGE, images.spr_player_damage, 64, 72);
 
     this.loadSheet(SpriteSheets.BAT_IDLE, images.spr_bat_idle, 64, 64);

@@ -13,21 +13,26 @@ import {
   Team,
   Velocity,
 } from '../components';
-import { SpriteSheets, assetManager } from '../engine/assets-manager';
-import { inputManager } from '../engine/input-manager';
 import {
   findGravityAndJumpVelocity,
   createLifeform,
   StateMachine,
   LifeformScript,
+  getUpDownGrid,
 } from './lifeform';
 import { AABB } from '../engine/utils';
 import { CountDown } from '../engine/utils';
 import { TeamNumber } from './defines';
+import { GridType } from './room';
 
-const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
+import { SpriteSheets, assetManager } from '../engine/assets-manager';
+import { inputManager } from '../engine/input-manager';
+import { roomManager } from '../engine/room-manager';
+import { renderSystem } from '../engine/renderSystem';
 
-type PlayerStateName = 'idle' | 'walk' | 'jump' | 'hurt';
+const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.4);
+
+type PlayerStateName = 'idle' | 'walk' | 'jumping' | 'hurt' | 'hanging';
 
 class PlayerScript extends LifeformScript {
   static readonly HURT_COOLDOWN = 0.8;
@@ -54,8 +59,8 @@ class PlayerScript extends LifeformScript {
           enter: () => this.playAnim('walk'),
           update: () => this.walk(),
         },
-        jump: {
-          name: 'jump',
+        jumping: {
+          name: 'jumping',
           update: () => this.jump(),
         },
         hurt: {
@@ -66,6 +71,17 @@ class PlayerScript extends LifeformScript {
             this.damageCooldown.reset();
           },
           update: (dt) => this.hurt(dt),
+        },
+        hanging: {
+          name: 'hanging',
+          enter: () => {
+            const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+            vel.vx = 0;
+            vel.vy = 0;
+            vel.gravity = 0; // disable gravity
+            this.playAnim('hang');
+          },
+          update: () => this.hang(),
         },
       },
       'walk',
@@ -106,10 +122,67 @@ class PlayerScript extends LifeformScript {
     return false;
   }
 
+  private checkHanging() {
+    if (this.isGrounded()) {
+      return false;
+    }
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    if (vel.vy < 0) {
+      return false;
+    }
+    // check if grab ledge
+    const position = this.world.getComponent<Position>(this.entity, Position.name);
+    const xMin = position.x + 16;
+    const xMax = position.x + 16 + 32;
+
+    const alignWithGrid = (value: number, tileSize: number, error = 2) => {
+      const remainder = value % tileSize;
+      return Math.abs(remainder) < error || Math.abs(remainder - tileSize) < error;
+    };
+
+    const room = roomManager.getCurrentRoom();
+    const gridSize = room.gridSize;
+    const y = position.y - gridSize;
+    if (!alignWithGrid(position.y, gridSize, 10)) {
+      return false;
+    }
+    if (alignWithGrid(xMin, gridSize)) {
+      const [up, down] = getUpDownGrid(xMin, y, room);
+      console.log('checkHanging', xMin, y, up, down);
+      if (up !== GridType.SOLID && down === GridType.SOLID) {
+        return true;
+      }
+    }
+    if (alignWithGrid(xMax, gridSize)) {
+      const gridX = Math.floor(xMax / room.gridSize);
+      const gridY = Math.floor(y / room.gridSize);
+      renderSystem.addDebugRect({
+        x: gridX * gridSize,
+        y: gridY * gridSize,
+        width: 64,
+        height: 64,
+      });
+      renderSystem.addDebugRect({
+        x: gridX * gridSize,
+        y: (gridY + 1) * gridSize,
+        width: 64,
+        height: 64,
+      });
+
+      const [up, down] = getUpDownGrid(xMax, y, room);
+      console.log('checkHanging', xMax, y, up, down);
+      if (up !== GridType.SOLID && down === GridType.SOLID) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private checkFalling(velocity: Velocity) {
     if (this.isGrounded()) {
       return false;
     }
+
     const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
     anim.current = 'jump';
     if (velocity.vy < 0) {
@@ -125,7 +198,7 @@ class PlayerScript extends LifeformScript {
     const walking = this.tryWalk(vel);
     this.tryJump(vel);
     if (!this.isGrounded()) {
-      this.fsm.transition('jump');
+      this.fsm.transition('jumping');
       return;
     }
     if (walking) {
@@ -138,7 +211,7 @@ class PlayerScript extends LifeformScript {
     const walking = this.tryWalk(vel);
     this.tryJump(vel);
     if (!this.isGrounded()) {
-      this.fsm.transition('jump');
+      this.fsm.transition('jumping');
       return;
     }
     if (!walking) {
@@ -151,11 +224,27 @@ class PlayerScript extends LifeformScript {
     const walking = this.tryWalk(velocity);
     const jumping = this.checkFalling(velocity);
     if (jumping) {
+      if (this.checkHanging()) {
+        this.fsm.transition('hanging');
+        return;
+      }
       return;
     }
 
     assetManager.snd_step.play();
     this.fsm.transition(walking ? 'walk' : 'idle');
+  }
+
+  private hang() {
+    // disable movement
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    // this.tryWalk(velocity);
+    if (this.inputUp()) {
+      velocity.vy = -JUMP_VELOCITY; // jump off the ledge
+      velocity.gravity = GRAVITY; // re-enable gravity
+      this.fsm.transition('jumping');
+      return;
+    }
   }
 
   private hurt(dt: number) {
@@ -178,14 +267,8 @@ class PlayerScript extends LifeformScript {
     assetManager.snd_step.play();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onCollision(layer: number, selfBound: AABB, otherBound: AABB): void {
-    // case Collider.OBSTACLE:
-    //   if (otherBound.above(selfBound)) {
-    //     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    //     velocity.vy += JUMP_VELOCITY * 0.2;
-    //     // @TODO: grab ledge
-    //   }
+  onCollision(_layer: number, _selfBound: AABB, _otherBound: AABB): void {
+    // left
   }
 }
 
@@ -239,6 +322,12 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
         speed: 1,
         loop: false,
       },
+      hang: {
+        sheetId: SpriteSheets.PLAYER_HANG,
+        frames: 1,
+        speed: 1,
+        loop: true,
+      },
     },
     'idle',
   );
@@ -257,99 +346,3 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   ecs.addComponent(id, new Instance(script));
   return id;
 }
-
-//   _GrabState = function () {
-//     // grab state
-//     this.currentFrame = this.handler._getGameAssets().spr_player_grab;
-//   };
-//   _tick() {
-//     this.hurt = false;
-//     if (this.pausing) {
-//       return;
-//     }
-//     if (this.health <= 0) {
-//       this._revive();
-//     }
-//     if (this.alarm0.activated) {
-//       this.alarm0._tick();
-//       if (this.alarm0.activated && this.alpha >= 0.1) this.alpha -= 0.1;
-//       return;
-//     }
-
-//     // hspeed
-//     if (!this.alarm1.activated && this.currentState != this._DamagedState) {
-//       const leftDown = inputManager.isKeyDown('KeyA');
-//       const rightDown = inputManager.isKeyDown('KeyD');
-//       const direction = Number(rightDown) - Number(leftDown);
-//       this.hspeed = direction;
-//     }
-//     // vspeed
-//     const jumpPressed = inputManager.isKeyPressed('KeyW');
-//     if (
-//       jumpPressed &&
-//       !this.alarm1.activated &&
-//       this.currentState != this._DamagedState &&
-//       ((this.takingJump && this.vspeed === 1.5) || this.grabbing)
-//     ) {
-//       if (!this.grabbing) {
-//         this.vspeed = JUMPFORCE;
-//       } else {
-//         this.vspeed = -20;
-//       }
-//       this.currentState = this._JumpingState;
-//       this.takingJump = false;
-//       this.grabbing = false;
-//     }
-//     // check grabbing state
-//     if (checkAllCollision(this, this.handler._getObstacles(), grabbingCollision)) {
-//       this.grabbing = true;
-//     }
-
-//     if (this.alarm1.activated) {
-//       this.alarm1._tick();
-//     }
-//     // vertical
-//     if (this.grabbing && !this.hurt) {
-//       this.currentState = this._GrabState;
-//     } else {
-//       if (checkAllCollision(this, this.handler._getObstacles(), downCollision)) {
-//       } else {
-//         this.y += this.vspeed;
-//         this.vspeed += GRAVITY;
-//       }
-//       checkAllCollision(this, this.handler._getObstacles(), upCollision);
-//     }
-//     // tick state
-//     this.currentState();
-//     // tick handler
-//   }
-
-//   _land() {
-//     if (this.vspeed === 0) return;
-//     this.takingJump = true;
-//     this.currentState = this._IdlingState;
-
-//     assetManager.snd_step.play();
-
-//     this.vspeed = 0;
-//   }
-
-//   _render(graphics) {
-//     // this.currentFrame.draw(
-//     //   graphics,
-//     //   this.x - xoffset,
-//     //   this.y - yoffset,
-//     //   this.alpha,
-//     //   this.face === 0 ? HORIZONTAL_FLIP : 0,
-//     // );
-//   }
-
-//   _setState(state) {
-//     this.currentState = state;
-//   }
-
-//   _setPos(x, y) {
-//     this.x = x;
-//     this.y = y;
-//   }
-// }

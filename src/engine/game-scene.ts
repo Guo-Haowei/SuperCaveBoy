@@ -11,7 +11,8 @@ export class GameScene extends IScene {
     const world = { ecs };
     System.scriptSystem(world, dt);
     System.movementSystem(world, dt);
-    System.physicsSystem(world, dt);
+    System.collisionSystem(world, dt);
+    System.rigidCollisionSystem(world, dt);
 
     System.damageSystem(world, dt);
     System.animationSystem(world, dt);

@@ -9,20 +9,13 @@ import {
   Sprite,
   Velocity,
 } from '../components';
-import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
+import { createEnemyCommon, StateMachine, LifeformScript, getUpDownGrid } from './lifeform';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { roomManager } from '../engine/room-manager';
-import { renderSystem } from '../engine/renderSystem';
 import { GridType } from './room';
+// import { renderSystem } from '../engine/renderSystem';
 
 type SnakeStateName = 'idle' | 'die';
-
-function positionToGrid(x: number, y: number, gridSize: number): { gridX: number; gridY: number } {
-  return {
-    gridX: Math.floor(x / gridSize),
-    gridY: Math.floor(y / gridSize),
-  };
-}
 
 class SnakeScript extends LifeformScript {
   private static readonly INITIAL_SPEED = 100;
@@ -63,50 +56,18 @@ class SnakeScript extends LifeformScript {
     // left
     const offset = 10;
     {
-      const { gridX, gridY } = positionToGrid(position.x - offset, position.y, gridSize);
-      const upperGrid = room.getGridAt(gridX, gridY);
-      const lowerGrid = room.getGridAt(gridX, gridY + 1);
-      if (upperGrid === GridType.SOLID || lowerGrid !== GridType.SOLID) {
+      const [up, down] = getUpDownGrid(position.x - offset, position.y, room);
+      if (up === GridType.SOLID || down !== GridType.SOLID) {
         vel.vx = SnakeScript.INITIAL_SPEED;
         facing.left = false;
       }
-
-      renderSystem.addDebugRect({
-        x: gridX * gridSize,
-        y: gridY * gridSize,
-        width: 64,
-        height: 64,
-      });
-      renderSystem.addDebugRect({
-        x: gridX * gridSize,
-        y: (gridY + 1) * gridSize,
-        width: 64,
-        height: 64,
-      });
     }
-
-    // right
     {
-      const { gridX, gridY } = positionToGrid(position.x + gridSize + offset, position.y, gridSize);
-      const upperGrid = room.getGridAt(gridX, gridY);
-      const lowerGrid = room.getGridAt(gridX, gridY + 1);
-      if (upperGrid === GridType.SOLID || lowerGrid !== GridType.SOLID) {
+      const [up, down] = getUpDownGrid(position.x + gridSize + offset, position.y, room);
+      if (up === GridType.SOLID || down !== GridType.SOLID) {
         vel.vx = -SnakeScript.INITIAL_SPEED;
         facing.left = true;
       }
-
-      renderSystem.addDebugRect({
-        x: gridX * gridSize,
-        y: gridY * gridSize,
-        width: 64,
-        height: 64,
-      });
-      renderSystem.addDebugRect({
-        x: gridX * gridSize,
-        y: (gridY + 1) * gridSize,
-        width: 64,
-        height: 64,
-      });
     }
   }
 }

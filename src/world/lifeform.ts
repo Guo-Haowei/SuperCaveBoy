@@ -17,6 +17,7 @@ import {
 } from '../components';
 import { TeamNumber } from './defines';
 import { AABB } from '../engine/utils';
+import { Room } from './room';
 
 export function findGravityAndJumpVelocity(
   desiredJumpHeight: number,
@@ -25,6 +26,15 @@ export function findGravityAndJumpVelocity(
   const GRAVITY = (2 * desiredJumpHeight) / timeToApex ** 2;
   const JUMP_VELOCITY = GRAVITY * timeToApex;
   return { GRAVITY, JUMP_VELOCITY };
+}
+
+export function getUpDownGrid(x: number, y: number, room: Room): [number, number] {
+  const gridSize = room.gridSize;
+  const gridX = Math.floor(x / gridSize);
+  const gridY = Math.floor(y / gridSize);
+  const up = room.getGridAt(gridX, gridY);
+  const down = room.getGridAt(gridX, gridY + 1);
+  return [up, down];
 }
 
 export function createRigid(
