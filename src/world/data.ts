@@ -1,7 +1,6 @@
 export enum TYPE {
   EXIT = 0,
   SAPPHIRE,
-  LAVA,
   CAMERA,
 }
 
@@ -184,12 +183,6 @@ export const WORLD_DATA: LevelData[] = [
       [620, 588, TYPE.SAPPHIRE],
       [328, 524, TYPE.SAPPHIRE],
       [1512, 396, TYPE.SAPPHIRE],
-      [448, 704, TYPE.LAVA, 2],
-      [704, 704, TYPE.LAVA, 3],
-      [1024, 704, TYPE.LAVA, 5],
-      [1472, 704, TYPE.LAVA, 2],
-      [1728, 704, TYPE.LAVA, 2],
-      [2048, 704, TYPE.LAVA, 2],
     ],
     monsters: [
       [1000, 512, MONSTER.SNAKE, 892, 1408],
@@ -269,8 +262,6 @@ export const WORLD_DATA: LevelData[] = [
       [1676, 780, TYPE.SAPPHIRE],
       [1804, 780, TYPE.SAPPHIRE],
       [1932, 780, TYPE.SAPPHIRE],
-      [256, 780, TYPE.LAVA, 2],
-      [1216, 780, TYPE.LAVA, 2],
     ],
     monsters: [
       [734, 704, MONSTER.SNAKE, 384, 1152],
@@ -546,10 +537,7 @@ export const WORLD_DATA: LevelData[] = [
       [-1, 0, 2, 12],
       [19, 0, 2, 12],
     ],
-    objects: [
-      [512, 716, TYPE.LAVA, 4],
-      [360, 420, TYPE.CAMERA],
-    ],
+    objects: [[360, 420, TYPE.CAMERA]],
     monsters: [[860, 516, MONSTER.BOSS]],
     level: [
       [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],

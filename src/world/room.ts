@@ -16,6 +16,7 @@ import { LevelData, MONSTER, TYPE } from './data';
 enum TileType {
   WALL = 0,
   DIRT = 1,
+  LAVA = 2,
 }
 
 const SPAWNING_X = 192;
@@ -61,14 +62,13 @@ export class Room {
     // tiles
     for (let y = 0; y < height; ++y) {
       for (let x = 0; x < width; ++x) {
-        const id = tiles[y][x];
-        if (id !== 0 && id !== 1) {
-          continue;
-        }
-        const spriteId = tiles[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
+        const spriteId = tiles[y][x] === TileType.DIRT ? SpriteSheets.DIRY : SpriteSheets.WALL;
         this.createTile(tileSize * x, tileSize * y, spriteId);
       }
     }
+
+    // lava
+    this.computeTile(levelData);
 
     // entrance
     this.createEntrance(96, 608);
@@ -98,8 +98,31 @@ export class Room {
         createPoartal(this.ecs, obj[0] as number, obj[1] as number, obj[3] as string);
       } else if (type === TYPE.CAMERA) {
         createTrigger(this.ecs, obj[0] as number, obj[1] as number);
-      } else if (type === TYPE.LAVA) {
-        this.createLava(obj[0] as number, obj[1] as number, obj[3] as number);
+      }
+    }
+  }
+
+  private computeTile(levelData: LevelData) {
+    const { tileSize } = this;
+    const grid = levelData.level;
+    // const visited = grid.map((row) => row.map(() => false));
+    const gridWidth = grid[0].length;
+    const gridHeight = grid.length;
+    for (let y = 0; y < gridHeight; ++y) {
+      for (let x = 0; x < gridWidth; ++x) {
+        if (grid[y][x] !== TileType.LAVA) continue;
+        const lavaStart = x;
+        let cursor = x + 1;
+        for (; cursor < gridWidth; ++cursor) {
+          const tileType = grid[y][cursor];
+          if (tileType !== TileType.LAVA) {
+            break;
+          }
+        }
+        const lavaLength = cursor - lavaStart;
+        this.createLava(lavaStart * tileSize, y * tileSize, lavaLength);
+
+        x = cursor;
       }
     }
   }
@@ -112,9 +135,7 @@ export class Room {
 
   private createLava(x: number, y: number, repeat: number) {
     const id = this.ecs.createEntity();
-    const offset = 16;
-    this.ecs.addComponent(id, new Position(x, y - offset));
-    this.ecs.addComponent(id, new Sprite(SpriteSheets.LAVA, 0, -1, repeat));
+    this.ecs.addComponent(id, new Position(x, y));
 
     const anim = new Animation(
       {
@@ -131,10 +152,11 @@ export class Room {
     const collider = this.ecs.createEntity();
     this.ecs.addComponent(
       collider,
-      new Collider(id, { width: TILE_SIZE * repeat, height: 64 - offset, offsetY: offset }),
+      new Collider(id, { width: TILE_SIZE * repeat, height: 30, offsetY: 30 }),
     );
     this.ecs.addComponent(collider, new Hitbox());
 
+    this.ecs.addComponent(id, new Sprite(SpriteSheets.LAVA, 0, -1, repeat));
     this.ecs.addComponent(id, anim);
   }
 
