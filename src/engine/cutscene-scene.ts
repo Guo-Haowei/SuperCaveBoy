@@ -6,8 +6,8 @@ import { roomManager } from './room-manager';
 export class CutsceneScene extends IScene {
   private pos: Position | null = null;
   private intialX = 0;
-  private targetX = 860;
-  private speed = 2000;
+  private targetX = 800;
+  private speed = 200;
 
   tick(dt: number) {
     const room = roomManager.getCurrentRoom();

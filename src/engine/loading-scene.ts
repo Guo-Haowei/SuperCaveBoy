@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { IScene } from './scene';
 import * as System from './systems';
 import { Camera, Position } from '../components';
@@ -34,15 +35,14 @@ export class LoadingScene extends IScene {
     const ratio = Math.min(0.999, loadingTime.remaining / loadingTime.duration);
     const alpha = 1.4 - Math.abs(ratio - 0.5) * 2;
 
-    ctx.save(); // Save current state
+    ctx.save();
 
-    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`; // black with 50% transparency
+    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
     ctx.fillRect(0, 0, camera.width, camera.height);
 
-    ctx.restore(); // Restore previous state
+    ctx.restore();
 
     if (this.roomName && alpha > 0.99) {
-      // eslint-disable-next-line no-console
       console.log(`Entering room: ${this.roomName}`);
       roomManager.loadRoom(this.roomName);
       this.roomName = null;

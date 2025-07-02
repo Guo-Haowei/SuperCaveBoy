@@ -205,9 +205,9 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   };
 
   const hitArea: ColliderArea = {
-    width: 32,
+    width: 12,
     height: 12,
-    offsetX: 16,
+    offsetX: 26,
     offsetY: 60,
   };
 

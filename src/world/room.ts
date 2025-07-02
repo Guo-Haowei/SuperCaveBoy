@@ -61,6 +61,10 @@ export class Room {
     // tiles
     for (let y = 0; y < height; ++y) {
       for (let x = 0; x < width; ++x) {
+        const id = tiles[y][x];
+        if (id !== 0 && id !== 1) {
+          continue;
+        }
         const spriteId = tiles[y][x] === TileType.WALL ? SpriteSheets.WALL : SpriteSheets.DIRY;
         this.createTile(tileSize * x, tileSize * y, spriteId);
       }

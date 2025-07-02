@@ -64,6 +64,9 @@ export function renderSystem(
 
   ctx.clearRect(0, 0, camera.width, camera.height);
 
+  ctx.fillStyle = `rgba(255, 255, 255, 1)`;
+  ctx.fillRect(0, 0, camera.width, camera.height);
+
   const offset = camera.getOffset(pos);
   ctx.save();
   ctx.translate(-offset.x, -offset.y);

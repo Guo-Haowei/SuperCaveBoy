@@ -76,7 +76,7 @@ class GuardianScript extends LifeformScript {
           },
         },
       },
-      'alert',
+      'idle',
     );
   }
 

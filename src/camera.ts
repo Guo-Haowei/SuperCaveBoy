@@ -4,20 +4,32 @@ import { Name, Position, Camera, Instance, ScriptBase } from './components';
 // @TODO: camera controller script
 class CameraFollowScript extends ScriptBase {
   private target: number;
-  private roomWidth: number;
-  private roomHeight: number;
+  private xMin: number;
+  private xMax: number;
+  private yMin: number;
+  private yMax: number;
 
   constructor(
     entity: number,
     world: ECSWorld,
     target: number,
+    screenWidth: number,
+    screenHeight: number,
     roomWidth: number,
     roomHeight: number,
   ) {
     super(entity, world);
     this.target = target;
-    this.roomWidth = roomWidth;
-    this.roomHeight = roomHeight;
+
+    this.xMin = screenWidth / 2;
+    this.xMax = roomWidth - screenWidth / 2;
+    this.yMin = screenHeight / 2;
+    this.yMax = roomHeight - screenHeight / 2;
+  }
+
+  clampPosition(pos: Position): void {
+    pos.x = Math.max(this.xMin, Math.min(pos.x, this.xMax));
+    pos.y = Math.max(this.yMin, Math.min(pos.y, this.yMax));
   }
 
   onUpdate(_dt: number) {
@@ -31,17 +43,7 @@ class CameraFollowScript extends ScriptBase {
     pos.x += (objx - pos.x) / 20.0;
     pos.y += (objy - pos.y) / 20.0;
 
-    // const { roomWidth, roomHeight } = this;
-    // if (pos.x <= WIDTH / 2) {
-    //   pos.x = WIDTH / 2;
-    // } else if (pos.x >= roomWidth - WIDTH / 2) {
-    //   pos.x = roomWidth - WIDTH / 2;
-    // }
-    // if (pos.y <= HEIGHT / 2 + YOFFSET) {
-    //   pos.y = HEIGHT / 2 + YOFFSET;
-    // } else if (pos.y >= roomHeight - HEIGHT / 2) {
-    //   pos.y = roomHeight - HEIGHT / 2;
-    // }
+    this.clampPosition(pos);
   }
 }
 
@@ -49,18 +51,29 @@ export function createGameCamera(
   ecs: ECSWorld,
   x: number,
   y: number,
-  width: number,
-  height: number,
+  screenWidth: number,
+  screenHeight: number,
   target: number,
   roomWidth: number,
   roomHeight: number,
 ): number {
   const id = ecs.createEntity();
-  const script = new CameraFollowScript(id, ecs, target, roomWidth, roomHeight);
+  const script = new CameraFollowScript(
+    id,
+    ecs,
+    target,
+    screenWidth,
+    screenHeight,
+    roomWidth,
+    roomHeight,
+  );
+
+  const position = new Position(x, y);
+  script.clampPosition(position);
 
   ecs.addComponent(id, new Name('Camera'));
-  ecs.addComponent(id, new Camera(width, height));
-  ecs.addComponent(id, new Position(x, y));
+  ecs.addComponent(id, new Camera(screenWidth, screenHeight));
+  ecs.addComponent(id, position);
   ecs.addComponent(id, new Instance(script));
   return id;
 }
