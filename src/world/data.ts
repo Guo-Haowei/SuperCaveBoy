@@ -551,7 +551,7 @@ export const WORLD_DATA: LevelData[] = [
     ],
     objects: [
       [512, 716, TYPE.LAVA, 4],
-      [360, 520, TYPE.CAMERA],
+      [360, 420, TYPE.CAMERA],
     ],
     monsters: [[860, 516, MONSTER.BOSS]],
     level: [

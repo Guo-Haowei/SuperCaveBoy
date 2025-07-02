@@ -8,9 +8,10 @@ import { createGameCamera } from '../camera';
 import { createPlayer } from './player';
 import { WIDTH, HEIGHT } from '../constants';
 import { createPoartal } from './portal';
+import { createGuardian } from './guardian';
+import { createTrigger } from './trigger';
 
 import { LevelData, MONSTER, TYPE } from './data';
-import { createGuardian } from './guardian';
 
 enum TileType {
   WALL = 0,
@@ -91,6 +92,8 @@ export class Room {
       const type = obj[2];
       if (type === TYPE.EXIT) {
         createPoartal(this.ecs, obj[0] as number, obj[1] as number, obj[3] as string);
+      } else if (type === TYPE.CAMERA) {
+        createTrigger(this.ecs, obj[0] as number, obj[1] as number);
       }
     }
   }

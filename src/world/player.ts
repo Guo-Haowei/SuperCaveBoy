@@ -158,8 +158,6 @@ class PlayerScript extends ScriptBase {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
 
     switch (layer) {
-      case Collider.PORTAL:
-        break;
       case Collider.OBSTACLE:
         if (otherBound.above(selfBound)) {
           const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
@@ -184,7 +182,7 @@ class PlayerScript extends ScriptBase {
         }
         break;
       default:
-        throw new Error(`Unhandled collision with layer ${layer}`);
+        break;
     }
   }
 }

@@ -145,6 +145,9 @@ function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
       case Collider.PORTAL:
         color = 'purple';
         break;
+      case Collider.EVENT:
+        color = 'orange';
+        break;
       default:
         color = 'blue';
         break;
