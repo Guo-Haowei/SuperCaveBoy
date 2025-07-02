@@ -1,26 +1,35 @@
-import { ECSWorld } from '../ecs';
+import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
-  Camera,
   Collider,
-  Dynamic,
-  Facing,
+  Instance,
+  Health,
+  Hitbox,
+  Hurtbox,
+  CollisionInfo,
   PendingDelete,
+  Player,
+  Rigid,
   Position,
   Sprite,
-  Instance,
-  Static,
+  Team,
+  Trigger,
   Velocity,
-  Grounded,
 } from '../components';
-import { Room } from '../world/room';
-import { assetManager } from './assets-manager';
-import { Direction, AABB, Vec2 } from './common';
-import { EditorState } from '../editor-state';
+import { Direction, AABB, Vec2 } from './utils';
+import { toAABB } from './utils';
+
+export interface SystemContext {
+  ecs: ECSWorld;
+  damageCollision?: [Entity, Entity, Hitbox][];
+  rigidCollision?: [Entity, Entity, Vec2][];
+}
 
 // ------------------------------ Animation System -----------------------------
-export function animationSystem(world: ECSWorld, dt: number) {
-  for (const [_id, anim, sprite] of world.queryEntities<Animation, Sprite>(
+export function animationSystem(world: SystemContext, dt: number) {
+  const { ecs } = world;
+
+  for (const [_id, anim, sprite] of ecs.queryEntities<Animation, Sprite>(
     Animation.name,
     Sprite.name,
   )) {
@@ -39,133 +48,16 @@ export function animationSystem(world: ECSWorld, dt: number) {
   }
 }
 
-// ------------------------------- Render System -------------------------------
-export function renderSystem(
-  world: ECSWorld,
-  ctx: CanvasRenderingContext2D,
-  room: Room,
-  cameraContext: { camera: Camera; pos: Position },
-) {
-  const { camera, pos } = cameraContext;
-
-  ctx.clearRect(0, 0, camera.width, camera.height);
-
-  const offset = camera.getOffset(pos);
-  ctx.save();
-  ctx.translate(-offset.x, -offset.y);
-  ctx.scale(camera.zoom, camera.zoom);
-
-  const renderables = world.queryEntities<Sprite, Position>(Sprite.name, Position.name);
-  const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
-
-  for (const [id, sprite, pos] of sorted) {
-    const { x, y } = pos as Position;
-    const { sheetId, frameIndex } = sprite as Sprite;
-
-    const renderable = assetManager.getFrame(sheetId, frameIndex);
-    const { image, frame } = renderable;
-
-    ctx.save();
-
-    const facing = world.getComponent<Facing>(id, Facing.name);
-    const flipLeft: number = facing && facing.left ? 1 : 0;
-
-    ctx.translate(x + flipLeft * frame.width, y);
-    ctx.scale(flipLeft ? -1 : 1, 1);
-
-    ctx.drawImage(
-      image,
-      frame.sourceX,
-      frame.sourceY,
-      frame.width,
-      frame.height,
-      0,
-      0,
-      frame.width,
-      frame.height,
-    );
-
-    ctx.restore();
-  }
-
-  if (EditorState.debugCollisions) {
-    renderSystemDebug(world, ctx);
-  }
-
-  if (EditorState.debugGrid) {
-    drawDebugGrid(ctx, room);
-  }
-
-  ctx.restore();
-}
-
-function drawDebugGrid(ctx: CanvasRenderingContext2D, room: Room) {
-  ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-
-  const { width, height, tileSize } = room;
-
-  for (let x = 0; x <= width; ++x) {
-    const pixelX = x * tileSize;
-    ctx.beginPath();
-    ctx.moveTo(pixelX, 0);
-    ctx.lineTo(pixelX, height * tileSize);
-    ctx.stroke();
-  }
-
-  for (let y = 0; y <= height; ++y) {
-    const pixelY = y * tileSize;
-    ctx.beginPath();
-    ctx.moveTo(0, pixelY);
-    ctx.lineTo(width * tileSize, pixelY);
-    ctx.stroke();
-  }
-}
-
-function renderSystemDebug(world: ECSWorld, ctx: CanvasRenderingContext2D) {
-  for (const [_, pos, collider] of world.queryEntities<Position, Collider>(
-    Position.name,
-    Collider.name,
-  )) {
-    const { x, y } = pos;
-    const { width, height, offsetX, offsetY, layer } = collider;
-
-    const dx = x + offsetX;
-    const dy = y + offsetY;
-
-    let color: string;
-    switch (layer) {
-      case Collider.PLAYER:
-        color = 'green';
-        break;
-      case Collider.ENEMY:
-        color = 'red';
-        break;
-      case Collider.PORTAL:
-        color = 'purple';
-        break;
-      default:
-        color = 'blue';
-        break;
-    }
-
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(dx, dy, width, height);
-  }
-}
-
 // ------------------------------- Script System -------------------------------
-export function scriptSystem(world: ECSWorld, dt: number) {
-  for (const [_id, script] of world.queryEntities<Instance>(Instance.name)) {
-    script.onUpdate(dt);
+export function scriptSystem(world: SystemContext, dt: number) {
+  for (const [_id, instance] of world.ecs.queryEntities<Instance>(Instance.name)) {
+    instance.script.onUpdate?.(dt);
   }
 }
 
 // ------------------------------ Movement System ------------------------------
-export function movementSystem(world: ECSWorld, dt: number) {
-  for (const [_id, vel, pos] of world.queryEntities<Velocity, Position>(
+export function movementSystem(world: SystemContext, dt: number) {
+  for (const [_id, vel, pos] of world.ecs.queryEntities<Velocity, Position>(
     Velocity.name,
     Position.name,
   )) {
@@ -178,9 +70,6 @@ export function movementSystem(world: ECSWorld, dt: number) {
 }
 
 // ------------------------------ Physics System -------------------------------
-function canCollide(a: Collider, b: Collider): boolean {
-  return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
-}
 
 function getMTV(a: AABB, b: AABB): Vec2 | null {
   const ax1 = a.xMin;
@@ -220,97 +109,174 @@ function mtvToDirection(mtv: Vec2): Direction {
   }
 }
 
-function toAABB(pos: Position, collider: Collider): AABB {
-  const { offsetX, offsetY, width, height } = collider;
-  return new AABB(
-    pos.x + offsetX,
-    pos.y + offsetY,
-    pos.x + offsetX + width,
-    pos.y + offsetY + height,
-  );
+function isRigidPair(a?: Rigid, b?: Rigid): boolean {
+  if (!a || !b) {
+    return false;
+  }
+  return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
 }
 
-export function physicsSystem(world: ECSWorld, _dt: number) {
-  const staticColliders = world.queryEntities<Static, Collider, Position>(
-    Static.name,
-    Collider.name,
-    Position.name,
-  );
-  const dynamicColliders = world.queryEntities<Dynamic, Collider, Position>(
-    Dynamic.name,
-    Collider.name,
-    Position.name,
-  );
+export function collisionSystem(world: SystemContext, _dt: number) {
+  world.damageCollision = [];
+  world.rigidCollision = [];
 
-  world.removeAllComponents(Grounded.name);
+  const { ecs, damageCollision, rigidCollision } = world;
+  const colliders = ecs.queryEntities<Collider>(Collider.name);
+  ecs.removeAllComponents(CollisionInfo.name);
 
-  // test static dynamic collisions
-  for (const [s, _static, staticCollider, staticPos] of staticColliders) {
-    for (const [d, _dynamic, dynamicCollider, dynamicPos] of dynamicColliders) {
-      if (!canCollide(staticCollider, dynamicCollider)) {
+  for (let i = 0; i < colliders.length - 1; ++i) {
+    for (let j = i + 1; j < colliders.length; ++j) {
+      const [id1, collider1] = colliders[i];
+      const [id2, collider2] = colliders[j];
+      const parent1 = collider1.parent;
+      const parent2 = collider2.parent;
+      const rigid1 = ecs.getComponent<Rigid>(id1, Rigid.name);
+      const rigid2 = ecs.getComponent<Rigid>(id2, Rigid.name);
+      const hitbox1 = ecs.getComponent<Hitbox>(id1, Hitbox.name);
+      const hitbox2 = ecs.getComponent<Hitbox>(id2, Hitbox.name);
+      const hurtbox1 = ecs.getComponent<Hurtbox>(id1, Hurtbox.name);
+      const hurtbox2 = ecs.getComponent<Hurtbox>(id2, Hurtbox.name);
+      const trigger1 = ecs.getComponent<Trigger>(id1, Trigger.name);
+      const trigger2 = ecs.getComponent<Trigger>(id2, Trigger.name);
+
+      const player1 = ecs.hasComponent(parent1, Player.name);
+      const player2 = ecs.hasComponent(parent2, Player.name);
+      const team1 = ecs.getComponent<Team>(parent1, Team.name);
+      const team2 = ecs.getComponent<Team>(parent2, Team.name);
+
+      const isRigid = isRigidPair(rigid1, rigid2);
+      const twoHitOne = hurtbox1 && hitbox2 && team1?.value !== team2?.value;
+      const oneHitTwo = hurtbox2 && hitbox1 && team1?.value !== team2?.value;
+      const is1Trigger = trigger1 && player2;
+      const is2Trigger = trigger2 && player1;
+
+      // @TODO: make sure sum to 1
+      const check =
+        Number(isRigid) +
+        Number(twoHitOne) +
+        Number(oneHitTwo) +
+        Number(is1Trigger) +
+        Number(is2Trigger);
+      if (check === 0) {
         continue;
       }
 
-      const aabb1 = toAABB(staticPos, staticCollider);
-      const aabb2 = toAABB(dynamicPos, dynamicCollider);
-      const mtv = getMTV(aabb1, aabb2);
-      if (!mtv) {
+      if (check > 1) throw new Error('Invalid collider pair');
+
+      const pos1 = ecs.getComponent<Position>(parent1, Position.name);
+      const pos2 = ecs.getComponent<Position>(parent2, Position.name);
+      if (!pos1 || !pos2) {
+        // it's possible that the parent entity has been deleted
         continue;
       }
-
-      // push the dynamic collider out of the static one
-      dynamicPos.x -= mtv.x;
-      dynamicPos.y -= mtv.y;
-
-      const direction = mtvToDirection(mtv);
-
-      world
-        .getComponent<Instance>(s, Instance.name)
-        ?.onCollision(d, dynamicCollider.layer, aabb1, aabb2);
-      world
-        .getComponent<Instance>(d, Instance.name)
-        ?.onCollision(s, staticCollider.layer, aabb2, aabb1);
-
-      if (direction === Direction.DOWN && staticCollider.layer === Collider.OBSTACLE) {
-        world.addComponent(d, new Grounded());
-        const vel = world.getComponent<Velocity>(d, Velocity.name);
-        if (vel) {
-          vel.vy = 1;
-        }
-      }
-    }
-  }
-
-  for (let i = 0; i < dynamicColliders.length - 1; ++i) {
-    for (let j = i + 1; j < dynamicColliders.length; ++j) {
-      const [d1, _dynamic1, collider1, pos1] = dynamicColliders[i];
-      const [d2, _dynamic2, collider2, pos2] = dynamicColliders[j];
-
-      if (!canCollide(collider1, collider2)) {
-        continue;
-      }
-
       const aabb1 = toAABB(pos1, collider1);
       const aabb2 = toAABB(pos2, collider2);
+
       const mtv = getMTV(aabb1, aabb2);
       if (!mtv) {
         continue;
       }
 
-      world
-        .getComponent<Instance>(d1, Instance.name)
-        ?.onCollision(d2, collider2.layer, aabb1, aabb2);
-      world
-        .getComponent<Instance>(d2, Instance.name)
-        ?.onCollision(d1, collider1.layer, aabb2, aabb1);
+      if (twoHitOne) {
+        damageCollision.push([parent2, parent1, hitbox2]);
+        continue;
+      } else if (oneHitTwo) {
+        damageCollision.push([parent1, parent2, hitbox1]);
+        continue;
+      }
+
+      if (isRigid) {
+        const isFirstObstacle = rigid1.layer === Rigid.OBSTACLE;
+        if (isFirstObstacle) {
+          rigidCollision.push([parent1, parent2, mtv]);
+        } else {
+          rigidCollision.push([parent2, parent1, { x: -mtv.x, y: -mtv.y }]);
+        }
+        continue;
+      }
+
+      const instance1 = ecs.getComponent<Instance>(parent1, Instance.name);
+      const instance2 = ecs.getComponent<Instance>(parent2, Instance.name);
+
+      if (is1Trigger) {
+        instance1?.script.onCollision(0, null, null);
+      } else if (is2Trigger) {
+        instance2?.script.onCollision(0, null, null);
+      }
     }
   }
 }
 
-export function deleteSystem(world: ECSWorld) {
-  const pendingDeletes = world.queryEntities<PendingDelete>(PendingDelete.name);
-  for (const [id] of pendingDeletes) {
-    world.removeEntity(id);
+export function rigidCollisionSystem(world: SystemContext, _dt: number) {
+  const { ecs, rigidCollision } = world;
+
+  for (const [obstacle, obj, mtv] of rigidCollision) {
+    const posA = ecs.getComponent<Position>(obstacle, Position.name);
+    const posB = ecs.getComponent<Position>(obj, Position.name);
+    if (!posA || !posB) {
+      continue;
+    }
+
+    posB.x -= mtv.x;
+    posB.y -= mtv.y;
+
+    const direction = mtvToDirection(mtv);
+
+    const info = new CollisionInfo();
+    if (direction === Direction.DOWN) {
+      info.grounded = true;
+      const vel = ecs.getComponent<Velocity>(obj, Velocity.name);
+      if (vel) {
+        vel.vy = 1;
+      }
+    } else if (direction === Direction.LEFT) {
+      info.leftWall = true;
+    } else if (direction === Direction.RIGHT) {
+      info.rightWall = true;
+    }
+    ecs.addComponent(obj, info);
+
+    const instanceA = ecs.getComponent<Instance>(obstacle, Instance.name);
+    const instanceB = ecs.getComponent<Instance>(obj, Instance.name);
+
+    instanceA?.script.onCollision?.(0, null, null);
+    instanceB?.script.onCollision?.(0, null, null);
   }
-  world.removeAllComponents(PendingDelete.name);
+}
+
+export function damageSystem(world: SystemContext, dt: number) {
+  const { ecs, damageCollision } = world;
+
+  for (const [attacker, victim, hitbox] of damageCollision) {
+    const health = ecs.getComponent<Health>(victim, Health.name);
+    if (!hitbox || !health) {
+      continue;
+    }
+
+    if (health.invulnerableTimeLeft <= 0) {
+      health.health -= hitbox.damage;
+      health.invulnerableTimeLeft = health.invulnerableTime;
+    } else {
+      health.invulnerableTimeLeft -= dt;
+    }
+
+    const instanceVictim = ecs.getComponent<Instance>(victim, Instance.name);
+    const instanceAttacker = ecs.getComponent<Instance>(attacker, Instance.name);
+
+    instanceVictim?.script.onHurt?.(attacker);
+    instanceAttacker?.script.onHit?.(victim);
+    // @TODO: if dead, onDie
+    if (health.isDead()) {
+      instanceVictim?.script.onDie?.();
+    }
+  }
+}
+
+export function deleteSystem(world: SystemContext) {
+  const { ecs } = world;
+  const pendingDeletes = ecs.queryEntities<PendingDelete>(PendingDelete.name);
+  for (const [id] of pendingDeletes) {
+    ecs.removeEntity(id);
+  }
+  ecs.removeAllComponents(PendingDelete.name);
 }

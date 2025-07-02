@@ -39,7 +39,9 @@ export class AABB {
   }
 
   above(other: AABB): boolean {
-    return this.yMax > other.yMin && this.yMax < other.yMax;
+    const diffy = this.yMax - other.yMin;
+    const diffx = Math.abs((this.xMin + this.xMax) / 2 - (other.xMin + other.xMax) / 2);
+    return diffy < 90 && diffx < 50;
   }
 
   center(): Vec2 {
@@ -48,6 +50,19 @@ export class AABB {
       y: (this.yMin + this.yMax) / 2,
     };
   }
+}
+
+export function toAABB(
+  pos: { x: number; y: number },
+  collider: { width: number; height: number; offsetX?: number; offsetY: number },
+): AABB {
+  const { offsetX, offsetY, width, height } = collider;
+  return new AABB(
+    pos.x + offsetX,
+    pos.y + offsetY,
+    pos.x + offsetX + width,
+    pos.y + offsetY + height,
+  );
 }
 
 export class CountDown {

@@ -1,8 +1,8 @@
+/* eslint-disable no-console */
 import { IScene } from './scene';
-import * as System from './systems';
-import { Camera, Position } from '../components';
 import { roomManager } from './room-manager';
-import { CountDown } from './common';
+import { CountDown } from './utils';
+import { renderSystem } from './renderSystem';
 
 export class LoadingScene extends IScene {
   static readonly LOADING_TIME = 1.2;
@@ -22,32 +22,31 @@ export class LoadingScene extends IScene {
     const { ecs } = room;
     const { ctx } = this.game;
 
-    const cameraId = room.cameraId;
-    const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
-    const pos = ecs.getComponent<Position>(cameraId, Position.name);
+    const { camera, pos } = room.getCameraAndPos();
 
-    System.renderSystem(ecs, ctx, room, { camera, pos });
+    renderSystem.render(ecs, room, { camera, pos });
 
     const { loadingTime } = this;
 
     const ratio = Math.min(0.999, loadingTime.remaining / loadingTime.duration);
     const alpha = 1.4 - Math.abs(ratio - 0.5) * 2;
 
-    ctx.save(); // Save current state
+    ctx.save();
 
-    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`; // black with 50% transparency
+    ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
     ctx.fillRect(0, 0, camera.width, camera.height);
 
-    ctx.restore(); // Restore previous state
+    ctx.restore();
 
     if (this.roomName && alpha > 0.99) {
+      console.log(`Entering room: ${this.roomName}`);
       roomManager.loadRoom(this.roomName);
       this.roomName = null;
     }
 
     const ready = loadingTime.tick(dt);
     if (ready) {
-      this.game.setScene('GAME');
+      this.game.requestScene('GAME');
       this.loadingTime.reset();
     }
   }

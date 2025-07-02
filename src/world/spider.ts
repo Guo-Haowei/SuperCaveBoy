@@ -1,23 +1,28 @@
 import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
+  ColliderArea,
   Facing,
   Name,
   Position,
   Instance,
-  ScriptBase,
   Sprite,
   Velocity,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
-import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform';
-import { CountDown } from '../engine/common';
+import {
+  createEnemyCommon,
+  findGravityAndJumpVelocity,
+  StateMachine,
+  LifeformScript,
+} from './lifeform';
+import { CountDown } from '../engine/utils';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
 type SpiderStateName = 'idle' | 'jumping' | 'die';
 
-class SpiderScript extends ScriptBase {
+class SpiderScript extends LifeformScript {
   private target: Entity;
   private cooldown = new CountDown(1.5);
 
@@ -91,7 +96,25 @@ class SpiderScript extends ScriptBase {
 }
 
 export function createSpider(ecs: ECSWorld, x: number, y: number, target: Entity) {
-  const id = createEnemyCommon(ecs, x, y, 40, 52, 12, 12);
+  const area: ColliderArea = {
+    width: 40,
+    height: 52,
+    offsetX: 12,
+    offsetY: 12,
+  };
+  const hurtArea: ColliderArea = {
+    width: 30,
+    height: 12,
+    offsetX: 17,
+    offsetY: 12,
+  };
+  const hitArea: ColliderArea = {
+    width: 40,
+    height: 32,
+    offsetX: 12,
+    offsetY: 32,
+  };
+  const id = createEnemyCommon(ecs, x, y, area, hurtArea, hitArea);
 
   const anim = new Animation(
     {

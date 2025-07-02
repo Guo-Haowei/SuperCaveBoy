@@ -1,24 +1,25 @@
 import { IScene } from './scene';
 import * as System from './systems';
-import { Camera, Position } from '../components';
 import { roomManager } from './room-manager';
+import { renderSystem } from './renderSystem';
 
 export class GameScene extends IScene {
   tick(dt: number) {
     const room = roomManager.getCurrentRoom();
     const { ecs } = room;
-    const { ctx } = this.game;
 
-    System.scriptSystem(ecs, dt);
-    System.movementSystem(ecs, dt);
-    System.physicsSystem(ecs, dt);
-    System.animationSystem(ecs, dt);
+    const world = { ecs };
+    System.scriptSystem(world, dt);
+    System.movementSystem(world, dt);
+    System.collisionSystem(world, dt);
+    System.rigidCollisionSystem(world, dt);
 
-    const cameraId = room.cameraId;
-    const camera = ecs.getComponent<Camera>(cameraId, Camera.name);
-    const pos = ecs.getComponent<Position>(cameraId, Position.name);
+    System.damageSystem(world, dt);
+    System.animationSystem(world, dt);
 
-    System.renderSystem(ecs, ctx, room, { camera, pos });
-    System.deleteSystem(ecs);
+    const { camera, pos } = room.getCameraAndPos();
+
+    renderSystem.render(ecs, room, { camera, pos });
+    System.deleteSystem(world);
   }
 }

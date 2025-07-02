@@ -1,30 +1,42 @@
 import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
-  Collider,
-  Name,
-  Position,
-  Instance,
-  ScriptBase,
-  Sprite,
-  Velocity,
+  ColliderArea,
+  Health,
   Facing,
+  Instance,
+  Player,
+  Position,
+  Name,
+  Rigid,
+  Sprite,
+  Team,
+  Velocity,
 } from '../components';
+import {
+  findGravityAndJumpVelocity,
+  createLifeform,
+  StateMachine,
+  LifeformScript,
+} from './lifeform';
+import { CountDown } from '../engine/utils';
+import { TeamNumber } from './defines';
+
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
-import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform';
-import { AABB } from '../engine/common';
-import { CountDown } from '../engine/common';
 
-const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
+const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.4);
 
-type PlayerStateName = 'idle' | 'walk' | 'jump' | 'hurt';
+type PlayerStateName = 'idle' | 'walk' | 'jumping' | 'hurt' | 'sliding';
 
-class PlayerScript extends ScriptBase {
+class PlayerScript extends LifeformScript {
+  static readonly HURT_COOLDOWN = 0.8;
   static readonly MOVE_SPEED = 400;
-  static readonly HURT_COOLDOWN = 0.5;
+  static readonly MAX_HEALTH = 10000;
 
-  private cooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
+  private damageCooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
+
+  private wall = 0;
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
@@ -44,8 +56,8 @@ class PlayerScript extends ScriptBase {
           enter: () => this.playAnim('walk'),
           update: () => this.walk(),
         },
-        jump: {
-          name: 'jump',
+        jumping: {
+          name: 'jumping',
           update: () => this.jump(),
         },
         hurt: {
@@ -53,9 +65,25 @@ class PlayerScript extends ScriptBase {
           enter: () => {
             this.playAnim('hurt');
             assetManager.snd_ouch.play();
-            this.cooldown.reset();
+            this.damageCooldown.reset();
           },
           update: (dt) => this.hurt(dt),
+        },
+        sliding: {
+          name: 'sliding',
+          enter: () => {
+            const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+            vel.vx = 0;
+            vel.vy = 0;
+            vel.gravity = 0.3 * GRAVITY;
+            this.playAnim('hang');
+          },
+          exit: () => {
+            const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+            vel.gravity = GRAVITY;
+            this.wall = 0;
+          },
+          update: () => this.slide(),
         },
       },
       'walk',
@@ -83,9 +111,9 @@ class PlayerScript extends ScriptBase {
     if (leftDown || rightDown) {
       const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
       facing.left = direction < 0;
-      return true;
+      return leftDown ? -1 : 1;
     }
-    return false;
+    return 0;
   }
 
   private tryJump(velocity: Velocity) {
@@ -96,10 +124,25 @@ class PlayerScript extends ScriptBase {
     return false;
   }
 
+  private checkSliding() {
+    const info = this.getCollisionInfo();
+    if (!info) {
+      return 0;
+    }
+    if (info.leftWall) {
+      return -1;
+    }
+    if (info.rightWall) {
+      return 1;
+    }
+    return 0;
+  }
+
   private checkFalling(velocity: Velocity) {
     if (this.isGrounded()) {
       return false;
     }
+
     const anim = this.world.getComponent<Animation>(this.entity, Animation.name);
     anim.current = 'jump';
     if (velocity.vy < 0) {
@@ -115,7 +158,7 @@ class PlayerScript extends ScriptBase {
     const walking = this.tryWalk(vel);
     this.tryJump(vel);
     if (!this.isGrounded()) {
-      this.fsm.transition('jump');
+      this.fsm.transition('jumping');
       return;
     }
     if (walking) {
@@ -128,7 +171,7 @@ class PlayerScript extends ScriptBase {
     const walking = this.tryWalk(vel);
     this.tryJump(vel);
     if (!this.isGrounded()) {
-      this.fsm.transition('jump');
+      this.fsm.transition('jumping');
       return;
     }
     if (!walking) {
@@ -141,6 +184,11 @@ class PlayerScript extends ScriptBase {
     const walking = this.tryWalk(velocity);
     const jumping = this.checkFalling(velocity);
     if (jumping) {
+      this.wall = this.checkSliding();
+      if (this.wall) {
+        this.fsm.transition('sliding');
+        return;
+      }
       return;
     }
 
@@ -148,57 +196,70 @@ class PlayerScript extends ScriptBase {
     this.fsm.transition(walking ? 'walk' : 'idle');
   }
 
+  private slide() {
+    if (this.isGrounded()) {
+      this.fsm.transition('idle');
+      return;
+    }
+
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+
+    const jumpPressed = this.inputUp();
+    if (jumpPressed) {
+      const walking = this.tryWalk(vel);
+      if ((this.wall === -1 && walking === 1) || (this.wall === 1 && walking === -1)) {
+        this.wall = 0; // reset wall state
+        this.fsm.transition('jumping');
+        vel.vy = -JUMP_VELOCITY;
+        return;
+      }
+    }
+  }
+
   private hurt(dt: number) {
-    if (this.cooldown.tick(dt)) {
+    if (this.damageCooldown.tick(dt)) {
       this.fsm.transition('idle');
     }
   }
 
-  onCollision(other: Entity, layer: number, selfBound: AABB, otherBound: AABB): void {
+  onHurt(_attacker: number) {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
 
-    switch (layer) {
-      case Collider.PORTAL:
-        break;
-      case Collider.OBSTACLE:
-        if (otherBound.above(selfBound)) {
-          const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-          velocity.vy += JUMP_VELOCITY * 0.2;
-          // @TODO: grab ledge
-        }
-        break;
-      case Collider.ENEMY:
-        if (selfBound.above(otherBound)) {
-          // kill the enemy
-          const script = this.world.getComponent<Instance>(other, Instance.name);
-          script?.onDie();
-          velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
-        } else {
-          const center = selfBound.center();
-          const otherCenter = otherBound.center();
+    velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(velocity.vx) || 1); // bounce back
+    velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
+    this.fsm.transition('hurt');
+  }
 
-          const dx = center.x - otherCenter.x;
-          velocity.vx = PlayerScript.MOVE_SPEED * (Math.sign(dx) || 1); // bounce back
-          velocity.vy -= JUMP_VELOCITY * 0.2; // bounce up
-          this.fsm.transition('hurt');
-        }
-        break;
-      default:
-        throw new Error(`Unhandled collision with layer ${layer}`);
-    }
+  onHit(_victim: number): void {
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
+    assetManager.snd_step.play();
   }
 }
 
 export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
-  const id = createLifeform(
-    ecs,
-    32,
-    62,
-    Collider.PLAYER,
-    Collider.ENEMY | Collider.OBSTACLE | Collider.EVENT | Collider.TRAP,
-    16,
-    10,
-  );
+  const rigidArea: ColliderArea = {
+    width: 32,
+    height: 62,
+    offsetX: 16,
+    offsetY: 10,
+  };
+
+  const hurtArea: ColliderArea = {
+    width: 32,
+    height: 42,
+    offsetX: 16,
+    offsetY: 10,
+  };
+
+  const hitArea: ColliderArea = {
+    width: 12,
+    height: 12,
+    offsetX: 26,
+    offsetY: 60,
+  };
+
+  const id = createLifeform(ecs, TeamNumber.PLAYER, Rigid.PLAYER, rigidArea, hurtArea, hitArea);
 
   const anim = new Animation(
     {
@@ -226,6 +287,12 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
         speed: 1,
         loop: false,
       },
+      hang: {
+        sheetId: SpriteSheets.PLAYER_HANG,
+        frames: 1,
+        speed: 1,
+        loop: true,
+      },
     },
     'idle',
   );
@@ -236,219 +303,11 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   ecs.addComponent(id, new Facing(false));
   ecs.addComponent(id, new Sprite(SpriteSheets.PLAYER_IDLE));
   ecs.addComponent(id, anim);
+  ecs.addComponent(id, new Player());
+  ecs.addComponent(id, new Team(TeamNumber.PLAYER));
+  ecs.addComponent(id, new Health(PlayerScript.MAX_HEALTH, PlayerScript.HURT_COOLDOWN));
 
   const script = new PlayerScript(id, ecs);
   ecs.addComponent(id, new Instance(script));
   return id;
 }
-
-// import { Rect } from '../common';
-// import { assetManager } from '../assetManager';
-// import { inputManager } from '../input-manager';
-
-// export class Player {
-//   constructor(x, y, speed, handler) {
-//     this.x = x;
-//     this.y = y;
-//     this.speed = speed;
-
-//     this.handler = handler;
-//     this.face = DIRECTION.RIGHT;
-
-//     this.jump_animation;
-//     this.walk_animation;
-
-//     this.currentState;
-//     this.currentFrame;
-
-//     this.grabbing = false;
-//     this.hurt = false;
-
-//     this.alpha = 1;
-
-//     this.pausing = false;
-
-//     this.alarm0 = new Alarm(this.handler);
-
-//     this.alarm1 = new Alarm(this.handler);
-//     this.walk_animation = new OldAnimation(2, handler._getGameAssets().spr_player_walk);
-//     this.jump_animation = handler._getGameAssets().spr_player_jump;
-//     this.currentFrame = this.jump_animation[1];
-//     this.currentState = this._JumpingState;
-//   }
-
-//   _move() {
-//     if (this.hspeed === 1) this.face = 1;
-//     else if (this.hspeed === -1) this.face = 0;
-//     if (this.x <= 60) {
-//       this.x = 60;
-//       this.state = ENTITY_STATES.IDLING;
-//     } else if (this.x >= WWIDTH - 125) {
-//       this.x = WWIDTH - 125;
-//       this.state = ENTITY_STATES.IDLING;
-//     }
-//     // check collision with walls
-//     if (!checkAllCollision(this, this.handler._getObstacles(), hCollision)) {
-//       this.x += this.hspeed * this.speed;
-//     }
-//     this.grabbing = false;
-//   }
-
-//   _damageTrigger(x) {
-//     this.grabbing = false;
-//     this.alarm1._init(20);
-//     this.alarm1._setScript(this.alarm1._quitDamangePlayer);
-//     this._setState(this._DamagedState);
-//     this.vspeed = -15;
-//     if (this.x > x) {
-//       this.hspeed = 1;
-//     } else {
-//       this.hspeed = -1;
-//     }
-//     assetManager.snd_ouch.play();
-//   }
-
-//   _DamagedState() {
-//     // damaged state
-//     this.hurt = true;
-//     this._move();
-//     this.currentFrame = this.handler._getGameAssets().spr_player_damage;
-//   }
-
-//   _GrabState = function () {
-//     // grab state
-//     this.currentFrame = this.handler._getGameAssets().spr_player_grab;
-//   };
-
-//   _IdlingState = function () {
-//     // idling state
-//     this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-//     if (this.hspeed !== 0) this.currentState = this._MovingState;
-//   };
-
-//   _MovingState = function () {
-//     // moving state
-//     if (this.hspeed === 0) {
-//       this.currentState == this._IdlingState;
-//       this.currentFrame = this.handler._getGameAssets().spr_player_idle;
-//       return;
-//     }
-//     this._move();
-//     this.currentFrame = this.walk_animation._getFrame();
-//     this.walk_animation._tick();
-//   };
-
-//   _JumpingState = function () {
-//     // jumping state
-//     this.currentFrame = this.jump_animation[this.vspeed < 0 ? 0 : 1];
-//     if (this.hspeed !== 0) this._move();
-//   };
-
-//   _revive = function () {
-//     this.alarm0.activated = false;
-//     this.alarm1.activated = false;
-//     this.hspeed = 0;
-//     this.vspeed = 0;
-//     this.face = DIRECTION.RIGHT;
-//     this.takingJump = false;
-//     this.grabbing = false;
-//     this.health = 3;
-//     this.sapphire = 0;
-//     this._setPos(SpawningX, SpawningY);
-//     this._setState(this._JumpingState);
-//     // reset camara pos
-//     // Camera()._setoffset(480, SpawningY);
-//     this.handler._getLevel()._init(true);
-//   };
-
-//   _tick() {
-//     this.hurt = false;
-//     if (this.pausing) {
-//       return;
-//     }
-//     if (this.health <= 0) {
-//       this._revive();
-//     }
-//     if (this.alarm0.activated) {
-//       this.alarm0._tick();
-//       if (this.alarm0.activated && this.alpha >= 0.1) this.alpha -= 0.1;
-//       return;
-//     }
-
-//     // hspeed
-//     if (!this.alarm1.activated && this.currentState != this._DamagedState) {
-//       const leftDown = inputManager.isKeyDown('KeyA');
-//       const rightDown = inputManager.isKeyDown('KeyD');
-//       const direction = Number(rightDown) - Number(leftDown);
-//       this.hspeed = direction;
-//     }
-//     // vspeed
-//     const jumpPressed = inputManager.isKeyPressed('KeyW');
-//     if (
-//       jumpPressed &&
-//       !this.alarm1.activated &&
-//       this.currentState != this._DamagedState &&
-//       ((this.takingJump && this.vspeed === 1.5) || this.grabbing)
-//     ) {
-//       if (!this.grabbing) {
-//         this.vspeed = JUMPFORCE;
-//       } else {
-//         this.vspeed = -20;
-//       }
-//       this.currentState = this._JumpingState;
-//       this.takingJump = false;
-//       this.grabbing = false;
-//     }
-//     // check grabbing state
-//     if (checkAllCollision(this, this.handler._getObstacles(), grabbingCollision)) {
-//       this.grabbing = true;
-//     }
-
-//     if (this.alarm1.activated) {
-//       this.alarm1._tick();
-//     }
-//     // vertical
-//     if (this.grabbing && !this.hurt) {
-//       this.currentState = this._GrabState;
-//     } else {
-//       if (checkAllCollision(this, this.handler._getObstacles(), downCollision)) {
-//       } else {
-//         this.y += this.vspeed;
-//         this.vspeed += GRAVITY;
-//       }
-//       checkAllCollision(this, this.handler._getObstacles(), upCollision);
-//     }
-//     // tick state
-//     this.currentState();
-//     // tick handler
-//   }
-
-//   _land() {
-//     if (this.vspeed === 0) return;
-//     this.takingJump = true;
-//     this.currentState = this._IdlingState;
-
-//     assetManager.snd_step.play();
-
-//     this.vspeed = 0;
-//   }
-
-//   _render(graphics) {
-//     // this.currentFrame.draw(
-//     //   graphics,
-//     //   this.x - xoffset,
-//     //   this.y - yoffset,
-//     //   this.alpha,
-//     //   this.face === 0 ? HORIZONTAL_FLIP : 0,
-//     // );
-//   }
-
-//   _setState(state) {
-//     this.currentState = state;
-//   }
-
-//   _setPos(x, y) {
-//     this.x = x;
-//     this.y = y;
-//   }
-// }
