@@ -77,3 +77,57 @@ export function createGuardian(ecs: ECSWorld, x: number, y: number, target: Enti
   ecs.addComponent(id, new Instance(script));
   return id;
 }
+
+// export class OldMonster {
+//   _BossTransition() {
+//     if (this.alarm1.activated) this.alarm1._tick();
+//     this.sprite = this.handler._getGameAssets().spr_boss[1];
+//     if (!this.alarm1.activated) {
+//       this._move = this._BossRising;
+//       this.hspeed = 0;
+//       this.vspeed = 0;
+//     }
+//     if (!this.takingDamage) this.sprite = this.handler._getGameAssets().spr_boss_damaged;
+//     if (this.health <= 0) {
+//       this._move = this._BossDying;
+//       const exit = new SpecialObject(this.handler, 992, 608, TYPE.EXIT);
+//       exit._init();
+//       this.handler._getLevel().objects.push(exit);
+//     }
+//   }
+
+//   _BossDying() {
+//     if (this.alarm2.activated) {
+//       this.alarm2._tick();
+//     }
+//     this.sprite = handler._getGameAssets().spr_boss_damaged;
+//     this.takingDamage = false;
+//     if (this.alpha > 0.1) this.alpha -= 0.03;
+//     else {
+//       this.alarm2.activated = false;
+//     }
+//   }
+
+//   _BossRising() {
+//     if (this.y > 192) {
+//       this.y -= (this.y - 180) / 30;
+//       if (this.y < 192) this.y = 192;
+//     } else {
+//       this._move = this._BossChasing;
+//       this.alarm0._init(120);
+//       this.takingDamage = true;
+//     }
+//   }
+
+//   _BossChasing() {
+//     if (this.alarm0.activated) this.alarm0._tick();
+//     const center = this.x + this.bound.x + this.bound.width / 2,
+//       player = this.handler._getPlayer(),
+//       pCenter = player.x + player.bound.x + player.bound.width / 2;
+//     if (Math.abs(center - pCenter) > 40 && this.alarm0.activated) {
+//       this.hspeed = this.x - player.x < 0 ? 1 : -1;
+//     } else {
+//       this._move = this._BossFalling;
+//       this.hspeed = 0;
+//     }
+//   }

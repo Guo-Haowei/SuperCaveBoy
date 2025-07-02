@@ -6,16 +6,15 @@ import {
   Position,
   ColliderArea,
   Instance,
-  ScriptBase,
   Sprite,
   Velocity,
 } from '../components';
-import { createEnemyCommon, StateMachine } from './lifeform';
+import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 
 type SnakeStateName = 'idle' | 'die';
 
-class SnakeScript extends ScriptBase {
+class SnakeScript extends LifeformScript {
   private static readonly INITIAL_SPEED = 100;
 
   private leftBound: number;

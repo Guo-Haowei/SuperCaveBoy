@@ -11,6 +11,7 @@ import {
   Grounded,
   Name,
   PendingDelete,
+  Player,
   Rigid,
   Position,
   Sprite,
@@ -132,6 +133,9 @@ function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
   ctx.globalAlpha = 0.5;
   for (const [id, collider] of world.queryEntities<Collider>(Collider.name)) {
     const pos = world.getComponent<Position>(collider.parent, Position.name);
+    if (!pos) {
+      continue;
+    }
     const { x, y } = pos;
     const { width, height, offsetX, offsetY } = collider;
 
@@ -153,7 +157,7 @@ function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
     } else if (isHitbox) {
       color = 'green';
     } else if (isHurtbox) {
-      color = 'yellow';
+      color = 'red';
     } else if (isTrigger) {
       color = 'orange';
     }
@@ -167,7 +171,7 @@ function drawDebugCollider(world: ECSWorld, ctx: CanvasRenderingContext2D) {
 // ------------------------------- Script System -------------------------------
 export function scriptSystem(world: ECSWorld, dt: number) {
   for (const [_id, instance] of world.queryEntities<Instance>(Instance.name)) {
-    instance.script.onUpdate(dt);
+    instance.script.onUpdate?.(dt);
   }
 }
 
@@ -242,30 +246,6 @@ function isRigidPair(a?: Rigid, b?: Rigid): boolean {
   return (a.layer & b.mask) !== 0 || (b.layer & a.mask) !== 0;
 }
 
-function isTriggerPair(
-  world: ECSWorld,
-  id1: number,
-  id2: number,
-  trigger1?: Trigger,
-  trigger2?: Trigger,
-): boolean {
-  if (!trigger1 && !trigger2) {
-    return false;
-  }
-  const team1 = world.getComponent<Team>(id1, Team.name);
-  const team2 = world.getComponent<Team>(id2, Team.name);
-
-  if (trigger1 && trigger1.filter & (team2 ? team2.value : 0)) {
-    return true;
-  }
-
-  if (trigger2 && trigger2.filter & (team1 ? team1.value : 0)) {
-    return true;
-  }
-
-  return false;
-}
-
 export function physicsSystem(world: ECSWorld, _dt: number) {
   const colliders = world.queryEntities<Collider>(Collider.name);
   world.removeAllComponents(Grounded.name);
@@ -285,13 +265,24 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
       const trigger1 = world.getComponent<Trigger>(id1, Trigger.name);
       const trigger2 = world.getComponent<Trigger>(id2, Trigger.name);
 
+      const player1 = world.hasComponent(parent1, Player.name);
+      const player2 = world.hasComponent(parent2, Player.name);
+      const team1 = world.getComponent<Team>(parent1, Team.name);
+      const team2 = world.getComponent<Team>(parent2, Team.name);
+
       const isRigid = isRigidPair(rigid1, rigid2);
-      const is1Hurt = hurtbox1 && hitbox2;
-      const is2Hurt = hurtbox2 && hitbox1;
-      const isTrigger = isTriggerPair(world, id1, id2, trigger1, trigger2);
+      const is1Hurt = hurtbox1 && hitbox2 && team1?.value !== team2?.value;
+      const is2Hurt = hurtbox2 && hitbox1 && team1?.value !== team2?.value;
+      const is1Trigger = trigger1 && player2;
+      const is2Trigger = trigger2 && player1;
 
       // @TODO: make sure sum to 1
-      const check = Number(isRigid) + Number(is1Hurt) + Number(is2Hurt) + Number(isTrigger);
+      const check =
+        Number(isRigid) +
+        Number(is1Hurt) +
+        Number(is2Hurt) +
+        Number(is1Trigger) +
+        Number(is2Trigger);
       if (check === 0) {
         continue;
       }
@@ -300,6 +291,10 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
 
       const pos1 = world.getComponent<Position>(parent1, Position.name)!;
       const pos2 = world.getComponent<Position>(parent2, Position.name)!;
+      if (!pos1 || !pos2) {
+        // it's possible that the parent entity has been deleted
+        continue;
+      }
       const aabb1 = toAABB(pos1, collider1);
       const aabb2 = toAABB(pos2, collider2);
 
@@ -348,12 +343,24 @@ export function physicsSystem(world: ECSWorld, _dt: number) {
 
       if (is1Hurt) {
         instance1?.script.onHurt?.(aabb1, aabb2);
+        instance2?.script.onHit?.(aabb2, aabb1);
       } else if (is2Hurt) {
-        instance1?.script.onHurt?.(aabb2, aabb1);
+        instance2?.script.onHurt?.(aabb2, aabb1);
+        instance1?.script.onHit?.(aabb1, aabb2);
+      } else if (isRigid) {
+        instance1?.script.onCollision?.(rigid2.layer, aabb1, aabb2);
+        instance2?.script.onCollision?.(rigid1.layer, aabb2, aabb1);
+      } else if (is1Trigger) {
+        console.log(
+          `Trigger collision: ${world.getComponent<Name>(parent1, Name.name)?.value} with`,
+        );
+        instance1?.script.onCollision();
+      } else if (is2Trigger) {
+        console.log(
+          `Trigger collision: ${world.getComponent<Name>(parent1, Name.name)?.value} with`,
+        );
+        instance2?.script.onCollision();
       }
-
-      instance1?.script?.onCollision?.(parent2, aabb1, aabb2);
-      instance2?.script?.onCollision?.(parent1, aabb2, aabb1);
     }
   }
 }

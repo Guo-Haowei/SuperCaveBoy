@@ -6,19 +6,23 @@ import {
   Name,
   Position,
   Instance,
-  ScriptBase,
   Sprite,
   Velocity,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
-import { createEnemyCommon, findGravityAndJumpVelocity, StateMachine } from './lifeform';
+import {
+  createEnemyCommon,
+  findGravityAndJumpVelocity,
+  StateMachine,
+  LifeformScript,
+} from './lifeform';
 import { CountDown } from '../engine/utils';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.3);
 
 type SpiderStateName = 'idle' | 'jumping' | 'die';
 
-class SpiderScript extends ScriptBase {
+class SpiderScript extends LifeformScript {
   private target: Entity;
   private cooldown = new CountDown(1.5);
 

@@ -7,7 +7,7 @@ class CussceneTriggerScript extends ScriptBase {
   private disabled = false;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onCollision(other: Entity, selfBound: AABB, otherBound: AABB): void {
+  onCollision(layer: number, selfBound: AABB, otherBound: AABB): void {
     if (this.disabled) return;
     getRuntime().requestScene('CUTSCENE');
     this.disabled = true;

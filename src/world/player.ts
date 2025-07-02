@@ -1,21 +1,25 @@
 import { ECSWorld, Entity } from '../ecs';
 import {
   Animation,
-  Collider,
   ColliderArea,
   Name,
   Position,
   Instance,
   Player,
-  ScriptBase,
   Sprite,
+  Team,
   Velocity,
   Facing,
   Rigid,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
-import { findGravityAndJumpVelocity, createLifeform, StateMachine } from './lifeform';
+import {
+  findGravityAndJumpVelocity,
+  createLifeform,
+  StateMachine,
+  LifeformScript,
+} from './lifeform';
 import { AABB } from '../engine/utils';
 import { CountDown } from '../engine/utils';
 import { TeamNumber } from './defines';
@@ -24,7 +28,7 @@ const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(180, 0.4);
 
 type PlayerStateName = 'idle' | 'walk' | 'jump' | 'hurt';
 
-class PlayerScript extends ScriptBase {
+class PlayerScript extends LifeformScript {
   static readonly MOVE_SPEED = 400;
   static readonly HURT_COOLDOWN = 0.5;
 
@@ -169,27 +173,20 @@ class PlayerScript extends ScriptBase {
     this.fsm.transition('hurt');
   }
 
-  onCollision(other: Entity, selfBound: AABB, otherBound: AABB): void {
-    // switch (layer) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onHit(selfBound: AABB, otherBound: AABB) {
+    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onCollision(layer: number, selfBound: AABB, otherBound: AABB): void {
     // case Collider.OBSTACLE:
     //   if (otherBound.above(selfBound)) {
     //     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     //     velocity.vy += JUMP_VELOCITY * 0.2;
     //     // @TODO: grab ledge
     //   }
-    //   break;
-    // case Collider.ENEMY:
-    //   // kill the enemy if above
-    //   if (selfBound.above(otherBound)) {
-    //     const script = this.world.getComponent<Instance>(other, Instance.name);
-    //     script?.onDie();
-    //     velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
-    //   } else {
-    //   }
-    //   break;
-    //   default:
-    //     break;
-    // }
   }
 }
 
@@ -254,6 +251,7 @@ export function createPlayer(ecs: ECSWorld, x: number, y: number): Entity {
   ecs.addComponent(id, new Sprite(SpriteSheets.PLAYER_IDLE));
   ecs.addComponent(id, anim);
   ecs.addComponent(id, new Player());
+  ecs.addComponent(id, new Team(TeamNumber.PLAYER));
 
   const script = new PlayerScript(id, ecs);
   ecs.addComponent(id, new Instance(script));

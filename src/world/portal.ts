@@ -14,7 +14,7 @@ class PortalScript extends ScriptBase {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onCollision(other: Entity, selfBound: AABB, otherBound: AABB): void {
+  onCollision(layer: number, selfBound: AABB, otherBound: AABB): void {
     getRuntime().requestRoom(this.dest);
   }
 }
@@ -27,7 +27,7 @@ export function createPoartal(world: ECSWorld, x: number, y: number, dest: strin
     collider,
     new Collider(entity, { width: 28, height: 66, offsetX: 30, offsetY: 30 }),
   );
-  world.addComponent(collider, new Trigger(TeamNumber.PLAYER));
+  world.addComponent(collider, new Trigger());
 
   world.addComponent(entity, new Position(x, y));
   world.addComponent(entity, new Sprite(SpriteSheets.PORTAL, 0, 5));

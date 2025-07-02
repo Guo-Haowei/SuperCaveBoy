@@ -5,17 +5,16 @@ import {
   Name,
   Position,
   Instance,
-  ScriptBase,
   Sprite,
   Velocity,
   ColliderArea,
 } from '../components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
-import { createEnemyCommon, StateMachine } from './lifeform';
+import { createEnemyCommon, LifeformScript, StateMachine } from './lifeform';
 
 type BatStateName = 'idle' | 'fly' | 'die';
 
-class BatScript extends ScriptBase {
+class BatScript extends LifeformScript {
   private target: Entity;
   private speed: number;
 
@@ -89,7 +88,14 @@ export function createBat(ecs: ECSWorld, x: number, y: number, target: Entity) {
     offsetX: 10,
     offsetY: 15,
   };
-  const id = createEnemyCommon(ecs, x, y, area, area, area);
+  const hurtArea: ColliderArea = {
+    width: 28,
+    height: 20,
+    offsetX: 20,
+    offsetY: 15,
+  };
+
+  const id = createEnemyCommon(ecs, x, y, area, hurtArea, area);
 
   const anim = new Animation(
     {
