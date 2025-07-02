@@ -18,21 +18,16 @@ import {
   createLifeform,
   StateMachine,
   LifeformScript,
-  getUpDownGrid,
 } from './lifeform';
-import { AABB } from '../engine/utils';
 import { CountDown } from '../engine/utils';
 import { TeamNumber } from './defines';
-import { GridType } from './room';
 
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
-import { roomManager } from '../engine/room-manager';
-import { renderSystem } from '../engine/renderSystem';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.4);
 
-type PlayerStateName = 'idle' | 'walk' | 'jumping' | 'hurt' | 'hanging';
+type PlayerStateName = 'idle' | 'walk' | 'jumping' | 'hurt' | 'sliding';
 
 class PlayerScript extends LifeformScript {
   static readonly HURT_COOLDOWN = 0.8;
@@ -40,6 +35,8 @@ class PlayerScript extends LifeformScript {
   static readonly MAX_HEALTH = 10000;
 
   private damageCooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
+
+  private wall = 0;
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
@@ -72,16 +69,21 @@ class PlayerScript extends LifeformScript {
           },
           update: (dt) => this.hurt(dt),
         },
-        hanging: {
-          name: 'hanging',
+        sliding: {
+          name: 'sliding',
           enter: () => {
             const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
             vel.vx = 0;
             vel.vy = 0;
-            vel.gravity = 0; // disable gravity
+            vel.gravity = 0.3 * GRAVITY;
             this.playAnim('hang');
           },
-          update: () => this.hang(),
+          exit: () => {
+            const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+            vel.gravity = GRAVITY;
+            this.wall = 0;
+          },
+          update: () => this.slide(),
         },
       },
       'walk',
@@ -109,9 +111,9 @@ class PlayerScript extends LifeformScript {
     if (leftDown || rightDown) {
       const facing = this.world.getComponent<Facing>(this.entity, Facing.name);
       facing.left = direction < 0;
-      return true;
+      return leftDown ? -1 : 1;
     }
-    return false;
+    return 0;
   }
 
   private tryJump(velocity: Velocity) {
@@ -122,60 +124,18 @@ class PlayerScript extends LifeformScript {
     return false;
   }
 
-  private checkHanging() {
-    if (this.isGrounded()) {
-      return false;
+  private checkSliding() {
+    const info = this.getCollisionInfo();
+    if (!info) {
+      return 0;
     }
-    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    if (vel.vy < 0) {
-      return false;
+    if (info.leftWall) {
+      return -1;
     }
-    // check if grab ledge
-    const position = this.world.getComponent<Position>(this.entity, Position.name);
-    const xMin = position.x + 16;
-    const xMax = position.x + 16 + 32;
-
-    const alignWithGrid = (value: number, tileSize: number, error = 2) => {
-      const remainder = value % tileSize;
-      return Math.abs(remainder) < error || Math.abs(remainder - tileSize) < error;
-    };
-
-    const room = roomManager.getCurrentRoom();
-    const gridSize = room.gridSize;
-    const y = position.y - gridSize;
-    if (!alignWithGrid(position.y, gridSize, 10)) {
-      return false;
+    if (info.rightWall) {
+      return 1;
     }
-    if (alignWithGrid(xMin, gridSize)) {
-      const [up, down] = getUpDownGrid(xMin, y, room);
-      console.log('checkHanging', xMin, y, up, down);
-      if (up !== GridType.SOLID && down === GridType.SOLID) {
-        return true;
-      }
-    }
-    if (alignWithGrid(xMax, gridSize)) {
-      const gridX = Math.floor(xMax / room.gridSize);
-      const gridY = Math.floor(y / room.gridSize);
-      renderSystem.addDebugRect({
-        x: gridX * gridSize,
-        y: gridY * gridSize,
-        width: 64,
-        height: 64,
-      });
-      renderSystem.addDebugRect({
-        x: gridX * gridSize,
-        y: (gridY + 1) * gridSize,
-        width: 64,
-        height: 64,
-      });
-
-      const [up, down] = getUpDownGrid(xMax, y, room);
-      console.log('checkHanging', xMax, y, up, down);
-      if (up !== GridType.SOLID && down === GridType.SOLID) {
-        return true;
-      }
-    }
-    return false;
+    return 0;
   }
 
   private checkFalling(velocity: Velocity) {
@@ -224,8 +184,9 @@ class PlayerScript extends LifeformScript {
     const walking = this.tryWalk(velocity);
     const jumping = this.checkFalling(velocity);
     if (jumping) {
-      if (this.checkHanging()) {
-        this.fsm.transition('hanging');
+      this.wall = this.checkSliding();
+      if (this.wall) {
+        this.fsm.transition('sliding');
         return;
       }
       return;
@@ -235,15 +196,23 @@ class PlayerScript extends LifeformScript {
     this.fsm.transition(walking ? 'walk' : 'idle');
   }
 
-  private hang() {
-    // disable movement
-    const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
-    // this.tryWalk(velocity);
-    if (this.inputUp()) {
-      velocity.vy = -JUMP_VELOCITY; // jump off the ledge
-      velocity.gravity = GRAVITY; // re-enable gravity
-      this.fsm.transition('jumping');
+  private slide() {
+    if (this.isGrounded()) {
+      this.fsm.transition('idle');
       return;
+    }
+
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+
+    const jumpPressed = this.inputUp();
+    if (jumpPressed) {
+      const walking = this.tryWalk(vel);
+      if ((this.wall === -1 && walking === 1) || (this.wall === 1 && walking === -1)) {
+        this.wall = 0; // reset wall state
+        this.fsm.transition('jumping');
+        vel.vy = -JUMP_VELOCITY;
+        return;
+      }
     }
   }
 
@@ -265,10 +234,6 @@ class PlayerScript extends LifeformScript {
     const velocity = this.world.getComponent<Velocity>(this.entity, Velocity.name);
     velocity.vy = -JUMP_VELOCITY * 0.5; // bounce up
     assetManager.snd_step.play();
-  }
-
-  onCollision(_layer: number, _selfBound: AABB, _otherBound: AABB): void {
-    // left
   }
 }
 

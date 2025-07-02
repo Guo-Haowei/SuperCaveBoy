@@ -55,16 +55,17 @@ class SnakeScript extends LifeformScript {
 
     // left
     const offset = 10;
+    const info = this.getCollisionInfo();
     {
-      const [up, down] = getUpDownGrid(position.x - offset, position.y, room);
-      if (up === GridType.SOLID || down !== GridType.SOLID) {
+      const [_, down] = getUpDownGrid(position.x - offset, position.y, room);
+      if (down !== GridType.SOLID || info?.leftWall) {
         vel.vx = SnakeScript.INITIAL_SPEED;
         facing.left = false;
       }
     }
     {
-      const [up, down] = getUpDownGrid(position.x + gridSize + offset, position.y, room);
-      if (up === GridType.SOLID || down !== GridType.SOLID) {
+      const [_, down] = getUpDownGrid(position.x + gridSize + offset, position.y, room);
+      if (down !== GridType.SOLID || info?.rightWall) {
         vel.vx = -SnakeScript.INITIAL_SPEED;
         facing.left = true;
       }
@@ -93,7 +94,7 @@ export function createSnake(ecs: ECSWorld, x: number, y: number) {
       idle: {
         sheetId: SpriteSheets.SNAKE_MOVE,
         frames: 2,
-        speed: 1,
+        speed: 0.5,
         loop: true,
       },
     },

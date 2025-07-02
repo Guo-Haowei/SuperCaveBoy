@@ -105,7 +105,11 @@ export class Facing {
 
 export class Player {}
 
-export class Grounded {}
+export class CollisionInfo {
+  grounded = false;
+  leftWall = false;
+  rightWall = false;
+}
 
 export class Rigid {
   static readonly PLAYER = 0b1;

@@ -3,7 +3,7 @@ import {
   Animation,
   Collider,
   ColliderArea,
-  Grounded,
+  CollisionInfo,
   Hitbox,
   Hurtbox,
   Rigid,
@@ -161,8 +161,14 @@ export class LifeformScript extends ScriptBase {
     anim.elapsed = 0;
   }
 
+  getCollisionInfo(): CollisionInfo | undefined {
+    return this.world.getComponent<CollisionInfo>(this.entity, CollisionInfo.name);
+  }
+
   isGrounded(): boolean {
-    return this.world.hasComponent(this.entity, Grounded.name);
+    const info = this.getCollisionInfo();
+    if (!info) return false;
+    return info.grounded;
   }
 }
 

@@ -6,8 +6,7 @@ import {
   Health,
   Hitbox,
   Hurtbox,
-  Grounded,
-  Name,
+  CollisionInfo,
   PendingDelete,
   Player,
   Rigid,
@@ -123,7 +122,7 @@ export function collisionSystem(world: SystemContext, _dt: number) {
 
   const { ecs, damageCollision, rigidCollision } = world;
   const colliders = ecs.queryEntities<Collider>(Collider.name);
-  ecs.removeAllComponents(Grounded.name);
+  ecs.removeAllComponents(CollisionInfo.name);
 
   for (let i = 0; i < colliders.length - 1; ++i) {
     for (let j = i + 1; j < colliders.length; ++j) {
@@ -222,13 +221,20 @@ export function rigidCollisionSystem(world: SystemContext, _dt: number) {
     posB.y -= mtv.y;
 
     const direction = mtvToDirection(mtv);
+
+    const info = new CollisionInfo();
     if (direction === Direction.DOWN) {
-      ecs.addComponent(obj, new Grounded());
+      info.grounded = true;
       const vel = ecs.getComponent<Velocity>(obj, Velocity.name);
       if (vel) {
         vel.vy = 1;
       }
+    } else if (direction === Direction.LEFT) {
+      info.leftWall = true;
+    } else if (direction === Direction.RIGHT) {
+      info.rightWall = true;
     }
+    ecs.addComponent(obj, info);
 
     const instanceA = ecs.getComponent<Instance>(obstacle, Instance.name);
     const instanceB = ecs.getComponent<Instance>(obj, Instance.name);
