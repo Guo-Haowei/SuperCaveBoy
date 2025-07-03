@@ -13,8 +13,7 @@ class RoomManager {
       this.roooms.set(data.name, data);
     });
 
-    this.loadRoom('Level 4');
-    // this.loadRoom('Level 1');
+    this.loadRoom('Level 1');
   }
 
   loadRoom(name: string) {

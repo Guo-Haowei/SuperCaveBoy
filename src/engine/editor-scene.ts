@@ -1,9 +1,9 @@
 import { IScene } from './scene';
-import { Camera, Position } from '../components';
+import { Camera, Position } from './components';
 import { inputManager } from './input-manager';
 import { roomManager } from './room-manager';
 import { Runtime } from './runtime';
-import { renderSystem } from './renderSystem';
+import { renderSystem } from './render-system';
 
 export class EditorScene extends IScene {
   private camera: Camera;

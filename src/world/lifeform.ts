@@ -1,4 +1,4 @@
-import { ECSWorld } from '../ecs';
+import { ECSWorld } from '../engine/ecs';
 import {
   Animation,
   Collider,
@@ -14,7 +14,7 @@ import {
   Velocity,
   Team,
   Health,
-} from '../components';
+} from '../engine/components';
 import { TeamNumber } from './defines';
 import { AABB, toAABB } from '../engine/utils';
 import { Room } from './room';

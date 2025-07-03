@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 import { ECSWorld, Entity } from './ecs';
-import { AABB } from './engine/utils';
+import { AABB } from './utils';
 
 export class Name {
   value: string;

@@ -1,4 +1,4 @@
-import { ECSWorld, Entity } from '../ecs';
+import { ECSWorld, Entity } from '../engine/ecs';
 import {
   Animation,
   ColliderArea,
@@ -12,7 +12,7 @@ import {
   Sprite,
   Team,
   Velocity,
-} from '../components';
+} from '../engine/components';
 import {
   findGravityAndJumpVelocity,
   createLifeform,
@@ -29,6 +29,11 @@ import { roomManager } from '../engine/room-manager';
 import { GridType } from './room';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.4);
+
+export const PlayerData = {
+  health: 3,
+  sapphire: 0,
+};
 
 type PlayerStateName = 'idle' | 'walk' | 'jumping' | 'hurt' | 'hanging';
 

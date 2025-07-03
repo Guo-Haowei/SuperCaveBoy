@@ -1,4 +1,4 @@
-import { ECSWorld, Entity } from '../ecs';
+import { ECSWorld, Entity } from './ecs';
 import {
   Animation,
   Collider,
@@ -15,7 +15,7 @@ import {
   Team,
   Trigger,
   Velocity,
-} from '../components';
+} from './components';
 import { Direction, AABB, Vec2 } from './utils';
 import { toAABB } from './utils';
 

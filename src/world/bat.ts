@@ -1,4 +1,4 @@
-import { ECSWorld, Entity } from '../ecs';
+import { ECSWorld, Entity } from '../engine/ecs';
 import {
   Animation,
   Facing,
@@ -8,7 +8,7 @@ import {
   Sprite,
   Velocity,
   ColliderArea,
-} from '../components';
+} from '../engine/components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { createEnemyCommon, LifeformScript, StateMachine } from './lifeform';
 

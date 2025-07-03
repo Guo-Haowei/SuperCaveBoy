@@ -20,6 +20,7 @@ export const SpriteSheets = {
   BOSS_HURT: 'boss_damage',
 
   SAPPHIRE: 'sapphire',
+  SAPPHIRE_GUI: 'sapphire_gui',
 } as const;
 
 interface SpriteFrame {
@@ -42,7 +43,8 @@ export interface Renderable {
 }
 
 class AssetManager {
-  private sheets: Record<string, SpriteSheet> = {};
+  // private
+  sheets: Record<string, SpriteSheet> = {};
 
   // @TODO: refactor
   snd_bat: HTMLAudioElement;
@@ -86,10 +88,9 @@ class AssetManager {
 
     this.loadSheet(SpriteSheets.LAVA, images.spr_lava, 64, 64);
     this.loadSheet(SpriteSheets.SAPPHIRE, images.spr_sapphire, 40, 40);
+    this.loadSheet(SpriteSheets.SAPPHIRE_GUI, images.spr_gui_sapphire, 64, 64);
 
     //     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
-    //     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
-    //     this.spr_gui_sapphire = new OldSprite(images.spr_gui_sapphire, 0, 0, 64, 64);
     //     this.spr_gui_heart = new OldSprite(images.spr_gui_heart, 0, 0, 64, 64);
   }
 
