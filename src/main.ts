@@ -1,5 +1,5 @@
 import { createRuntime } from './engine/runtime';
-import { EditorState } from './editor-state';
+import { EditorState } from './world/data';
 
 const imageAssets: Record<string, HTMLImageElement> = {};
 let isPlaying = false;

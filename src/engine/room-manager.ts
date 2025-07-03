@@ -1,7 +1,7 @@
 import { GRID_SIZE } from '../constants';
 import { Room } from '../world/room';
 
-import { ROOM_DATA, RoomData } from '../world/data';
+import { ROOM_DATA, RoomData } from '../world/level-data';
 
 class RoomManager {
   private roooms = new Map<string, RoomData>();

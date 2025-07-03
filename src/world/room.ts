@@ -12,7 +12,7 @@ import { createGuardian } from './guardian';
 import { createTrigger } from './cutscene-trigger';
 import { createSapphire } from './sapphire';
 
-import { RoomData, MONSTER, TYPE } from './data';
+import { RoomData, MONSTER, TYPE } from './level-data';
 
 export enum GridType {
   NULL = -1,

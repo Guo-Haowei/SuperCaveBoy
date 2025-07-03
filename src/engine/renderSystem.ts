@@ -12,7 +12,7 @@ import {
 } from '../components';
 import { assetManager } from './assets-manager';
 import { ECSWorld } from '../ecs';
-import { EditorState } from '../editor-state';
+import { EditorState } from '../world/data';
 
 export interface DebugRect {
   x: number;
