@@ -10,6 +10,7 @@ import { WIDTH, HEIGHT, GRID_SIZE } from '../constants';
 import { createPoartal } from './portal';
 import { createGuardian } from './guardian';
 import { createTrigger } from './cutscene-trigger';
+import { createSapphire } from './sapphire';
 
 import { RoomData, MONSTER, TYPE } from './data';
 
@@ -98,6 +99,8 @@ export class Room {
       const type = obj[2];
       if (type === TYPE.EXIT) {
         createPoartal(this.ecs, obj[0] as number, obj[1] as number, obj[3] as string);
+      } else if (type === TYPE.SAPPHIRE) {
+        createSapphire(this.ecs, obj[0] as number, obj[1] as number);
       } else if (type === TYPE.CAMERA) {
         createTrigger(this.ecs, obj[0] as number, obj[1] as number);
       }

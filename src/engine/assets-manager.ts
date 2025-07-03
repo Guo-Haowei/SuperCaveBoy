@@ -18,6 +18,8 @@ export const SpriteSheets = {
 
   BOSS_IDLE: 'boss_idle',
   BOSS_HURT: 'boss_damage',
+
+  SAPPHIRE: 'sapphire',
 } as const;
 
 interface SpriteFrame {
@@ -83,6 +85,7 @@ class AssetManager {
     this.loadSheet(SpriteSheets.BOSS_HURT, images.spr_boss_damaged, 160, 188);
 
     this.loadSheet(SpriteSheets.LAVA, images.spr_lava, 64, 64);
+    this.loadSheet(SpriteSheets.SAPPHIRE, images.spr_sapphire, 40, 40);
 
     //     this.bg_menu = new OldSprite(images.bg_menu, 0, 0, WIDTH, HEIGHT);
     //     this.spr_small_sapphire = new OldSprite(images.spr_sapphire, 0, 0, 40, 40);
