@@ -225,11 +225,9 @@ export class Room {
     height = height * gridSize;
 
     const id = this.ecs.createEntity();
-    const collider = this.ecs.createEntity();
-    this.ecs.addComponent(collider, new Collider(id, { width, height }));
-    this.ecs.addComponent(collider, new Rigid(Rigid.OBSTACLE, 0));
 
+    this.ecs.addComponent(id, new Collider(id, { width, height }));
+    this.ecs.addComponent(id, new Rigid(Rigid.OBSTACLE, 0));
     this.ecs.addComponent(id, new Position(x, y));
-    this.ecs.addComponent(id, collider);
   }
 }
