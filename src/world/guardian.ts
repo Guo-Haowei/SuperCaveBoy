@@ -1,4 +1,4 @@
-import { ECSWorld, Entity } from '../ecs';
+import { ECSWorld, Entity } from '../engine/ecs';
 import {
   Animation,
   ColliderArea,
@@ -8,7 +8,7 @@ import {
   Sprite,
   Velocity,
   Health,
-} from '../components';
+} from '../engine/components';
 import { SpriteSheets } from '../engine/assets-manager';
 import { createEnemyCommon, StateMachine, LifeformScript } from './lifeform';
 import { CountDown } from '../engine/utils';
@@ -175,23 +175,6 @@ export function createGuardian(ecs: ECSWorld, x: number, y: number, target: Enti
 }
 
 // export class OldMonster {
-//   _BossTransition() {
-//     if (this.alarm1.activated) this.alarm1._tick();
-//     this.sprite = this.handler._getGameAssets().spr_boss[1];
-//     if (!this.alarm1.activated) {
-//       this._move = this._BossRising;
-//       this.hspeed = 0;
-//       this.vspeed = 0;
-//     }
-//     if (!this.takingDamage) this.sprite = this.handler._getGameAssets().spr_boss_damaged;
-//     if (this.health <= 0) {
-//       this._move = this._BossDying;
-//       const exit = new SpecialObject(this.handler, 992, 608, TYPE.EXIT);
-//       exit._init();
-//       this.handler._getLevel().objects.push(exit);
-//     }
-//   }
-
 //   _BossDying() {
 //     if (this.alarm2.activated) {
 //       this.alarm2._tick();

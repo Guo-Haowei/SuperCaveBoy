@@ -1,4 +1,4 @@
-import { ECSWorld, Entity } from '../ecs';
+import { ECSWorld, Entity } from '../engine/ecs';
 import {
   Animation,
   ColliderArea,
@@ -8,7 +8,7 @@ import {
   Instance,
   Sprite,
   Velocity,
-} from '../components';
+} from '../engine/components';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import {
   createEnemyCommon,

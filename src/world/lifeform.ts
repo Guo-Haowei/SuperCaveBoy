@@ -1,4 +1,4 @@
-import { ECSWorld } from '../ecs';
+import { ECSWorld } from '../engine/ecs';
 import {
   Animation,
   Collider,
@@ -14,9 +14,9 @@ import {
   Velocity,
   Team,
   Health,
-} from '../components';
+} from '../engine/components';
 import { TeamNumber } from './defines';
-import { AABB } from '../engine/utils';
+import { AABB, toAABB } from '../engine/utils';
 import { Room } from './room';
 
 export function findGravityAndJumpVelocity(
@@ -37,19 +37,6 @@ export function getUpDownGrid(x: number, y: number, room: Room): [number, number
   return [up, down];
 }
 
-export function createRigid(
-  ecs: ECSWorld,
-  parent: number,
-  area: ColliderArea,
-  layer: number,
-  mask: number,
-) {
-  const id = ecs.createEntity();
-  ecs.addComponent(id, new Collider(parent, area));
-  ecs.addComponent(id, new Rigid(layer, mask));
-  return id;
-}
-
 export function createHurtbox(ecs: ECSWorld, parent: number, area: ColliderArea) {
   const id = ecs.createEntity();
   ecs.addComponent(id, new Collider(parent, area));
@@ -64,6 +51,18 @@ export function createHitbox(ecs: ECSWorld, parent: number, area: ColliderArea, 
   return id;
 }
 
+export function createRigid(
+  ecs: ECSWorld,
+  parent: number,
+  area: ColliderArea,
+  layer: number,
+  mask: number,
+) {
+  const id = ecs.createEntity();
+  ecs.addComponent(id, new Collider(parent, area));
+  ecs.addComponent(id, new Rigid(layer, mask));
+  return id;
+}
 export function createLifeform(
   ecs: ECSWorld,
   team: TeamNumber,
@@ -73,7 +72,9 @@ export function createLifeform(
   hitbox: ColliderArea,
 ) {
   const parent = ecs.createEntity();
-  createRigid(ecs, parent, rigid, layer, Rigid.OBSTACLE);
+  ecs.addComponent(parent, new Collider(parent, rigid));
+  ecs.addComponent(parent, new Rigid(layer, Rigid.OBSTACLE));
+
   createHurtbox(ecs, parent, hurtbox);
   createHitbox(ecs, parent, hitbox);
 
@@ -169,6 +170,12 @@ export class LifeformScript extends ScriptBase {
     const info = this.getCollisionInfo();
     if (!info) return false;
     return info.grounded;
+  }
+
+  getAABB() {
+    const pos = this.world.getComponent<Position>(this.entity, Position.name);
+    const collider = this.world.getComponent<Collider>(this.entity, Collider.name);
+    return toAABB(pos, collider);
   }
 }
 

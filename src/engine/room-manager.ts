@@ -1,7 +1,7 @@
 import { GRID_SIZE } from '../constants';
 import { Room } from '../world/room';
 
-import { ROOM_DATA, RoomData } from '../world/data';
+import { ROOM_DATA, RoomData } from '../world/level-data';
 
 class RoomManager {
   private roooms = new Map<string, RoomData>();
@@ -13,8 +13,7 @@ class RoomManager {
       this.roooms.set(data.name, data);
     });
 
-    this.loadRoom('Level 3');
-    // this.loadRoom('Level 10');
+    this.loadRoom('Level 1');
   }
 
   loadRoom(name: string) {

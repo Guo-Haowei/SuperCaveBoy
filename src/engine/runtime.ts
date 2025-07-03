@@ -1,7 +1,7 @@
 import { inputManager } from './input-manager';
 import { assetManager } from './assets-manager';
 import { roomManager } from './room-manager';
-import { renderSystem } from './renderSystem';
+import { renderSystem } from './render-system';
 import { IScene } from './scene';
 import { GameScene } from './game-scene';
 import { EditorScene } from './editor-scene';

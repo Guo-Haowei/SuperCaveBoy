@@ -1,7 +1,7 @@
 import { IScene } from './scene';
-import { Camera, Position } from '../components';
+import { Camera, Position } from './components';
 import { roomManager } from './room-manager';
-import { renderSystem } from './renderSystem';
+import { renderSystem } from './render-system';
 
 export class CutsceneScene extends IScene {
   private pos: Position | null = null;

@@ -1,4 +1,4 @@
-import { ECSWorld, Entity } from '../ecs';
+import { ECSWorld, Entity } from '../engine/ecs';
 import {
   Animation,
   ColliderArea,
@@ -12,22 +12,30 @@ import {
   Sprite,
   Team,
   Velocity,
-} from '../components';
+} from '../engine/components';
 import {
   findGravityAndJumpVelocity,
   createLifeform,
   StateMachine,
   LifeformScript,
+  getUpDownGrid,
 } from './lifeform';
 import { CountDown } from '../engine/utils';
 import { TeamNumber } from './defines';
 
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { inputManager } from '../engine/input-manager';
+import { roomManager } from '../engine/room-manager';
+import { GridType } from './room';
 
 const { GRAVITY, JUMP_VELOCITY } = findGravityAndJumpVelocity(170, 0.4);
 
-type PlayerStateName = 'idle' | 'walk' | 'jumping' | 'hurt' | 'sliding';
+export const PlayerData = {
+  health: 3,
+  sapphire: 0,
+};
+
+type PlayerStateName = 'idle' | 'walk' | 'jumping' | 'hurt' | 'hanging';
 
 class PlayerScript extends LifeformScript {
   static readonly HURT_COOLDOWN = 0.8;
@@ -35,8 +43,7 @@ class PlayerScript extends LifeformScript {
   static readonly MAX_HEALTH = 10000;
 
   private damageCooldown = new CountDown(PlayerScript.HURT_COOLDOWN);
-
-  private wall = 0;
+  private hangingDirection = 0; // -1 for left, 1 for right, 0 for none
 
   constructor(entity: Entity, world: ECSWorld) {
     super(entity, world);
@@ -69,21 +76,21 @@ class PlayerScript extends LifeformScript {
           },
           update: (dt) => this.hurt(dt),
         },
-        sliding: {
-          name: 'sliding',
+        hanging: {
+          name: 'hanging',
           enter: () => {
             const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
             vel.vx = 0;
             vel.vy = 0;
-            vel.gravity = 0.3 * GRAVITY;
+            vel.gravity = 0;
             this.playAnim('hang');
           },
           exit: () => {
             const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+            this.hangingDirection = 0;
             vel.gravity = GRAVITY;
-            this.wall = 0;
           },
-          update: () => this.slide(),
+          update: () => this.hang(),
         },
       },
       'walk',
@@ -124,17 +131,48 @@ class PlayerScript extends LifeformScript {
     return false;
   }
 
-  private checkSliding() {
+  private checkHanging() {
     const info = this.getCollisionInfo();
-    if (!info) {
+    if (!(info && (info.leftWall || info.rightWall))) {
       return 0;
     }
+
+    const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
+    if (vel.vy < 0) {
+      return 0;
+    }
+
+    const room = roomManager.getCurrentRoom();
+    const { gridSize } = room;
+    const pos = this.world.getComponent<Position>(this.entity, Position.name);
+    const gridY = Math.floor(pos.y / gridSize);
+    const dy = pos.y - gridY * gridSize;
+
+    if (gridSize - dy > 15) {
+      return 0;
+    }
+
+    const aabb = this.getAABB();
+
+    // @TODO: get AABB
     if (info.leftWall) {
-      return -1;
+      const x = aabb.xMin - 1;
+      const y = pos.y;
+      const [up, down] = getUpDownGrid(x, y, room);
+      if (up !== GridType.SOLID && down === GridType.SOLID) {
+        return -1;
+      }
     }
+
     if (info.rightWall) {
-      return 1;
+      const x = aabb.xMax + 1;
+      const y = pos.y;
+      const [up, down] = getUpDownGrid(x, y, room);
+      if (up !== GridType.SOLID && down === GridType.SOLID) {
+        return 1;
+      }
     }
+
     return 0;
   }
 
@@ -184,9 +222,10 @@ class PlayerScript extends LifeformScript {
     const walking = this.tryWalk(velocity);
     const jumping = this.checkFalling(velocity);
     if (jumping) {
-      this.wall = this.checkSliding();
-      if (this.wall) {
-        this.fsm.transition('sliding');
+      const direction = this.checkHanging();
+      if (direction) {
+        this.hangingDirection = direction;
+        this.fsm.transition('hanging');
         return;
       }
       return;
@@ -196,23 +235,14 @@ class PlayerScript extends LifeformScript {
     this.fsm.transition(walking ? 'walk' : 'idle');
   }
 
-  private slide() {
-    if (this.isGrounded()) {
-      this.fsm.transition('idle');
-      return;
-    }
-
+  private hang() {
     const vel = this.world.getComponent<Velocity>(this.entity, Velocity.name);
 
     const jumpPressed = this.inputUp();
     if (jumpPressed) {
-      const walking = this.tryWalk(vel);
-      if ((this.wall === -1 && walking === 1) || (this.wall === 1 && walking === -1)) {
-        this.wall = 0; // reset wall state
-        this.fsm.transition('jumping');
-        vel.vy = -JUMP_VELOCITY;
-        return;
-      }
+      this.fsm.transition('jumping');
+      vel.vy = -JUMP_VELOCITY;
+      return;
     }
   }
 

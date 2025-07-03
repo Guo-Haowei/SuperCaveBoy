@@ -1,4 +1,4 @@
-import { ECSWorld, Entity } from '../ecs';
+import { ECSWorld, Entity } from '../engine/ecs';
 import {
   Animation,
   Facing,
@@ -8,7 +8,7 @@ import {
   Instance,
   Sprite,
   Velocity,
-} from '../components';
+} from '../engine/components';
 import { createEnemyCommon, StateMachine, LifeformScript, getUpDownGrid } from './lifeform';
 import { SpriteSheets, assetManager } from '../engine/assets-manager';
 import { roomManager } from '../engine/room-manager';

@@ -9,10 +9,10 @@ import {
   Sprite,
   Trigger,
   Position,
-} from '../components';
+} from './components';
 import { assetManager } from './assets-manager';
-import { ECSWorld } from '../ecs';
-import { EditorState } from '../editor-state';
+import { ECSWorld } from './ecs';
+import { EditorState } from '../world/data';
 
 export interface DebugRect {
   x: number;
@@ -25,31 +25,35 @@ export interface DebugRect {
 
 class RenderSystem {
   private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+  private _ctx: CanvasRenderingContext2D;
   private debugList: DebugRect[] = [];
 
   init(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
     this.canvas = canvas;
-    this.ctx = ctx;
+    this._ctx = ctx;
   }
 
   addDebugRect(rect: DebugRect) {
     this.debugList.push(rect);
   }
 
+  get ctx(): CanvasRenderingContext2D {
+    return this._ctx;
+  }
+
   render(ecs: ECSWorld, room: Room, cameraContext: { camera: Camera; pos: Position }) {
     const { camera, pos } = cameraContext;
-    const { ctx } = this;
+    const { _ctx } = this;
 
-    ctx.clearRect(0, 0, camera.width, camera.height);
+    _ctx.clearRect(0, 0, camera.width, camera.height);
 
-    ctx.fillStyle = `rgba(255, 255, 255, 1)`;
-    ctx.fillRect(0, 0, camera.width, camera.height);
+    _ctx.fillStyle = `rgba(255, 255, 255, 1)`;
+    _ctx.fillRect(0, 0, camera.width, camera.height);
 
     const offset = camera.getOffset(pos);
-    ctx.save();
-    ctx.translate(-offset.x, -offset.y);
-    ctx.scale(camera.zoom, camera.zoom);
+    _ctx.save();
+    _ctx.translate(-offset.x, -offset.y);
+    _ctx.scale(camera.zoom, camera.zoom);
 
     const renderables = ecs.queryEntities<Sprite, Position>(Sprite.name, Position.name);
     const sorted = renderables.sort((a, b) => b[1].zIndex - a[1].zIndex);
@@ -61,16 +65,16 @@ class RenderSystem {
       const renderable = assetManager.getFrame(sheetId, frameIndex);
       const { image, frame } = renderable;
 
-      ctx.save();
+      _ctx.save();
 
       const facing = ecs.getComponent<Facing>(id, Facing.name);
       const flipLeft: number = facing && facing.left ? 1 : 0;
 
-      ctx.translate(x + flipLeft * frame.width, y);
-      ctx.scale(flipLeft ? -1 : 1, 1);
+      _ctx.translate(x + flipLeft * frame.width, y);
+      _ctx.scale(flipLeft ? -1 : 1, 1);
 
       for (let i = 0; i < sprite.repeat; ++i) {
-        ctx.drawImage(
+        _ctx.drawImage(
           image,
           frame.sourceX,
           frame.sourceY,
@@ -83,7 +87,7 @@ class RenderSystem {
         );
       }
 
-      ctx.restore();
+      _ctx.restore();
     }
 
     if (EditorState.debugCollisions) {
@@ -95,13 +99,13 @@ class RenderSystem {
       this.drawDebugGrid(room);
     }
 
-    ctx.restore();
+    _ctx.restore();
 
     this.debugList = [];
   }
 
   private drawDebugGrid(room: Room) {
-    const { ctx } = this;
+    const { _ctx: ctx } = this;
     ctx.strokeStyle = 'rgba(150, 150, 150, 0.5)';
     ctx.lineWidth = 1;
     ctx.lineCap = 'round';
@@ -126,7 +130,7 @@ class RenderSystem {
   }
 
   private drawDebugCollider(ecs: ECSWorld) {
-    const { ctx } = this;
+    const { _ctx: ctx } = this;
     ctx.globalAlpha = 0.5;
     for (const [id, collider] of ecs.queryEntities<Collider>(Collider.name)) {
       const pos = ecs.getComponent<Position>(collider.parent, Position.name);
@@ -166,7 +170,7 @@ class RenderSystem {
   }
 
   private drawDebugShape() {
-    const { ctx } = this;
+    const { _ctx: ctx } = this;
 
     ctx.lineWidth = 2;
 

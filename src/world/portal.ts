@@ -1,6 +1,6 @@
-import { Collider, Position, Instance, Sprite, Trigger } from '../components';
+import { Collider, Position, Instance, Sprite, Trigger } from '../engine/components';
 import { SpriteSheets } from '../engine/assets-manager';
-import { Entity, ECSWorld } from '../ecs';
+import { Entity, ECSWorld } from '../engine/ecs';
 import { getRuntime } from '../engine/runtime';
 import { TriggerScript } from './lifeform';
 

@@ -1,5 +1,5 @@
-import { ECSWorld } from './ecs';
-import { Name, Position, Camera, Instance, ScriptBase } from './components';
+import { ECSWorld } from '../engine/ecs';
+import { Name, Position, Camera, Instance, ScriptBase } from '../engine/components';
 
 // @TODO: camera controller script
 class CameraFollowScript extends ScriptBase {

@@ -2,7 +2,7 @@
 import { IScene } from './scene';
 import { roomManager } from './room-manager';
 import { CountDown } from './utils';
-import { renderSystem } from './renderSystem';
+import { renderSystem } from './render-system';
 
 export class LoadingScene extends IScene {
   static readonly LOADING_TIME = 1.2;

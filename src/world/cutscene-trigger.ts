@@ -1,5 +1,5 @@
-import { ECSWorld, Entity } from '../ecs';
-import { Position, Instance, Collider, Trigger } from '../components';
+import { ECSWorld, Entity } from '../engine/ecs';
+import { Position, Instance, Collider, Trigger } from '../engine/components';
 import { getRuntime } from '../engine/runtime';
 import { TriggerScript } from './lifeform';
 
