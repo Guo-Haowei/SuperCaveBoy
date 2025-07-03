@@ -1,11 +1,12 @@
-import { Collider, Position, Instance, Sprite, Trigger } from '../components';
-import { SpriteSheets } from '../engine/assets-manager';
+import { Collider, Position, Instance, PendingDelete, Sprite, Trigger } from '../components';
+import { assetManager, SpriteSheets } from '../engine/assets-manager';
 import { Entity, ECSWorld } from '../ecs';
 import { TriggerScript } from './lifeform';
 
 class SapphireScript extends TriggerScript {
   fire(): void {
-    console.log('Sapphire collected');
+    assetManager.snd_tink.play();
+    this.world.addComponent(this.entity, new PendingDelete());
   }
 }
 
