@@ -71,17 +71,8 @@ export class Game {
         this.changeScene(this.scenes[name]);
     }
 
-    tick() {
-        const timestamp = Date.now();
-        let dt = 0;
-        if (this.lastTick === 0) {
-            this.lastTick = timestamp;
-        } else {
-            dt = timestamp - this.lastTick;
-            this.lastTick = timestamp;
-        }
-
-        this.currentScene.tick(timestamp);
+    tick(dt: number) {
+        this.currentScene.tick(dt);
     }
 
     render(ctx: CanvasRenderingContext2D) {
@@ -142,9 +133,9 @@ class PlayScene implements IScene {
     }
 
     tick(dt: number) {
-        this.handler._getCamera()._tick();
-        this.handler._getPlayer()._tick();
-        this.handler._getLevel()._tick();
+        this.handler._getCamera()._tick(dt);
+        this.handler._getPlayer()._tick(dt);
+        this.handler._getLevel()._tick(dt);
     }
 
     render(ctx) {
