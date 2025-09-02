@@ -1,4 +1,5 @@
-import { Player } from './objects/gameobjects/lifeforms/player.js';
+import { Player } from './objects/gameobjects/lifeforms/player';
+import { Camera } from './objects/camera';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
