@@ -1,3 +1,8 @@
+// @TODO: move to utils
+function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
+
 export class Camera {
     private offsetX: number;
     private offsetY: number;
@@ -41,15 +46,8 @@ export class Camera {
         const objy = this.target.y;
         this.offsetX += (objx - this.offsetX) / 20.0;
         this.offsetY += (objy - this.offsetY) / 20.0;
-        if (this.offsetX <= halfWidth) {
-            this.offsetX = halfWidth;
-        } else if (this.offsetX >= WWIDTH - halfWidth) {
-            this.offsetX = WWIDTH - halfWidth;
-        }
-        if (this.offsetY <= halfHeight + YOFFSET) {
-            this.offsetY = halfHeight + YOFFSET;
-        } else if (this.offsetY >= WHEIGHT - halfHeight) {
-            this.offsetY = WHEIGHT - halfHeight;
-        }
+
+        this.offsetX = clamp(this.offsetX, halfWidth, WWIDTH - halfWidth);
+        this.offsetY = clamp(this.offsetY, halfHeight + YOFFSET, WHEIGHT - halfHeight);
     }
 }
