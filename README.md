@@ -2,6 +2,11 @@
 
 Click [here](http://guo-haowei.github.io/pages/SuperCaveBoy/index.html) to play
 
+## Build
+```
+$ npm run dev
+```
+
 ## Video
 
 [![alt text](https://github.com/Guo-Haowei/SuperCaveBoy/blob/master/resources/youtube.png)](https://youtu.be/lK5Jx7QHk0U)

@@ -2,10 +2,9 @@ var TYPE = {EXIT: 0, SAPPHIRE: 1, LAVA: 2, CAMERA: 3};
 var MONSTER = {SNAKE: 0, BAT: 1, SPIDER: 2, BOSS: 3};
 
 var WORLD = {
-    "startLevel": -1,
-    "levelNum": 2,
-    "levels": [
-    /*
+    startLevel: -1,
+    levelNum: 10,
+    levels: [
     {
         "obstacles": [
             [0, 11, 28, 3]
@@ -243,7 +242,6 @@ var WORLD = {
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ]
     },
-    */
     {
         "obstacles": [
             [4, 5, 2, 3],

@@ -6,13 +6,13 @@ function Level(handler) {
     this.map;
     this.width;
     this.height;
-    
+
     this.obstacles = [];
     this.objects = [];
     this.monsters = [];
-    
+
     this.entrance = this.handler._getGameAssets().spr_entrance;
-    
+
     this._init = function(bool) {
         if (bool) {}
         else {
@@ -40,7 +40,7 @@ function Level(handler) {
             else if (this.level === 6 || this.level === 9) YOFFSET = 35;
             else YOFFSET = 0;
         }
-        
+
         var mons = WORLD.levels[this.level].monsters;
         this.monsters = [];
         for (var i = 0; i < mons.length; ++i) {
@@ -49,7 +49,7 @@ function Level(handler) {
             if (mon[5]) {this.monsters[i]._init(mon[5]);}
             this.monsters[i]._init();
         }
-        
+
         var objs = WORLD.levels[this.level].objects;
         this.objects = [];
         for (var i = 0; i < objs.length; ++i) {
