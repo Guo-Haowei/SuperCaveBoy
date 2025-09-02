@@ -1,45 +1,55 @@
-function Camera(x, y) {
-    // fields
-    this.xoffset = x;
-    this.yoffset = y;
-    this.target = null;
-    
-    // methods
-    this._getxoffset = function() {
-        return this.xoffset;
+export class Camera {
+    private offsetX: number;
+    private offsetY: number;
+    private target: any = null;
+
+    constructor(x, y) {
+        this.offsetX = x;
+        this.offsetY = y;
     }
-    
-    this._getyoffset = function() {
-        return this.yoffset;
+
+    getOffsetX() {
+        return this.offsetX;
     }
-    
-    this._setoffset = function(x, y) {
-        this.xoffset = x;
-        this.yoffset = y;
+
+    getOffsetY() {
+        return this.offsetY;
     }
-    
-    this._tick = function() {
-        this._followTarget();
+
+    setOffset(x: number, y: number) {
+        this.offsetX = x;
+        this.offsetY = y;
     }
-    
-    this._setTarget = function(obj) {
+
+    tick() {
+        this.followTarget();
+    }
+
+    setTarget(obj) {
         this.target = obj;
     }
-    
-    this._followTarget = function() {
-        if (this.target == null) return;
-        var objx = this.target.x, objy = this.target.y;
-        this.xoffset += (objx - this.xoffset)/20.0;
-        this.yoffset += (objy - this.yoffset)/20.0;
-        if (this.xoffset <= WIDTH/2) {
-            this.xoffset = WIDTH/2;
-        } else if (this.xoffset >= WWIDTH - WIDTH/2) {
-            this.xoffset = WWIDTH - WIDTH/2;
+
+    private followTarget() {
+        if (!this.target) {
+            return;
         }
-        if (this.yoffset <= HEIGHT/2+YOFFSET) {
-            this.yoffset = HEIGHT/2+YOFFSET;
-        } else if (this.yoffset >= WHEIGHT - HEIGHT/2) {
-            this.yoffset = WHEIGHT - HEIGHT/2;
+
+        const halfWidth = 0.5 * WIDTH;
+        const halfHeight = 0.5 * HEIGHT;
+
+        const objx = this.target.x;
+        const objy = this.target.y;
+        this.offsetX += (objx - this.offsetX) / 20.0;
+        this.offsetY += (objy - this.offsetY) / 20.0;
+        if (this.offsetX <= halfWidth) {
+            this.offsetX = halfWidth;
+        } else if (this.offsetX >= WWIDTH - halfWidth) {
+            this.offsetX = WWIDTH - halfWidth;
+        }
+        if (this.offsetY <= halfHeight + YOFFSET) {
+            this.offsetY = halfHeight + YOFFSET;
+        } else if (this.offsetY >= WHEIGHT - halfHeight) {
+            this.offsetY = WHEIGHT - halfHeight;
         }
     }
 }

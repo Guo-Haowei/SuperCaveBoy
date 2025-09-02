@@ -40,7 +40,7 @@ function Alarm(handler) {
         player._setState(player._JumpingState);
         
         // reset camara pos
-        this.handler._getCamera()._setoffset(480, SpawningY);
+        this.handler._getCamera().setOffset(480, SpawningY);
         // update floor
         if (WORLD.levelNum-1>level.level) {
             level._init();

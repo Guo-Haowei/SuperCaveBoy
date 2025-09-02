@@ -1,5 +1,4 @@
 function Level(handler) {
-    
     this.handler = handler;
     this.level = WORLD.startLevel;
     this.world = [];
@@ -60,13 +59,13 @@ function Level(handler) {
             {this.objects[i]._init(obj[3]);}
             else {this.objects[i]._init();}
         }
-        
+
         if (this.level === 9) {
             var music = handler._getMusic()
             music._setCurrent(music.snd_boss);
         }
     }
-    
+
     this._tick = function() {
         for (var i = 0; i < this.objects.length; ++i) {
             this.objects[i]._tick();
@@ -77,17 +76,17 @@ function Level(handler) {
             if (this.monsters[i].destroyed) {this.monsters.splice(i, 1);}
         }
     }
-    
+
     this._getTile = function(x, y) {
         var result = this.map[y][x];
         if (!result)
             return null;
         return result;
     }
-    
+
     this._render = function(graphics) {
-        var xOffset = this.handler._getCamera().xoffset-WIDTH/2,
-            yOffset = this.handler._getCamera().yoffset-HEIGHT/2;
+        var xOffset = this.handler._getCamera().getOffsetX() - WIDTH/2,
+            yOffset = this.handler._getCamera().getOffsetY() - HEIGHT/2;
         var xStart = Math.max(Math.floor(xOffset/64), 0),
             yStart = Math.max(Math.floor(yOffset/64)-1, 0),
             xLen = Math.min(xStart+wTile+1, this.width),

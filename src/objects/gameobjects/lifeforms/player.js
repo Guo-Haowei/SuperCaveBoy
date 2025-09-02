@@ -120,7 +120,7 @@ export function Player(x, y, speed, handler) {
         this._setPos(SpawningX, SpawningY);
         this._setState(this._JumpingState);
         // reset camara pos
-        this.handler._getCamera()._setoffset(480, SpawningY);
+        this.handler._getCamera().setOffset(480, SpawningY);
         this.handler._getLevel()._init(true);
     }
 
@@ -181,8 +181,8 @@ export function Player(x, y, speed, handler) {
     }
 
     this._render = function(graphics) {
-        var xoffset = this.handler._getCamera()._getxoffset() - WIDTH/2,
-            yoffset = this.handler._getCamera()._getyoffset() -HEIGHT/2 - YOFFSET;
+        var xoffset = this.handler._getCamera().getOffsetX() - WIDTH/2,
+            yoffset = this.handler._getCamera().getOffsetY() -HEIGHT/2 - YOFFSET;
         this.currentFrame.draw(graphics, this.x - xoffset, this.y - yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
     }
 

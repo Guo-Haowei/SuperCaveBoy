@@ -50,7 +50,7 @@ export class Game {
         this.player = new Player(SpawningX, SpawningY, 10, this.handler);
         this.player._init();
         this.camera = new Camera(480, SpawningY);
-        this.camera._setTarget(this.player);
+        this.camera.setTarget(this.player);
 
         // gui
         this.gui = new GUI(this.handler);
@@ -134,7 +134,7 @@ class PlayScene implements IScene {
     }
 
     tick(dt: number) {
-        this.handler._getCamera()._tick(dt);
+        this.handler._getCamera().tick(dt);
         this.handler._getPlayer()._tick(dt);
         this.handler._getLevel()._tick(dt);
     }

@@ -51,7 +51,7 @@ function SpecialObject(handler, x, y, type) {
     this._CameraTrigger = function() {
         this.triggerActivated = true;
         var camera = this.handler._getCamera();
-        camera._setTarget(this);
+        camera.setTarget(this);
         this.handler._getPlayer().pausing = true;
         if (this.x < 900) {
             this.x += (920 - this.x)/70; 
@@ -69,7 +69,7 @@ function SpecialObject(handler, x, y, type) {
                 this.x -= this.hspeed;
                 this.hspeed += 0.04;
             } else {
-                this.handler._getCamera()._setTarget(this.handler._getPlayer());                
+                this.handler._getCamera().setTarget(this.handler._getPlayer());                
                 this.destroyed = true;
                 this.handler._getPlayer().pausing = false;
                 this.boss._setState(this.boss._BossRising);
@@ -81,7 +81,7 @@ function SpecialObject(handler, x, y, type) {
 
     this._cameraSkip = function() {
         this.triggerActivated = false;
-        this.handler._getCamera()._setTarget(this.handler._getPlayer());                
+        this.handler._getCamera().setTarget(this.handler._getPlayer());                
         this.destroyed = true;
         this.handler._getPlayer().pausing = false;
         this.boss._setState(this.boss._BossRising);
@@ -149,8 +149,8 @@ function SpecialObject(handler, x, y, type) {
     
     this._render = function(graphics) {
         if (!this.sprite) return;
-        var xoffset = this.handler._getCamera()._getxoffset() - WIDTH/2,
-            yoffset = this.handler._getCamera()._getyoffset() -HEIGHT/2 - YOFFSET;
+        var xoffset = this.handler._getCamera().getOffsetX() - WIDTH/2,
+            yoffset = this.handler._getCamera().getOffsetY() -HEIGHT/2 - YOFFSET;
         if (this.type !== TYPE.LAVA) {
             this.sprite.draw(graphics, this.x - xoffset, this.y - yoffset);
         } else {
