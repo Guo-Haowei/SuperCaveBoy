@@ -10,8 +10,8 @@ function Tile(x, y, type, handler) {
     // Polygon
     
     this._render = function(graphics) {
-        var xoffset = this.handler._getCamera()._getxoffset() - WIDTH/2,
-        yoffset = this.handler._getCamera()._getyoffset() -HEIGHT/2 - YOFFSET;
+        var xoffset = this.handler._getCamera().getOffsetX() - WIDTH/2,
+        yoffset = this.handler._getCamera().getOffsetY() -HEIGHT/2 - YOFFSET;
         if (this.type === 1) {
             this.spr_dirt.draw(graphics, this.x - xoffset, this.y - yoffset);
         } else {

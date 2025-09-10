@@ -6,28 +6,15 @@ var game = new Game();
 function main(imageAssets: { [key: string]: HTMLImageElement }) {
     game.init(imageAssets);
 
-    let ticks = 0;
-    let current = 0;
-    let past = Date.now();
+    let lastTime = Date.now();
 
     const loop = () => {
-        let lastTime = now;
-        now = Date.now();
-        delta += now - lastTime;
-        if (delta >= 1000.0 / fps) {
-            delta = 0;
-            ++ticks;
-            game.tick();
-            game.render(ctx);
-        }
+        const now = Date.now();
+        const dt = now - lastTime;
+        lastTime = now;
 
-        current = Date.now();
-        // fps check
-        if (current - past >= 1000) {
-            console.log('fps is '+ticks);
-            ticks = 0;
-            past = current;
-        }
+        game.tick(dt);
+        game.render(ctx);
 
         requestAnimationFrame(loop);
     };
@@ -52,8 +39,6 @@ window.onload = () => {
             name = name.split('.').shift() || '';
             imageAssets[name] = img;
         });
-
-        console.log(imageAssets);
 
         main(imageAssets);
     });

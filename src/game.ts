@@ -1,4 +1,5 @@
-import { Player } from './objects/gameobjects/lifeforms/player.js';
+import { Player } from './objects/gameobjects/lifeforms/player';
+import { Camera } from './objects/camera';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 
@@ -9,6 +10,7 @@ export class Game {
     private currentScene: IScene;
     private scenes = new Map<Scene, IScene>();
     private lastTick = 0;
+    private player: Player;
 
     constructor() {
         // assets
@@ -20,13 +22,14 @@ export class Game {
         this.keyManager._setTakeInput(true);
         this.keyManager._init();
         // game objects
-        this.player;
         // camera
         this.camera;
         // music
         this.music = null;
         // level
         this.level;
+
+        this.player = new Player(SpawningX, SpawningY, 10, this.handler);
     }
 
     public init(images: { [key: string]: HTMLImageElement }) {
@@ -46,10 +49,10 @@ export class Game {
         this.level._init();
 
         // create entities
-        this.player = new Player(SpawningX, SpawningY, 10, this.handler);
         this.player._init();
+
         this.camera = new Camera(480, SpawningY);
-        this.camera._setTarget(this.player);
+        this.camera.setTarget(this.player);
 
         // gui
         this.gui = new GUI(this.handler);
@@ -71,17 +74,8 @@ export class Game {
         this.changeScene(this.scenes[name]);
     }
 
-    tick() {
-        const timestamp = Date.now();
-        let dt = 0;
-        if (this.lastTick === 0) {
-            this.lastTick = timestamp;
-        } else {
-            dt = timestamp - this.lastTick;
-            this.lastTick = timestamp;
-        }
-
-        this.currentScene.tick(timestamp);
+    tick(dt: number) {
+        this.currentScene.tick(dt);
     }
 
     render(ctx: CanvasRenderingContext2D) {
@@ -142,9 +136,9 @@ class PlayScene implements IScene {
     }
 
     tick(dt: number) {
-        this.handler._getCamera()._tick();
-        this.handler._getPlayer()._tick();
-        this.handler._getLevel()._tick();
+        this.handler._getCamera().tick(dt);
+        this.handler._getPlayer()._tick(dt);
+        this.handler._getLevel()._tick(dt);
     }
 
     render(ctx) {

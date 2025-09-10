@@ -284,8 +284,8 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
     }
     this._render = function(graphics) {
         var 
-        xoffset = this.handler._getCamera()._getxoffset()-WIDTH/2,
-        yoffset = this.handler._getCamera()._getyoffset()-HEIGHT/2 - YOFFSET;
+        xoffset = this.handler._getCamera().getOffsetX()-WIDTH/2,
+        yoffset = this.handler._getCamera().getOffsetY()-HEIGHT/2 - YOFFSET;
         this.sprite.draw(graphics, this.x-xoffset, this.y-yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
 
     }
