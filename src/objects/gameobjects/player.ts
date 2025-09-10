@@ -1,4 +1,4 @@
-import { Direction } from "../../../constants";
+import { Direction } from "../../constants";
 
 export class Player {
     private x: number;

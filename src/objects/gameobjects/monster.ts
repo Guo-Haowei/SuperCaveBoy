@@ -1,4 +1,4 @@
-import { Direction } from "../../../constants";
+import { Direction } from "../../constants";
 
 // @TODO: collider
 // type Collider = {
@@ -10,7 +10,7 @@ import { Direction } from "../../../constants";
 //   collisionCategory: number; // Bitmask representing what this entity *is*
 // };
 
-function Monster(handler, x, y, type, leftBound, rightBound) {
+export function Monster(handler, x, y, type, leftBound, rightBound) {
     this.x = x;
     this.y = y;
     this.leftBound = leftBound;
@@ -285,10 +285,9 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
         }
     }
     this._render = function(graphics) {
-        var 
-        xoffset = this.handler._getCamera().getOffsetX()-WIDTH/2,
-        yoffset = this.handler._getCamera().getOffsetY()-HEIGHT/2 - YOFFSET;
+        let xoffset = this.handler._getCamera().getOffsetX() - WIDTH / 2;
+        let yoffset =
+          this.handler._getCamera().getOffsetY() - HEIGHT / 2 - YOFFSET;
         this.sprite.draw(graphics, this.x-xoffset, this.y-yoffset, this.alpha, (this.face===0?HORIZONTAL_FLIP:0));
-
     }
 }

@@ -1,4 +1,6 @@
-function Level(handler) {
+import { Monster } from "../../objects/gameobjects/monster";
+
+export function Level(handler) {
     this.handler = handler;
     this.level = WORLD.startLevel;
     this.world = [];

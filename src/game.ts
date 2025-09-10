@@ -1,5 +1,6 @@
-import { Player } from './objects/gameobjects/lifeforms/player';
+import { Player } from './objects/gameobjects/player';
 import { Camera } from './objects/camera';
+import { Level } from './world/level/level';
 
 export type Scene = 'MENU' | 'PLAY' | 'END';
 

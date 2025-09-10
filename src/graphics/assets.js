@@ -35,7 +35,6 @@ function Assets(images) {
     // initialize assets
 
     this._init = function() {
-        console.log('');
         // player idle
         this.spr_player_idle = new Sprite(images.spr_player_idle, 0, 0, 64, 72);
         // player walk
