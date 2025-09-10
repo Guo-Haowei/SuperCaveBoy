@@ -10,6 +10,7 @@ export class Game {
     private currentScene: IScene;
     private scenes = new Map<Scene, IScene>();
     private lastTick = 0;
+    private player: Player;
 
     constructor() {
         // assets
@@ -21,13 +22,14 @@ export class Game {
         this.keyManager._setTakeInput(true);
         this.keyManager._init();
         // game objects
-        this.player;
         // camera
         this.camera;
         // music
         this.music = null;
         // level
         this.level;
+
+        this.player = new Player(SpawningX, SpawningY, 10, this.handler);
     }
 
     public init(images: { [key: string]: HTMLImageElement }) {
@@ -47,8 +49,8 @@ export class Game {
         this.level._init();
 
         // create entities
-        this.player = new Player(SpawningX, SpawningY, 10, this.handler);
         this.player._init();
+
         this.camera = new Camera(480, SpawningY);
         this.camera.setTarget(this.player);
 

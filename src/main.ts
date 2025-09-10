@@ -40,8 +40,6 @@ window.onload = () => {
             imageAssets[name] = img;
         });
 
-        console.log(imageAssets);
-
         main(imageAssets);
     });
 };

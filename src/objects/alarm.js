@@ -1,11 +1,11 @@
 function Alarm(handler) {
-    
+
     this.handler = handler;
     this.count = 0;
     this.frames;
     this.activated = false;
     this.script;
-    
+
     this._tick = function() {
         if (this.activated) {
             if (this.count < this.frames) {
@@ -17,28 +17,27 @@ function Alarm(handler) {
             }
         }
     }
-    
+
     this._init = function(frames) {
         this.frames = frames;
         this.activated = true;
         this.count = 0;
     }
-    
+
     this._setScript = function(script) {
         this.script = script;
     }
-    
+
     this._enterNewRoom = function() {
-        var level = this.handler._getLevel();
-        //if (level.level >= levelNum-1) return;
-        
+        let level = this.handler._getLevel();
+
         // reset player pos
-        var player = this.handler._getPlayer();
-        
+        let player = this.handler._getPlayer();
+
         player.alpha = 1;
         player._setPos(SpawningX, SpawningY);
         player._setState(player._JumpingState);
-        
+
         // reset camara pos
         this.handler._getCamera().setOffset(480, SpawningY);
         // update floor
@@ -49,7 +48,7 @@ function Alarm(handler) {
             this.handler._getGame().setScene('END');
         }
     }
-    
+
     this._quitDamangePlayer = function() {
         var player = this.handler._getPlayer();
         player._setState(player._MovingState);
