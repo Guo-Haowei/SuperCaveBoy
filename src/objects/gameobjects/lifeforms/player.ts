@@ -1,34 +1,44 @@
 export class Player {
+    private x: number;
+    private y: number;
+
+    private speed: number;
+    private hspeed: number;
+    private vspeed: number;
+
+    public health = 3;
+    public sapphire = 0;
+
+    // @TODO: change to enum
+    private face = DIRECTION.RIGHT;
+
+    private takingJump = false;
+    private landed = false;
+    private hurt = false;
+    private grabbing = false;
+    private pausing = false;
+
+    private alpha = 1;
+
+    private bound = new Rect(16, 10, 32, 62);
+
+    // @TODO: refactor
+    private handler: any;
+
     constructor(x, y, speed, handler) {
         this.x = x;
         this.y = y;
-        this.speed = speed;
         this.handler = handler;
-        this.face = DIRECTION.RIGHT;
 
-        this.health = 3;
-        this.sapphire = 0;
-
+        this.speed = speed;
         this.hspeed = 0;
         this.vspeed = 0;
-
-        this.takingJump = false;
-        this.landed = false;
 
         this.jump_animation;
         this.walk_animation;
 
         this.currentState;
         this.currentFrame;
-
-        this.grabbing = false;
-        this.hurt = false;
-
-        this.bound = new Rect(16, 10, 32, 62);
-
-        this.alpha = 1;
-
-        this.pausing = false;
 
         // alarm exit
         this.alarm0 = new Alarm(this.handler);
@@ -109,7 +119,6 @@ export class Player {
         this.currentFrame = this.jump_animation[this.vspeed<0?0:1];
         if (this.hspeed !== 0) this._move();
     }
-
 
     _revive() {
         this.alarm0.activated = false;
