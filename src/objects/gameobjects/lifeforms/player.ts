@@ -1,16 +1,17 @@
+import { Direction } from "../../../constants";
+
 export class Player {
     private x: number;
     private y: number;
 
     private speed: number;
-    private hspeed: number;
-    private vspeed: number;
+    private hspeed = 0;
+    private vspeed = 0;
 
     public health = 3;
     public sapphire = 0;
 
-    // @TODO: change to enum
-    private face = DIRECTION.RIGHT;
+    private face = Direction.RIGHT;
 
     private takingJump = false;
     private landed = false;
@@ -31,8 +32,6 @@ export class Player {
         this.handler = handler;
 
         this.speed = speed;
-        this.hspeed = 0;
-        this.vspeed = 0;
 
         this.jump_animation;
         this.walk_animation;
@@ -125,7 +124,7 @@ export class Player {
         this.alarm1.activated = false;
         this.hspeed = 0;
         this.vspeed = 0;
-        this.face = DIRECTION.RIGHT;
+        this.face = Direction.RIGHT;
         this.takingJump = false;
         this.grabbing = false;
         this.health = 3;

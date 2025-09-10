@@ -1,3 +1,5 @@
+import { Direction } from "../../../constants";
+
 // @TODO: collider
 // type Collider = {
 //   offsetX: number;
@@ -16,7 +18,7 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
     this.handler = handler;
     this.type = type;
 
-    this.face = DIRECTION.LEFT;
+    this.face = Direction.LEFT;
 
     this.hspeed = 0;
     this.vspeed = 0;
@@ -182,8 +184,8 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             this.hspeed = 1;
         }
         this.speed = Math.abs((this.x+this.bound.x+this.bound.width/2)-(player.x+player.bound.x+player.bound.width))/30+2;
-        if (this.hspeed > 0) {this.face = DIRECTION.RIGHT;}
-        else if (this.hspeed < 0) {this.face = DIRECTION.LEFT;}
+        if (this.hspeed > 0) {this.face = Direction.RIGHT;}
+        else if (this.hspeed < 0) {this.face = Direction.LEFT;}
         else {this._move = this._SpiderIdle;return;}
         // reset animation
         this.move_animation._tick();
@@ -206,20 +208,20 @@ function Monster(handler, x, y, type, leftBound, rightBound) {
             ysign = this.y-player.y>5?1:this.y-player.y>=-5?0:-1;
         this.hspeed = -xsign;
         this.vspeed = -ysign;
-        this.face = this.hspeed>0? DIRECTION.RIGHT:DIRECTION.LEFT;
+        this.face = this.hspeed>0? Direction.RIGHT:Direction.LEFT;
         if (this.hspeed == 0 || this.vspeed == 0) this.speed = 3;
     }
 
     this._SnakeMove = function() {
         this.move_animation._tick();
-        if (this.x >= this.leftBound && this.x-this.speed <= this.leftBound && this.face === DIRECTION.LEFT) {
+        if (this.x >= this.leftBound && this.x-this.speed <= this.leftBound && this.face === Direction.LEFT) {
             this.x = this.leftBound;
-            this.face = DIRECTION.RIGHT;
-        } else if (this.x+this.bound.x <= this.rightBound && this.x+this.bound.x+this.speed >= this.rightBound && this.face === DIRECTION.RIGHT) {
+            this.face = Direction.RIGHT;
+        } else if (this.x+this.bound.x <= this.rightBound && this.x+this.bound.x+this.speed >= this.rightBound && this.face === Direction.RIGHT) {
             this.x = this.rightBound-this.bound.x;
-            this.face = DIRECTION.LEFT;
+            this.face = Direction.LEFT;
         }
-        this.hspeed = this.face === DIRECTION.RIGHT?1:-1
+        this.hspeed = this.face === Direction.RIGHT?1:-1
         this.x += this.hspeed*this.speed;
         this.sprite = this.move_animation._getFrame();
     }

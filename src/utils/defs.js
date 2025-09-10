@@ -10,8 +10,6 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 document.body.appendChild(canvas);
 
-var DIRECTION = {LEFT: 0, RIGHT: 1, UP: 2, DOWN: 3};
-
 var KEYEVENT = {SPACE: 32, VK_LEFT: 37, VK_UP: 38, VK_RIGHT: 39};
 
 var BOOL = {TRUE: 1, FALSE: 0};
